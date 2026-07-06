@@ -13,6 +13,11 @@ const mainNavItems: NavItem[] = [
         url: '/dashboard',
         icon: LayoutGrid,
     },
+    {
+        title: 'Waiting List',
+        url: '/waiting-lists',
+        icon: LayoutGrid,
+    },
 ];
 
 const footerNavItems: NavItem[] = [
