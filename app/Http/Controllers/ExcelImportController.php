@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\ExcelImportService;
 use Illuminate\Http\Request;
+use App\Services\ExcelImportService;
+use Inertia\Inertia;
 
 class ExcelImportController extends Controller
 {
@@ -15,8 +16,14 @@ class ExcelImportController extends Controller
 
         $result = $service->import($request->file('file'));
 
-        return response()->json($result);
+        return back()->with([
+            'success' => 'Importação concluída',
+            'result' => $result
+        ]);
+    }
+
+    public function page()
+    {
+        return Inertia::render('WaitingList/Import');
     }
 }
-
-

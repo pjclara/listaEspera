@@ -11,12 +11,36 @@ class WaitingListController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $waitingLists = WaitingList::with('equipa')->paginate(50);
+        $waitingLists = WaitingList::with('admin')
+            ->when($request->num_processo, fn($q) => $q->where('num_processo', $request->num_processo))
+            ->when($request->situacao, fn($q) => $q->where('situacao', $request->situacao))
+            ->when($request->estado, fn($q) => $q->where('estado', $request->estado))
+            ->paginate(20)
+            ->withQueryString();
+
+        // get distinct situacao values for the filter dropdown
+        $situacaoOptions = WaitingList::query()
+            ->select('situacao')
+            ->distinct()
+            ->pluck('situacao');
+
+        // get distinct estado values for the filter dropdown
+        $estadoOptions = WaitingList::query()
+            ->select('estado')
+            ->distinct()
+            ->pluck('estado');
 
         return Inertia::render('WaitingList/Index', [
             'waitingLists' => $waitingLists,
+            'situacaoOptions' => $situacaoOptions,
+            'estadoOptions' => $estadoOptions,
+            'filters' => [
+                'num_processo' => $request->num_processo,
+                'situacao' => $request->situacao,
+                'estado' => $request->estado,
+            ],
         ]);
     }
 
@@ -67,5 +91,22 @@ class WaitingListController extends Controller
     public function destroy(WaitingList $waitingList)
     {
         //
+    }
+
+    public function updateAdmin(Request $request, WaitingList $waitingList)
+    {
+        $data = $request->validate([
+            'contactado' => 'boolean',
+            'data_contacto' => 'required_if:contactado,true|date',
+            'contactado_por' => 'required_if:contactado,true|string|max:255',
+            'observacoes' => 'nullable|string',
+        ]);
+
+        $waitingList->admin()->updateOrCreate(
+            ['waiting_list_id' => $waitingList->id],
+            $data
+        );
+
+        return back()->with('success', 'Dados administrativos atualizados.');
     }
 }

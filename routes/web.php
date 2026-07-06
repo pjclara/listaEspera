@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ExcelImportController;
+use App\Http\Controllers\WaitingListController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -14,12 +15,20 @@ Route::middleware(['auth'])->group(function () {
     })->name('dashboard');
 
     // Waiting List Routes
-    Route::resource('waiting-lists', \App\Http\Controllers\WaitingListController::class);
+    Route::resource('waiting-lists', WaitingListController::class);
 
     Route::post('/waiting-list/import', [ExcelImportController::class, 'import'])
         ->middleware(['auth']);
     Route::get('/waiting-list/import', fn() => Inertia::render('WaitingList/Import'))
         ->middleware(['auth']);
+
+    // admin
+    Route::post('/waiting-lists/{waitingList}/admin', [WaitingListController::class, 'updateAdmin']);
+});
+
+
+Route::get('/phpinfo', function () {
+    phpinfo();
 });
 
 require __DIR__ . '/settings.php';

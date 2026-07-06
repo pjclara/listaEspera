@@ -3,8 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class WaitingList extends Model
 {
@@ -12,45 +10,45 @@ class WaitingList extends Model
 
     protected $fillable = [
         'id',
-        'data_inscricao',
+        'data_marcacao',
         'prioridade',
-        'origem',
+        'regime',
+        'situacao',
         'estado',
+        'data_operado',
+        'data_agenda',
+        'num_processo',
         'sexo',
-        'episodio_id',
-        'instituicao',
-        'medico_id',
-        'medico_nome',
-        'diagnostico_cid',
-        'diagnostico_desc',
-        'procedimento_pcs',
-        'data_prevista',
-        'duracao_estimada',
-        'motivo_cancelamento',
+        'des_grupo',
+        'cod_medico',
+        'nome_clinico',
+        'patologia',
+        'des_diagnostico',
+        'interv_cirurgica',
+        'data_cancel',
+        'cancel',
+        'des_cancel',
         'equipa_id',
         'updated_from_excel_at',
     ];
 
+    public $incrementing = false; // porque o ID vem do Excel
+
     protected $casts = [
-        'data_inscricao' => 'date',
-        'data_prevista' => 'date',
+        'data_marcacao' => 'date',
+        'data_operado' => 'date',
+        'data_agenda' => 'date',
+        'data_cancel' => 'date',
         'updated_from_excel_at' => 'datetime',
     ];
 
-    public $incrementing = false; // ID vem do Excel
-
-    public function equipa(): BelongsTo
-    {
-        return $this->belongsTo(Team::class, 'equipa_id');
-    }
-
-    public function schedules(): HasMany
-    {
-        return $this->hasMany(Schedule::class);
-    }
-
-    public function history(): HasMany
+    public function history()
     {
         return $this->hasMany(WaitingListHistory::class);
+    }
+
+    public function admin()
+    {
+        return $this->hasOne(WaitingListAdmin::class);
     }
 }

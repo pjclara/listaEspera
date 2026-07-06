@@ -12,9 +12,16 @@ return new class extends Migration {
             $table->foreignId('leader_id')->nullable()->constrained('users');
             $table->timestamps();
         });
+        Schema::table('users', function (Blueprint $table) {
+            $table->foreignId('team_id')->nullable()->constrained('teams');
+        });
     }
 
     public function down(): void {
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropForeign(['team_id']);
+            $table->dropColumn('team_id');
+        });
         Schema::dropIfExists('teams');
     }
 };

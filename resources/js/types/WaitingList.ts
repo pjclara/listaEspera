@@ -15,5 +15,4 @@ export interface WaitingList {
   data_prevista: string | null;
   duracao_estimada: number | null;
   motivo_cancelamento: string | null;
-  equipa_id: number | null;
 }

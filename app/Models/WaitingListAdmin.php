@@ -4,21 +4,21 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class WaitingListHistory extends Model
+class WaitingListAdmin extends Model
 {
-    protected $table = 'waiting_list_history';
+    protected $table = 'waiting_list_admin';
 
     protected $fillable = [
         'waiting_list_id',
-        'campo_alterado',
-        'valor_antigo',
-        'valor_novo',
-        'alterado_em',
-        'origem',
+        'contactado',
+        'data_contacto',
+        'contactado_por',
+        'observacoes',
     ];
 
     protected $casts = [
-        'alterado_em' => 'datetime',
+        'contactado' => 'boolean',
+        'data_contacto' => 'date',
     ];
 
     public function waitingList()

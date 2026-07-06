@@ -17,7 +17,6 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->string('password');
             $table->enum('role', ['admin', 'secretaria', 'membro', 'lider'])->default('admin');
-            $table->foreignId('team_id')->nullable()->constrained('teams');
             $table->timestamps();
         });
 

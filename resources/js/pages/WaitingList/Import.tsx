@@ -1,5 +1,16 @@
 import { useState } from "react";
 import { router } from '@inertiajs/react';
+import { PlaceholderPattern } from '@/components/ui/placeholder-pattern';
+import AppLayout from '@/layouts/app-layout';
+import { type BreadcrumbItem } from '@/types';
+import { Head } from '@inertiajs/react';
+
+const breadcrumbs: BreadcrumbItem[] = [
+    {
+        title: 'Importar Lista de Espera',
+        href: '/waiting-list/import',
+    },
+];
 
 export default function ImportExcel() {
   const [file, setFile] = useState<File | null>(null);
@@ -19,6 +30,9 @@ export default function ImportExcel() {
   }
 
   return (
+    <AppLayout breadcrumbs={breadcrumbs}>
+      <Head title="Importar Lista de Espera" />
+
     <div className="p-6">
       <h1 className="text-xl font-bold mb-4">Importar Lista de Espera (Excel)</h1>
 
@@ -38,5 +52,6 @@ export default function ImportExcel() {
         </button>
       </form>
     </div>
+    </AppLayout>
   );
 }
