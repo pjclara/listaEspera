@@ -23,6 +23,11 @@ const mainNavItems: NavItem[] = [
         url: '/slots',
         icon: LayoutGrid,
     },
+    {
+        title: 'Agenda',
+        url: '/agenda',
+        icon: LayoutGrid,
+    },
 ];
 
 const footerNavItems: NavItem[] = [

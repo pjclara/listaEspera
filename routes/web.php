@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AgendaController;
 use App\Http\Controllers\ExcelImportController;
 use App\Http\Controllers\SlotController;
 use App\Http\Controllers\WaitingListController;
@@ -31,6 +32,9 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/waiting-lists/{waitingList}/schedule/{schedule}', [WaitingListController::class, 'updateSchedule']);
 
     Route::resource('slots', SlotController::class);
+
+    Route::get('/agenda', [AgendaController::class, 'index']);
+
 
 });
 

@@ -128,7 +128,7 @@ class WaitingListController extends Controller
     {
         $data = $request->validate([
             'slot_id' => 'required|exists:slots,id',
-            'duracao_estimada' => 'required|integer|min:1',
+            'duracao_estimada' => 'nullable|integer|min:1',
             'estado' => 'required|string',
         ]);
 
@@ -145,7 +145,7 @@ class WaitingListController extends Controller
     {
         $data = $request->validate([
             'slot_id' => 'required|exists:slots,id',
-            'duracao_estimada' => 'required|integer|min:1',
+            'duracao_estimada' => 'nullable|integer|min:1',
             'estado' => 'required|string',
         ]);
 
