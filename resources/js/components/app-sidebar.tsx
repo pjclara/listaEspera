@@ -18,6 +18,11 @@ const mainNavItems: NavItem[] = [
         url: '/waiting-lists',
         icon: LayoutGrid,
     },
+    {
+        title: 'Slots',
+        url: '/slots',
+        icon: LayoutGrid,
+    },
 ];
 
 const footerNavItems: NavItem[] = [

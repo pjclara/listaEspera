@@ -8,4 +8,5 @@ export interface Slot {
   tipo: "programado" | "ambulatorio" | "urgente";
   is_swapped: boolean;
   swapped_to_team_id: number | null;
+  observacoes: string;
 }

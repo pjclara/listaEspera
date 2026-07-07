@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ExcelImportController;
+use App\Http\Controllers\SlotController;
 use App\Http\Controllers\WaitingListController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -24,6 +25,12 @@ Route::middleware(['auth'])->group(function () {
 
     // admin
     Route::post('/waiting-lists/{waitingList}/admin', [WaitingListController::class, 'updateAdmin']);
+
+    // schedule
+    Route::post('/waiting-lists/{waitingList}/schedule', [WaitingListController::class, 'schedule']);
+
+    Route::resource('slots', SlotController::class);
+
 });
 
 

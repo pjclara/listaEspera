@@ -109,4 +109,20 @@ class WaitingListController extends Controller
 
         return back()->with('success', 'Dados administrativos atualizados.');
     }
+
+    public function schedule(Request $request, WaitingList $waitingList)
+    {
+        $data = $request->validate([
+            'data_agenda' => 'required|date',
+            'hora_agenda' => 'required',
+            'equipa_id' => 'required|exists:equipa,id',
+        ]);
+
+        $waitingList->updateOrCreate(
+            ['id' => $waitingList->id],
+            $data
+        );
+
+        return back()->with('success', 'Agendamento registado com sucesso.');
+    }
 }

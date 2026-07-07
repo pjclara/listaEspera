@@ -2,64 +2,58 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Controller;
 use App\Models\Slot;
+use App\Models\Team;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class SlotController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
+        return Inertia::render('Slots/Index', [
+            'slots' => Slot::with('team')->orderBy('data')->get(),
+            'equipas' => Team::all(),
+        ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
+        $data = $request->validate([
+            'data' => 'required|date',
+            'hora_inicio' => 'required',
+            'hora_fim' => 'required',
+            'team_id' => 'required|exists:teams,id',
+            'sala' => 'nullable|string',
+            'observacoes' => 'nullable|string',
+        ]);
+
+        Slot::create($data);
+
+        return back()->with('success', 'Slot criado com sucesso.');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Slot $slot)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Slot $slot)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, Slot $slot)
     {
-        //
+        $data = $request->validate([
+            'data' => 'required|date',
+            'hora_inicio' => 'required',
+            'hora_fim' => 'required',
+            'team_id' => 'required|exists:teams,id',
+            'sala' => 'nullable|string',
+            'observacoes' => 'nullable|string',
+        ]);
+
+        $slot->update($data);
+
+        return back()->with('success', 'Slot atualizado com sucesso.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Slot $slot)
     {
-        //
+        $slot->delete();
+
+        return back()->with('success', 'Slot removido.');
     }
 }
