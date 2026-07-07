@@ -9,4 +9,7 @@ export interface Slot {
   is_swapped: boolean;
   swapped_to_team_id: number | null;
   observacoes: string;
+  repeat_type: "none" | "daily" | "weekly" | "monthly";
+  repeat_until: string | null;
+
 }

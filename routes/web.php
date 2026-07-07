@@ -27,7 +27,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/waiting-lists/{waitingList}/admin', [WaitingListController::class, 'updateAdmin']);
 
     // schedule
-    Route::post('/waiting-lists/{waitingList}/schedule', [WaitingListController::class, 'schedule']);
+    Route::post('/waiting-lists/{waitingList}/schedule', [WaitingListController::class, 'storeSchedule']);
+    Route::put('/waiting-lists/{waitingList}/schedule/{schedule}', [WaitingListController::class, 'updateSchedule']);
 
     Route::resource('slots', SlotController::class);
 

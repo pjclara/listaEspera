@@ -15,6 +15,16 @@ class Schedule extends Model
         'duracao_estimada',
     ];
 
+    // set the default user_id to the currently authenticated user when creating a new Schedule
+    protected static function booted()
+    {
+        static::creating(function ($schedule) {
+            if (auth()->check()) {
+                $schedule->user_id = auth()->id();
+            }
+        });
+    }
+
     public function slot(): BelongsTo
     {
         return $this->belongsTo(Slot::class);

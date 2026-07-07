@@ -9,7 +9,26 @@ export default function Index({
     filters,
     situacaoOptions,
     estadoOptions,
-}: PageProps<{ waitingLists: any; filters: any; situacaoOptions: string[]; estadoOptions: string[] }>) {
+    equipaOptions,
+    slotsDisponiveis,
+}: PageProps<{
+    waitingLists: any;
+    filters: any;
+    situacaoOptions: string[];
+    estadoOptions: string[];
+    equipaOptions: { id: number; nome: string }[];
+    slotsDisponiveis: {
+        id: number;
+        team_id: number;
+        team: { id: number; nome: string };
+        sala: string;
+        data: string;
+        hora_inicio: string;
+        hora_fim: string;
+        tipo: 'programado' | 'ambulatorio' | 'urgente';
+        is_swapped: boolean;
+    }[];
+}>) {
     const safeFilters = filters ?? {};
 
     const [numProcesso, setNumProcesso] = useState(safeFilters.num_processo ?? '');
@@ -68,20 +87,28 @@ export default function Index({
     };
     const [showScheduleModal, setShowScheduleModal] = useState(false);
     const [scheduleForm, setScheduleForm] = useState({
-        data_agenda: '',
-        hora_agenda: '',
-        equipa_id: '',
+        slot_id: '',
+        duracao_estimada: '',
     });
     const [selectedSchedule, setSelectedSchedule] = useState(null);
+    const isEditingSchedule = !!selectedSchedule?.schedule;
 
     const openScheduleModal = (item: any) => {
         setSelectedSchedule(item);
 
-        setScheduleForm({
-            data_agenda: item.data_agenda || '',
-            hora_agenda: item.hora_agenda || '',
-            equipa_id: item.equipa_id || '',
-        });
+        if (item.schedule) {
+            // modo edição
+            setScheduleForm({
+                slot_id: item.schedule.slot_id,
+                duracao_estimada: item.schedule.duracao_estimada,
+            });
+        } else {
+            // modo criação
+            setScheduleForm({
+                slot_id: '',
+                duracao_estimada: '',
+            });
+        }
 
         setShowScheduleModal(true);
     };
@@ -223,7 +250,7 @@ export default function Index({
                                     <td className="px-4 py-3">
                                         <button
                                             onClick={() => openScheduleModal(i)}
-                                            className={`rounded px-3 py-1 text-sm text-white transition ${i.data_agenda ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'} `}
+                                            className={`rounded px-3 py-1 text-sm text-white transition ${i.schedule ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'} `}
                                         >
                                             Agendar
                                         </button>
@@ -345,66 +372,80 @@ export default function Index({
             {showScheduleModal && selectedSchedule && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
                     <div className="w-full max-w-lg animate-[fadeIn_0.2s_ease] rounded-xl bg-white p-6 shadow-xl">
-                        <h2 className="mb-4 text-xl font-semibold">Agendar — Nº {selectedSchedule.num_processo}</h2>
+                        <h2 className="mb-4 text-xl font-semibold">
+                            {selectedSchedule.schedule ? 'Editar Agendamento' : `Agendar — Nº ${selectedSchedule.num_processo}`}
+                        </h2>
 
                         <form
                             onSubmit={(e) => {
                                 e.preventDefault();
-                                router.post(
-                                    `/waiting-lists/${selectedSchedule.id}/schedule`,
-                                    {
-                                        data_agenda: scheduleForm.data_agenda,
-                                        hora_agenda: scheduleForm.hora_agenda,
-                                        equipa_id: scheduleForm.equipa_id,
-                                    },
-                                    {
-                                        preserveScroll: true,
-                                        onSuccess: () => closeScheduleModal(),
-                                    },
-                                );
+
+                                if (selectedSchedule.schedule) {
+                                    router.put(
+                                        `/waiting-lists/${selectedSchedule.id}/schedule/${selectedSchedule.schedule.id}`,
+                                        {
+                                            slot_id: scheduleForm.slot_id,
+                                            duracao_estimada: scheduleForm.duracao_estimada,
+                                            estado: 'agendado',
+                                        },
+                                        {
+                                            preserveScroll: true,
+                                            onSuccess: () => closeScheduleModal(),
+                                        },
+                                    );
+                                } else {
+                                    router.post(
+                                        `/waiting-lists/${selectedSchedule.id}/schedule`,
+                                        {
+                                            slot_id: scheduleForm.slot_id,
+                                            duracao_estimada: scheduleForm.duracao_estimada,
+                                            estado: 'agendado',
+                                        },
+                                        {
+                                            preserveScroll: true,
+                                            onSuccess: () => closeScheduleModal(),
+                                        },
+                                    );
+                                }
                             }}
                             className="space-y-4"
                         >
-                            {/* Data */}
+                            {/* Slot */}
                             <label className="block">
-                                <span className="text-sm text-gray-600">Data da cirurgia</span>
-                                <input
-                                    type="date"
-                                    value={scheduleForm.data_agenda || ''}
-                                    onChange={(e) => setScheduleForm({ ...scheduleForm, data_agenda: e.target.value })}
-                                    className="w-full rounded border px-3 py-2"
-                                />
-                                {errors.data_agenda && <p className="mt-1 text-sm text-red-600">{errors.data_agenda}</p>}
-                            </label>
-
-                            {/* Hora */}
-                            <label className="block">
-                                <span className="text-sm text-gray-600">Hora</span>
-                                <input
-                                    type="time"
-                                    value={scheduleForm.hora_agenda || ''}
-                                    onChange={(e) => setScheduleForm({ ...scheduleForm, hora_agenda: e.target.value })}
-                                    className="w-full rounded border px-3 py-2"
-                                />
-                                {errors.hora_agenda && <p className="mt-1 text-sm text-red-600">{errors.hora_agenda}</p>}
-                            </label>
-
-                            {/* Equipa */}
-                            <label className="block">
-                                <span className="text-sm text-gray-600">Equipa</span>
+                                <span className="text-sm text-gray-600">Slot disponível</span>
                                 <select
-                                    value={scheduleForm.equipa_id || ''}
-                                    onChange={(e) => setScheduleForm({ ...scheduleForm, equipa_id: e.target.value })}
+                                    value={scheduleForm.slot_id || ''}
+                                    onChange={(e) => setScheduleForm({ ...scheduleForm, slot_id: e.target.value })}
                                     className="w-full rounded border px-3 py-2"
                                 >
-                                    <option value="">Selecione</option>
-                                    {equipaOptions.map((eq: any) => (
-                                        <option key={eq.id} value={eq.id}>
-                                            {eq.nome}
+                                    <option value="">Selecione um slot</option>
+
+                                    {slotsDisponiveis.map((slot) => (
+                                        <option key={slot.id} value={slot.id}>
+                                            {new Date(slot.data).toLocaleDateString()} — {slot.hora_inicio} — Equipa {slot.team.nome}
                                         </option>
                                     ))}
                                 </select>
-                                {errors.equipa_id && <p className="mt-1 text-sm text-red-600">{errors.equipa_id}</p>}
+
+                                {errors.slot_id && <p className="mt-1 text-sm text-red-600">{errors.slot_id}</p>}
+                            </label>
+
+                            {/* Duração estimada */}
+                            <label className="block">
+                                <span className="text-sm text-gray-600">Duração estimada (minutos)</span>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    value={scheduleForm.duracao_estimada || ''}
+                                    onChange={(e) =>
+                                        setScheduleForm({
+                                            ...scheduleForm,
+                                            duracao_estimada: e.target.value,
+                                        })
+                                    }
+                                    className="w-full rounded border px-3 py-2"
+                                />
+                                {errors.duracao_estimada && <p className="mt-1 text-sm text-red-600">{errors.duracao_estimada}</p>}
                             </label>
 
                             <div className="mt-6 flex justify-end gap-3">
@@ -417,7 +458,7 @@ export default function Index({
                                 </button>
 
                                 <button type="submit" className="rounded bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-700">
-                                    Guardar Agendamento
+                                    {selectedSchedule.schedule ? 'Guardar Alterações' : 'Guardar Agendamento'}
                                 </button>
                             </div>
                         </form>

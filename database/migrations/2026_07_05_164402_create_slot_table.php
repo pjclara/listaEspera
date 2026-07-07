@@ -5,7 +5,8 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
-    public function up(): void {
+    public function up(): void
+    {
         Schema::create('slots', function (Blueprint $table) {
             $table->id();
             $table->foreignId('team_id')->constrained('teams');
@@ -22,11 +23,15 @@ return new class extends Migration {
             $table->foreignId('swap_approved_by')->nullable()->constrained('users');
             $table->text('swap_reason')->nullable();
 
+
+            $table->enum('repeat_type', ['none', 'daily', 'weekly', 'monthly'])->default('none');
+            $table->date('repeat_until')->nullable(); // repetir até data
             $table->timestamps();
         });
     }
 
-    public function down(): void {
+    public function down(): void
+    {
         Schema::dropIfExists('slots');
     }
 };

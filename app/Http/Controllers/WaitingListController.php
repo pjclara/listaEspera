@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Schedule;
+use App\Models\Team;
 use App\Models\WaitingList;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -13,7 +15,7 @@ class WaitingListController extends Controller
      */
     public function index(Request $request)
     {
-        $waitingLists = WaitingList::with('admin')
+        $waitingLists = WaitingList::with('admin', 'schedule')
             ->when($request->num_processo, fn($q) => $q->where('num_processo', $request->num_processo))
             ->when($request->situacao, fn($q) => $q->where('situacao', $request->situacao))
             ->when($request->estado, fn($q) => $q->where('estado', $request->estado))
@@ -32,10 +34,22 @@ class WaitingListController extends Controller
             ->distinct()
             ->pluck('estado');
 
+        $equipaOptions = Team::query()
+            ->select('id', 'nome')
+            ->get();
+
+        $slotsDisponiveis = \App\Models\Slot::query()
+            ->where('data', '>=', now())
+            ->where('is_swapped', false)
+            ->with('team')
+            ->get();
+
         return Inertia::render('WaitingList/Index', [
             'waitingLists' => $waitingLists,
             'situacaoOptions' => $situacaoOptions,
             'estadoOptions' => $estadoOptions,
+            'equipaOptions' => $equipaOptions,
+            'slotsDisponiveis' => $slotsDisponiveis,
             'filters' => [
                 'num_processo' => $request->num_processo,
                 'situacao' => $request->situacao,
@@ -110,19 +124,31 @@ class WaitingListController extends Controller
         return back()->with('success', 'Dados administrativos atualizados.');
     }
 
-    public function schedule(Request $request, WaitingList $waitingList)
+    public function storeSchedule(Request $request, WaitingList $waitingList)
     {
         $data = $request->validate([
-            'data_agenda' => 'required|date',
-            'hora_agenda' => 'required',
-            'equipa_id' => 'required|exists:equipa,id',
+            'slot_id' => 'required|exists:slots,id',
+            'duracao_estimada' => 'required|integer|min:1',
+            'estado' => 'required|string',
         ]);
 
-        $waitingList->updateOrCreate(
-            ['id' => $waitingList->id],
-            $data
-        );
+        Schedule::create([
+            'waiting_list_id' => $waitingList->id,
+            'slot_id' => $data['slot_id'],
+            'user_id' => auth()->id(),
+            'estado' => $data['estado'],
+            'duracao_estimada' => $data['duracao_estimada'],
+        ]);
+    }
 
-        return back()->with('success', 'Agendamento registado com sucesso.');
+    public function updateSchedule(Request $request, WaitingList $waitingList, Schedule $schedule)
+    {
+        $data = $request->validate([
+            'slot_id' => 'required|exists:slots,id',
+            'duracao_estimada' => 'required|integer|min:1',
+            'estado' => 'required|string',
+        ]);
+
+        $schedule->update($data);
     }
 }

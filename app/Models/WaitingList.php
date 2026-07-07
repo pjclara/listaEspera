@@ -51,4 +51,14 @@ class WaitingList extends Model
     {
         return $this->hasOne(WaitingListAdmin::class);
     }
+
+    public function team()
+    {
+        return $this->belongsTo(Team::class, 'equipa_id');
+    }
+
+    public function schedule()
+    {
+        return $this->hasOne(Schedule::class);
+    }
 }
