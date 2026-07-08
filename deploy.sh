@@ -6,6 +6,7 @@ LARAVEL_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 cd "$LARAVEL_DIR"
 
+
 echo "==> git pull"
 git pull
 
