@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\WaitingListExport;
 use App\Models\Schedule;
 use App\Models\Team;
 use App\Models\WaitingList;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Maatwebsite\Excel\Facades\Excel;
 
 class WaitingListController extends Controller
 {
@@ -15,10 +17,19 @@ class WaitingListController extends Controller
      */
     public function index(Request $request)
     {
+        if (!$request->estado) {
+            $request->merge(['estado' => 'A']);
+        }
+        if (!$request->situacao) {
+            $request->merge(['situacao' => ['Readmitido', 'Inscrito', 'Pre-Inscrito', 'Transferido para']]);
+        }
         $waitingLists = WaitingList::with('admin', 'schedule')
             ->when($request->num_processo, fn($q) => $q->where('num_processo', $request->num_processo))
-            ->when($request->situacao, fn($q) => $q->where('situacao', $request->situacao))
+            ->when($request->situacao, fn($q) => $q->whereIn('situacao', (array) $request->situacao))
             ->when($request->estado, fn($q) => $q->where('estado', $request->estado))
+            // des_diagnostico
+            ->when($request->des_diagnostico, fn($q) => $q->where('des_diagnostico', 'like', '%' . $request->des_diagnostico . '%'))
+            ->orderBy('data_marcacao', 'asc')
             ->paginate(20)
             ->withQueryString();
 
@@ -35,7 +46,7 @@ class WaitingListController extends Controller
             ->pluck('estado');
 
         $equipaOptions = Team::query()
-            ->select('id','nome')
+            ->select('id', 'nome')
             ->get();
 
         $slotsDisponiveis = \App\Models\Slot::query()
@@ -54,6 +65,7 @@ class WaitingListController extends Controller
                 'num_processo' => $request->num_processo,
                 'situacao' => $request->situacao,
                 'estado' => $request->estado,
+                'des_diagnostico' => $request->des_diagnostico,
             ],
         ]);
     }
@@ -150,5 +162,32 @@ class WaitingListController extends Controller
         ]);
 
         $schedule->update($data);
+    }
+
+
+    public function export(Request $request)
+    {
+       
+        $query = WaitingList::query();
+
+        if ($request->num_processo) {
+            $query->where('num_processo', $request->num_processo);
+        }
+
+        if ($request->des_diagnostico) {
+            $query->where('des_diagnostico', 'like', "%{$request->des_diagnostico}%");
+        }
+
+        if ($request->situacao) {
+            $query->whereIn('situacao', (array) $request->situacao);
+        }
+
+        if ($request->estado) {
+            $query->where('estado', $request->estado);
+        }
+
+        $data = $query->get();
+
+        return Excel::download(new WaitingListExport($data), 'lista_espera.xlsx');
     }
 }

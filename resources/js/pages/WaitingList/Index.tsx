@@ -1,6 +1,6 @@
 import AppLayout from '@/layouts/app-layout';
 import { Head, Link, PageProps, router } from '@inertiajs/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { usePage } from '@inertiajs/react';
 
@@ -32,8 +32,12 @@ export default function Index({
     const safeFilters = filters ?? {};
 
     const [numProcesso, setNumProcesso] = useState(safeFilters.num_processo ?? '');
-    const [situacao, setSituacao] = useState(safeFilters.situacao ?? '');
+    const [situacao, setSituacao] = useState(Array.isArray(safeFilters.situacao) ? safeFilters.situacao : []);
+    const [showSituacaoDropdown, setShowSituacaoDropdown] = useState(false);
+
     const [estado, setEstado] = useState(safeFilters.estado ?? '');
+    //des_diagnostico
+    const [desDiagnostico, setDesDiagnostico] = useState(safeFilters.des_diagnostico ?? '');
 
     const situacaoOptionsState = situacaoOptions ?? [];
     const estadoOptionsState = estadoOptions ?? [];
@@ -49,6 +53,12 @@ export default function Index({
         contactado_por: '',
         observacoes: '',
     });
+
+    useEffect(() => {
+        if (typeof safeFilters.situacao === 'string') {
+            setSituacao([safeFilters.situacao]);
+        }
+    }, []);
 
     const openModal = (item: any) => {
         setSelected(item);
@@ -78,6 +88,7 @@ export default function Index({
                 num_processo: numProcesso,
                 situacao: situacao,
                 estado: estado,
+                des_diagnostico: desDiagnostico,
             },
             {
                 preserveState: true,
@@ -91,7 +102,6 @@ export default function Index({
         duracao_estimada: '',
     });
     const [selectedSchedule, setSelectedSchedule] = useState(null);
-    const isEditingSchedule = !!selectedSchedule?.schedule;
 
     const openScheduleModal = (item: any) => {
         setSelectedSchedule(item);
@@ -113,6 +123,12 @@ export default function Index({
         setShowScheduleModal(true);
     };
 
+    useEffect(() => {
+        if (typeof safeFilters.situacao === 'string') {
+            setSituacao([safeFilters.situacao]);
+        }
+    }, []);
+
     const closeScheduleModal = () => {
         setShowScheduleModal(false);
         setSelectedSchedule(null);
@@ -127,6 +143,7 @@ export default function Index({
                 num_processo: numProcesso,
                 situacao: newSituacao,
                 estado: estado,
+                des_diagnostico: desDiagnostico,
             },
             {
                 preserveState: true,
@@ -144,6 +161,7 @@ export default function Index({
                 num_processo: numProcesso,
                 situacao: situacao,
                 estado: newEstado,
+                des_diagnostico: desDiagnostico,
             },
             {
                 preserveState: true,
@@ -160,6 +178,16 @@ export default function Index({
         return admin.contactado || admin.data_contacto || admin.contactado_por || admin.observacoes;
     };
 
+    const exportExcel = () => {
+        const params = new URLSearchParams({
+            num_processo: numProcesso,
+            estado: estado,
+            des_diagnostico: desDiagnostico,
+        });
+        situacao.forEach((item) => params.append('situacao[]', item));
+        window.location.href = route('waiting.export') + '?' + params.toString();
+    };
+
     return (
         <AppLayout>
             <Head title="Lista de Espera" />
@@ -174,7 +202,7 @@ export default function Index({
                 </div>
 
                 {/* FILTROS */}
-                <div className="flex gap-4 rounded-xl border border-gray-200 bg-white p-4 shadow">
+                <div className="flex flex-wrap items-end gap-4 rounded-xl border border-gray-200 bg-white p-4 shadow">
                     <div className="flex flex-col">
                         <label className="mb-1 text-sm text-gray-600">Nº Processo</label>
                         <input
@@ -187,15 +215,61 @@ export default function Index({
                     </div>
 
                     <div className="flex flex-col">
-                        <label className="mb-1 text-sm text-gray-600">Situação</label>
-                        <select value={situacao} onChange={(e) => updateSituacao(e.target.value)} className="rounded border px-3 py-2">
-                            <option value="">Todas</option>
-                            {situacaoOptionsState.map((option) => (
-                                <option key={option} value={option}>
-                                    {option}
-                                </option>
-                            ))}
-                        </select>
+                        <label className="mb-1 text-sm text-gray-600">Descrição Diagnóstico</label>
+                        <input
+                            type="text"
+                            value={desDiagnostico}
+                            onChange={(e) => setDesDiagnostico(e.target.value)}
+                            className="rounded border px-3 py-2"
+                            placeholder="Ex: Diagnóstico"
+                        />
+                    </div>
+
+                    <div className="relative flex flex-col">
+                        <label className="mb-1 block text-sm text-gray-600">Situação</label>
+
+                        <button
+                            type="button"
+                            onClick={() => setShowSituacaoDropdown((prev) => !prev)}
+                            className="w-full rounded border px-3 py-2 text-left"
+                        >
+                            {situacao.length === 0 ? (
+                                <span className="text-gray-500">Todas</span>
+                            ) : (
+                                <div className="flex flex-wrap gap-1">
+                                    {situacao.map((s) => (
+                                        <span key={s} className="rounded bg-blue-100 px-2 py-1 text-xs text-blue-700">
+                                            {s}
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
+                        </button>
+
+                        {showSituacaoDropdown && (
+                            <div className="absolute top-full left-0 z-50 mt-1 w-full rounded border bg-white shadow">
+                                {situacaoOptionsState.map((option) => {
+                                    const checked = situacao.includes(option);
+
+                                    return (
+                                        <label key={option} className="flex cursor-pointer items-center gap-2 px-3 py-2 hover:bg-gray-100">
+                                            <input
+                                                type="checkbox"
+                                                checked={checked}
+                                                onChange={() => {
+                                                    if (checked) {
+                                                        setSituacao(situacao.filter((s) => s !== option));
+                                                    } else {
+                                                        setSituacao([...situacao, option]);
+                                                    }
+                                                }}
+                                            />
+                                            {option}
+                                        </label>
+                                    );
+                                })}
+                            </div>
+                        )}
                     </div>
 
                     <div className="flex flex-col">
@@ -210,9 +284,17 @@ export default function Index({
                         </select>
                     </div>
 
-                    <button onClick={applyFilters} className="self-end rounded bg-blue-600 px-4 py-2 text-white shadow transition hover:bg-blue-700">
-                        Filtrar
-                    </button>
+                    <div className="flex flex-col justify-end">
+                        <button onClick={applyFilters} className="rounded bg-blue-600 px-4 py-2 text-white shadow transition hover:bg-blue-700">
+                            Filtrar
+                        </button>
+                    </div>
+
+                    <div className="flex flex-col justify-end">
+                        <button onClick={exportExcel} className="rounded bg-green-600 px-4 py-2 text-white shadow transition hover:bg-green-700">
+                            Exportar Excel
+                        </button>
+                    </div>
                 </div>
 
                 {/* TABELA */}
@@ -223,7 +305,7 @@ export default function Index({
                                 <th className="px-4 py-3">ID</th>
                                 <th className="px-4 py-3">Nº Processo</th>
                                 <th className="px-4 py-3">Diagnóstico</th>
-                                <th className="px-4 py-3">Estado</th>
+                                <th className="px-4 py-3">Data LE</th>
                                 <th className="px-4 py-3">Situação</th>
                             </tr>
                         </thead>
@@ -234,7 +316,7 @@ export default function Index({
                                     <td className="px-4 py-3 font-medium text-gray-900">{i.id}</td>
                                     <td className="px-4 py-3">{i.num_processo}</td>
                                     <td className="px-4 py-3">{i.des_diagnostico}</td>
-                                    <td className="px-4 py-3">{i.estado}</td>
+                                    <td className="px-4 py-3">{new Date(i.data_marcacao).toLocaleDateString()}</td>
                                     <td className="px-4 py-3">{i.situacao}</td>
 
                                     <td className="px-4 py-3">

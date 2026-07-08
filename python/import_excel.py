@@ -31,34 +31,86 @@ cursor = db.cursor(dictionary=True)
 # Funções auxiliares
 # -----------------------------
 
+
 def parse_date(value):
+    if value is None:
+        return None
+
+    # pandas datetime → converter diretamente
+    if hasattr(value, "strftime"):
+        return value.strftime("%Y-%m-%d")
+
+    value = str(value).strip()
     if value == "":
         return None
 
-    # formato dd/mm/yyyy
-    if "/" in value:
-        try:
-            return datetime.strptime(value, "%d/%m/%Y").strftime("%Y-%m-%d")
-        except:
-            return None
-
-    # número Excel
+    # dd/mm/yyyy
     try:
-        return pd.to_datetime(value, unit='d', origin='1899-12-30').strftime("%Y-%m-%d")
+        if "/" in value:
+            return datetime.strptime(value, "%d/%m/%Y").strftime("%Y-%m-%d")
+    except:
+        pass
+
+    # yyyy-mm-dd hh:mm:ss
+    try:
+        return datetime.strptime(value, "%Y-%m-%d %H:%M:%S").strftime("%Y-%m-%d")
+    except:
+        pass
+
+    # yyyy-mm-dd
+    try:
+        return datetime.strptime(value, "%Y-%m-%d").strftime("%Y-%m-%d")
+    except:
+        pass
+
+    # Excel serial number
+    try:
+        return pd.to_datetime(float(value), unit='d', origin='1899-12-30').strftime("%Y-%m-%d")
     except:
         return None
 
+
+from datetime import datetime, date
 
 def normalize_date(value):
-    if value in ("", None):
+    if value is None:
         return None
 
+    # Já é datetime.date ou datetime.datetime
+    if isinstance(value, (datetime, date)):
+        return value.strftime("%Y-%m-%d")
+
+    # Converter para string
+    value = str(value).strip()
+    if value == "":
+        return None
+
+    # yyyy-mm-dd hh:mm:ss
     try:
-        if hasattr(value, "strftime"):
-            return value.strftime("%Y-%m-%d")
-        return parse_date(value)
+        return datetime.strptime(value, "%Y-%m-%d %H:%M:%S").strftime("%Y-%m-%d")
+    except:
+        pass
+
+    # yyyy-mm-dd
+    try:
+        return datetime.strptime(value, "%Y-%m-%d").strftime("%Y-%m-%d")
+    except:
+        pass
+
+    # dd/mm/yyyy
+    try:
+        if "/" in value:
+            return datetime.strptime(value, "%d/%m/%Y").strftime("%Y-%m-%d")
+    except:
+        pass
+
+    # Excel serial number
+    try:
+        return pd.to_datetime(float(value), unit='d', origin='1899-12-30').strftime("%Y-%m-%d")
     except:
         return None
+
+
 
 
 def get_existing(id):
@@ -136,6 +188,11 @@ for _, row in df.iterrows():
         "cancel": row["CANCEL"],
         "des_cancel": row["DES_CANCEL"],
     }
+    
+    display_data = {k: v for k, v in data.items() if "data" in k}
+    # datas nao estao a ser guardadas corretamente, vamos normalizar para comparar 	=> phpmyadmin is 	date	
+    for field in ["data_marcacao", "data_operado", "data_agenda", "data_cancel"]:
+        data[field] = normalize_date(data[field])
     
     existing = get_existing(id)
 

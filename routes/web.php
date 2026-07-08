@@ -37,6 +37,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/agenda/semana', [AgendaController::class, 'semana']);
     Route::get('/agenda/mensal', [AgendaController::class, 'mensal']);
 
+    Route::get('/waiting/export', [WaitingListController::class, 'export'])->name('waiting.export');
+
+
 });
 
 
