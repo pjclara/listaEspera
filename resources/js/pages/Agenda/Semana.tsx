@@ -3,30 +3,92 @@ import { Head, router } from '@inertiajs/react';
 import { useState } from 'react';
 import { SlotModal } from '../Slots/SlotModal';
 
-export default function Semana({ agenda, start, end, teamColors }: ProsPageProps<{ agenda: Record<string, any[]>; start: string; end: string; teamColors: Record<number, string> }>) {
-    const [slotModal, setSlotModal] = useState(null);
+type AgendaSlot = {
+    id: number;
+    team_id: number;
+    hora_inicio: string;
+    hora_fim: string;
+    sala?: string | null;
+    team: { nome: string };
+    schedules: Array<unknown>;
+};
+
+type SemanaPageProps = {
+    agenda: Record<string, AgendaSlot[]>;
+    start: string;
+    end: string;
+    teamColors: Record<number, string>;
+};
+
+function parseYmdLocal(ymd: string): Date {
+    const [year, month, day] = ymd.split('-').map(Number);
+
+    // Meio-dia para evitar transições DST à meia-noite
+    return new Date(year, month - 1, day, 12, 0, 0, 0);
+}
+
+function formatYmdLocal(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+}
+
+export default function Semana({
+    agenda,
+    start,
+    end,
+    teamColors,
+}: SemanaPageProps) {
+    const [slotModal, setSlotModal] = useState<AgendaSlot | null>(null);
 
     const diasSemana = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta'];
 
-    const datas = Object.keys(agenda); // ["2026-07-06", ...]
+    // ORDENAR AS DATAS
+    const datasOrdenadas = Object.keys(agenda).sort(
+        (a, b) => parseYmdLocal(a).getTime() - parseYmdLocal(b).getTime()
+    );
+
+    // MAPEAR PELO DIA REAL DA SEMANA (Seg=1 ... Sex=5)
+    const mapaDias: Record<string, string | null> = {
+        Segunda: null,
+        Terça: null,
+        Quarta: null,
+        Quinta: null,
+        Sexta: null,
+    };
+
+    for (const data of datasOrdenadas) {
+        const weekday = parseYmdLocal(data).getDay();
+
+        if (weekday >= 1 && weekday <= 5) {
+            mapaDias[diasSemana[weekday - 1]] = data;
+        }
+    }
 
     function mudarSemana(offset: number) {
         if (offset === 0) {
-            router.get('/agenda/semana', { start: new Date().toISOString().slice(0, 10) });
+            router.get('/agenda/semana', {
+                start: formatYmdLocal(new Date()),
+            });
             return;
         }
-        const novaData = new Date(start);
+
+        const novaData = parseYmdLocal(start);
         novaData.setDate(novaData.getDate() + offset * 7);
 
-        router.get('/agenda/semana', { start: novaData.toISOString().slice(0, 10) });
+        router.get('/agenda/semana', {
+            start: formatYmdLocal(novaData),
+        });
     }
 
     return (
         <AppLayout breadcrumbs={[{ title: 'Agenda Cirúrgica', href: '/agenda' }]}>
             <Head title="Agenda Cirúrgica - Semana" />
+
             <div className="p-6">
                 <div className="mb-6 flex items-center justify-between">
-
                     <h1 className="text-2xl font-semibold">
                         Semana {start} → {end}
                     </h1>
@@ -47,54 +109,61 @@ export default function Semana({ agenda, start, end, teamColors }: ProsPageProps
                 </div>
 
                 <div className="grid grid-cols-5 gap-4">
-                    {diasSemana.map((diaNome, index) => {
-                        const data = datas[index];
+                    {diasSemana.map((diaNome) => {
+                        const data = mapaDias[diaNome];
 
                         return (
                             <div key={diaNome} className="rounded-xl border bg-white p-3 shadow-sm">
                                 <h2 className="mb-3 text-lg font-semibold">
                                     {diaNome}
                                     <br />
-                                    <span className="text-sm text-gray-600">{data ? new Date(data).toLocaleDateString() : ''}</span>
+                                    <span className="text-sm text-gray-600">
+                                        {data ? parseYmdLocal(data).toLocaleDateString('pt-PT') : ''}
+                                    </span>
                                 </h2>
 
                                 <div className="space-y-3">
                                     {data &&
-                                        agenda[data].map((slot) => {
-                                            const cheio = slot.ocupados >= slot.capacidade;
-                                            const parcial = slot.ocupados > 0 && slot.ocupados < slot.capacidade;
-
-                                            return (
-                                                <div
-                                                    key={slot.id}
-                                                    className="cursor-pointer rounded-lg border p-3"
-                                                    style={{
-                                                        backgroundColor: teamColors[slot.team_id] + '20',
-                                                        borderColor: teamColors[slot.team_id],
-                                                    }}
-                                                    onClick={() => setSlotModal(slot)}
-                                                >
-                                                    <div className="font-medium">
-                                                        {slot.hora_inicio} — {slot.hora_fim}
-                                                    </div>
-
-                                                    <div className="text-sm text-gray-600">Equipa: {slot.team.nome}</div>
-
-                                                    <div className="text-sm text-gray-600">Sala: {slot.sala || '—'}</div>
-
-                                                    <div className="mt-1 text-sm font-semibold">
-                                                        Nº de cirurgias agendadas: {slot.schedules.length}
-                                                    </div>
+                                        agenda[data]?.map((slot: AgendaSlot) => (
+                                            <div
+                                                key={slot.id}
+                                                className="cursor-pointer rounded-lg border p-3"
+                                                style={{
+                                                    backgroundColor: teamColors[slot.team_id] + '20',
+                                                    borderColor: teamColors[slot.team_id],
+                                                }}
+                                                onClick={() => setSlotModal(slot)}
+                                            >
+                                                <div className="font-medium">
+                                                    {slot.hora_inicio} — {slot.hora_fim}
                                                 </div>
-                                            );
-                                        })}
+
+                                                <div className="text-sm text-gray-600">
+                                                    Equipa: {slot.team.nome}
+                                                </div>
+
+                                                <div className="text-sm text-gray-600">
+                                                    Sala: {slot.sala || '—'}
+                                                </div>
+
+                                                <div className="mt-1 text-sm font-semibold">
+                                                    Nº de cirurgias agendadas: {slot.schedules.length}
+                                                </div>
+                                            </div>
+                                        ))}
                                 </div>
                             </div>
                         );
                     })}
                 </div>
 
-                {slotModal && <SlotModal slot={slotModal} teamColors={teamColors} close={() => setSlotModal(null)} />}
+                {slotModal && (
+                    <SlotModal
+                        slot={slotModal}
+                        teamColors={teamColors}
+                        close={() => setSlotModal(null)}
+                    />
+                )}
             </div>
         </AppLayout>
     );
