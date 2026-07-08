@@ -26,9 +26,7 @@ export default function Semana({ agenda, start, end, teamColors }: ProsPageProps
             <Head title="Agenda Cirúrgica - Semana" />
             <div className="p-6">
                 <div className="mb-6 flex items-center justify-between">
-                    <button onClick={() => router.get('/agenda/mensal')} className="mb-6 ml-3 rounded bg-gray-200 px-4 py-2 hover:bg-gray-300">
-                        Ver mês
-                    </button>
+
                     <h1 className="text-2xl font-semibold">
                         Semana {start} → {end}
                     </h1>

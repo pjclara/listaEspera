@@ -32,18 +32,7 @@ export default function Agenda({ agenda, teamColors }:PropPageProps<{ agenda: Re
         <div className="p-6">
             <h1 className="text-2xl font-semibold mb-6">Agenda Cirúrgica</h1>
 
-            <button
-                onClick={() => router.get("/agenda/semana")}
-                className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 mb-6"
-            >
-                Ver semana
-            </button>
-            <button
-                onClick={() => router.get("/agenda/mensal")}
-                className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 mb-6 ml-3"
-            >
-                Ver mês
-            </button>
+
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {dias.map((dia) => (

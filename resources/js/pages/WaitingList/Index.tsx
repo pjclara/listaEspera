@@ -3,6 +3,7 @@ import { Head, Link, PageProps, router } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 
 import { usePage } from '@inertiajs/react';
+import { BreadcrumbItem } from '@/types';
 
 export default function Index({
     waitingLists,
@@ -188,8 +189,15 @@ export default function Index({
         window.location.href = route('waiting.export') + '?' + params.toString();
     };
 
+    const breadcrumbs: BreadcrumbItem[] = [
+        {
+            title: 'Lista de Espera',
+            href: '/waiting-lists',
+        },
+    ];
+
     return (
-        <AppLayout>
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Lista de Espera" />
 
             <div className="flex h-full flex-1 flex-col gap-6 rounded-xl p-6">
