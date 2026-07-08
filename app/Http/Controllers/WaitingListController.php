@@ -35,7 +35,7 @@ class WaitingListController extends Controller
             ->pluck('estado');
 
         $equipaOptions = Team::query()
-            ->select('id', 'nome')
+            ->select('id','nome')
             ->get();
 
         $slotsDisponiveis = \App\Models\Slot::query()

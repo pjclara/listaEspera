@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { router, usePage } from "@inertiajs/react";
+import { router, usePage } from '@inertiajs/react';
+import { useState } from 'react';
 
 export function EditScheduleModal({ schedule, slot, close }) {
     const [form, setForm] = useState({
@@ -19,14 +19,13 @@ export function EditScheduleModal({ schedule, slot, close }) {
                     onSubmit={(e) => {
                         e.preventDefault();
 
-                        router.put(
-                            `/waiting-lists/${schedule.waiting_list_id}/schedule/${schedule.id}`,
-                            form,
-                            {
-                                preserveScroll: true,
-                                onSuccess: () => close(),
-                            }
-                        );
+                        router.put(`/waiting-lists/${schedule.waiting_list_id}/schedule/${schedule.id}`, form, {
+                            preserveScroll: true,
+                            onSuccess: () => {
+                                router.reload({ only: ['agenda'] });
+                                close();
+                            },
+                        });
                     }}
                     className="space-y-4"
                 >
@@ -35,9 +34,7 @@ export function EditScheduleModal({ schedule, slot, close }) {
                         <span className="text-sm text-gray-600">Slot</span>
                         <select
                             value={form.slot_id}
-                            onChange={(e) =>
-                                setForm({ ...form, slot_id: e.target.value })
-                            }
+                            onChange={(e) => setForm({ ...form, slot_id: e.target.value })}
                             className="w-full rounded border px-3 py-2"
                         >
                             <option value={slot.id}>
@@ -53,14 +50,10 @@ export function EditScheduleModal({ schedule, slot, close }) {
                             type="number"
                             min="1"
                             value={form.duracao_estimada}
-                            onChange={(e) =>
-                                setForm({ ...form, duracao_estimada: e.target.value })
-                            }
+                            onChange={(e) => setForm({ ...form, duracao_estimada: e.target.value })}
                             className="w-full rounded border px-3 py-2"
                         />
-                        {errors?.duracao_estimada && (
-                            <p className="text-sm text-red-600">{errors.duracao_estimada}</p>
-                        )}
+                        {errors?.duracao_estimada && <p className="text-sm text-red-600">{errors.duracao_estimada}</p>}
                     </label>
 
                     <div className="mt-6 flex justify-between">
@@ -69,8 +62,8 @@ export function EditScheduleModal({ schedule, slot, close }) {
                             onClick={() =>
                                 router.put(
                                     `/waiting-lists/${schedule.waiting_list_id}/schedule/${schedule.id}`,
-                                    { estado: "cancelado" },
-                                    { onSuccess: () => close() }
+                                    { estado: 'cancelado', duracao_estimada: form.duracao_estimada, slot_id: form.slot_id },
+                                    { onSuccess: () => close() },
                                 )
                             }
                             className="rounded bg-red-600 px-4 py-2 text-white hover:bg-red-700"
@@ -79,18 +72,11 @@ export function EditScheduleModal({ schedule, slot, close }) {
                         </button>
 
                         <div className="flex gap-3">
-                            <button
-                                type="button"
-                                onClick={close}
-                                className="rounded bg-gray-300 px-4 py-2 hover:bg-gray-400"
-                            >
+                            <button type="button" onClick={close} className="rounded bg-gray-300 px-4 py-2 hover:bg-gray-400">
                                 Fechar
                             </button>
 
-                            <button
-                                type="submit"
-                                className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-                            >
+                            <button type="submit" className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">
                                 Guardar
                             </button>
                         </div>

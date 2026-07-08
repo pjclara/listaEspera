@@ -4,6 +4,7 @@ import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
 import { useState } from 'react';
 import { SlotModal } from '../Slots/SlotModal';
+import { router } from '@inertiajs/react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -13,7 +14,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 
-export default function Agenda({ agenda }:PropPageProps<{ agenda: Record<string, any[]> }>) {
+export default function Agenda({ agenda, teamColors }:PropPageProps<{ agenda: Record<string, any[]>; teamColors: Record<number, string> }>) {
     const [slotModal, setSlotModal] = useState<any | null>(null);
     const dias = Object.keys(agenda); // ["2026-07-06", "2026-07-07", ...]
 
@@ -31,6 +32,19 @@ export default function Agenda({ agenda }:PropPageProps<{ agenda: Record<string,
         <div className="p-6">
             <h1 className="text-2xl font-semibold mb-6">Agenda Cirúrgica</h1>
 
+            <button
+                onClick={() => router.get("/agenda/semana")}
+                className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 mb-6"
+            >
+                Ver semana
+            </button>
+            <button
+                onClick={() => router.get("/agenda/mensal")}
+                className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 mb-6 ml-3"
+            >
+                Ver mês
+            </button>
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {dias.map((dia) => (
                     <div key={dia} className="border rounded-xl p-4 shadow-sm bg-white">
@@ -44,11 +58,8 @@ export default function Agenda({ agenda }:PropPageProps<{ agenda: Record<string,
                                 return (
                                     <div
                                         key={slot.id}
-                                        className={`rounded-lg p-3 cursor-pointer border
-                                            ${cheio ? "bg-red-100 border-red-300" :
-                                              parcial ? "bg-yellow-100 border-yellow-300" :
-                                              "bg-green-100 border-green-300"}
-                                        `}
+                                        className={`rounded-lg p-3 cursor-pointer border`}
+                                        style={{ backgroundColor: teamColors[slot.team_id] + '20', borderColor: teamColors[slot.team_id] }}
                                         onClick={() => openSlotModal(slot)}
                                     >
                                         <div className="font-medium">
@@ -74,7 +85,7 @@ export default function Agenda({ agenda }:PropPageProps<{ agenda: Record<string,
                 ))}
             </div>
 
-            {slotModal && <SlotModal slot={slotModal} close={() => setSlotModal(null)} />}
+            {slotModal && <SlotModal slot={slotModal} teamColors={teamColors} close={() => setSlotModal(null)} />}
         </div>
         </AppLayout>
     );

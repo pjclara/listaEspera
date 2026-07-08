@@ -34,7 +34,8 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('slots', SlotController::class);
 
     Route::get('/agenda', [AgendaController::class, 'index']);
-
+    Route::get('/agenda/semana', [AgendaController::class, 'semana']);
+    Route::get('/agenda/mensal', [AgendaController::class, 'mensal']);
 
 });
 
