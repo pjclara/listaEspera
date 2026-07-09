@@ -15,6 +15,7 @@ class RolesSeeder extends Seeder
          * PERMISSÕES POR DOMÍNIO
          * ---------------------------------------------------------
          */
+        
 
         // Agenda
         Permission::create(['name' => 'agenda.view']);

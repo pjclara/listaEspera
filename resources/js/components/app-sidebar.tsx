@@ -31,7 +31,7 @@ const mainNavItems: NavItem[] = [
         icon: LayoutGrid,
     },
     {
-        title: 'Waiting List',
+        title: 'Listas de Espera',
         url: '/waiting-lists',
         icon: LayoutGrid,
     },
@@ -65,6 +65,7 @@ const mainNavItems: NavItem[] = [
         title: 'Utilizadores',
         url: '/users',
         icon: LayoutGrid,
+        permissions: ['view-users'],
     }
 ];
 

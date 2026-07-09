@@ -15,7 +15,7 @@ composer install --no-dev --optimize-autoloader --quiet
 
 echo "==> migrate"
 php artisan migrate --force
-ph artisan db:seed --c --force
+
 
 echo "==> cache"
 php artisan config:cache

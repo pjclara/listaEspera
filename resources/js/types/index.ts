@@ -21,6 +21,7 @@ export interface NavItem {
     icon?: LucideIcon | null;
     isActive?: boolean;
     children?: NavItem[];
+    permissions?: string[]; // Optional permissions property
 }
 
 export interface SharedData {
