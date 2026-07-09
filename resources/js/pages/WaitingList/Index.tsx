@@ -165,17 +165,18 @@ export default function Index({
             '/waiting-lists',
             {
                 num_processo: numProcesso,
-                situacao: situacao,
-                estado: estado,
+                situacao,
+                estado,
                 des_diagnostico: desDiagnostico,
-                prioridade: prioridade,
+                prioridade,
             },
             {
                 preserveState: true,
                 preserveScroll: true,
+                only: ['waitingLists'], // <- nome da prop que recebes no Inertia
             },
         );
-    }, [situacao]);
+    }, [situacao, estado, prioridade, numProcesso, desDiagnostico]);
 
     const updatePrioridade = (newSituacao: string) => {
         setPrioridade(newSituacao);
@@ -194,7 +195,7 @@ export default function Index({
                 preserveScroll: true,
             },
         );
-    }
+    };
 
     const hasAdminData = (item: any) => {
         const admin = item.admin;
@@ -220,7 +221,6 @@ export default function Index({
             href: '/waiting-lists',
         },
     ];
-
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
