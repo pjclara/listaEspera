@@ -1,4 +1,5 @@
 import AdminObservacoesModal from '@/components/waiting-lists/AdminObservacoesModal';
+import ObservacoesGeraisModal from '@/components/waiting-lists/ObservacoesGeraisModal';
 import AppLayout from '@/layouts/app-layout';
 import { Head, Link, PageProps, router } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
@@ -108,6 +109,27 @@ export default function Index({
         duracao_estimada: '',
     });
     const [selectedSchedule, setSelectedSchedule] = useState(null);
+
+
+    const [showObservacoesGeraisModal, setShowObservacoesGeraisModal] = useState(false);
+    const [observacoesGeraisForm, setObservacoesGeraisForm] = useState({
+        observacoes_gerais: '',
+    });
+
+    const openModalObservacoesGerais = (item: any) => {
+        setSelected(item);
+
+        setObservacoesGeraisForm({
+            observacoes_gerais: item.observacoes_gerais ?? '',
+        });
+
+        setShowObservacoesGeraisModal(true);
+    };
+
+    const closeObservacoesGeraisModal = () => {
+        setShowObservacoesGeraisModal(false);
+        setSelected(null);
+    };
 
     const openScheduleModal = (item: any) => {
         setSelectedSchedule(item);
@@ -379,7 +401,17 @@ export default function Index({
                                                 hasAdminData(i) ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-700 hover:bg-gray-800'
                                             }`}
                                         >
-                                            Observações
+                                            Contactos
+                                        </button>
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        <button
+                                            onClick={() => openModalObservacoesGerais(i)}
+                                            className={`rounded px-3 py-1 text-sm text-white transition ${
+                                                i.observacoes_gerais ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-700 hover:bg-gray-800'
+                                            }`}
+                                        >
+                                            Observações Gerais
                                         </button>
                                     </td>
                                     <td className="px-4 py-3">
@@ -428,6 +460,14 @@ export default function Index({
                 setScheduleForm={setScheduleForm}
                 slotsDisponiveis={slotsDisponiveis}
                 onClose={closeScheduleModal}
+            />
+            <ObservacoesGeraisModal
+                open={showObservacoesGeraisModal}
+                selected={selected}
+                form={observacoesGeraisForm}
+                setForm={setObservacoesGeraisForm}
+                errors={errors}
+                onClose={closeObservacoesGeraisModal}
             />
         </AppLayout>
     );

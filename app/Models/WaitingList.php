@@ -30,6 +30,7 @@ class WaitingList extends Model
         'des_cancel',
         'equipa_id',
         'updated_from_excel_at',
+        'observacoes_gerais',
     ];
 
     public $incrementing = false; // porque o ID vem do Excel

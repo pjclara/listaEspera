@@ -210,4 +210,19 @@ class WaitingListController extends Controller
 
         return Excel::download(new WaitingListExport($data), 'lista_espera.xlsx');
     }
+
+    public function updateObservacoesGerais(Request $request, WaitingList $waitingList)
+    {
+        $data = $request->validate([
+            'observacoes_gerais' => 'nullable|string',
+        ]);
+
+        $waitingList->update($data);
+
+        return back()->with('toast', [
+            'type' => 'success',
+            'title' => 'Observações atualizadas',
+            'description' => 'As observações gerais foram guardadas.',
+        ]);
+    }
 }

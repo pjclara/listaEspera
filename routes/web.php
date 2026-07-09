@@ -39,8 +39,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/agenda/mensal', [AgendaController::class, 'mensal']);
 
     Route::get('/waiting/export', [WaitingListController::class, 'export'])->name('waiting.export');
+    Route::put('/waiting-lists/{waitingList}/observacoes-gerais', [WaitingListController::class, 'updateObservacoesGerais']);
 
-Route::resource('users', UserController::class);
+    Route::resource('users', UserController::class);
 });
 
 
