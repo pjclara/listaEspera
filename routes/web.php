@@ -3,6 +3,7 @@
 use App\Http\Controllers\AgendaController;
 use App\Http\Controllers\ExcelImportController;
 use App\Http\Controllers\SlotController;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\WaitingListController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -39,7 +40,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/waiting/export', [WaitingListController::class, 'export'])->name('waiting.export');
 
-
+Route::resource('users', UserController::class);
 });
 
 

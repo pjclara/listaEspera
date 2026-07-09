@@ -37,6 +37,12 @@ export default function Mensal({
 
     function mudarMes(offset: number) {
         const novaData = new Date(month);
+        if (offset === 0) {
+            router.get('/agenda/mensal', {
+                month: new Date().toISOString().slice(0, 10),
+            });
+            return;
+        }
         novaData.setMonth(novaData.getMonth() + offset);
 
         router.get('/agenda/mensal', {

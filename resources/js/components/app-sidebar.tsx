@@ -61,6 +61,11 @@ const mainNavItems: NavItem[] = [
             },
         ],
     },
+    {
+        title: 'Utilizadores',
+        url: '/users',
+        icon: LayoutGrid,
+    }
 ];
 
 /**
