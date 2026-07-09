@@ -22,13 +22,13 @@ class WaitingListController extends Controller
             $request->merge(['estado' => 'A']);
         }
         if (!$request->situacao) {
-            $request->merge(['situacao' => ['Readmitido', 'Inscrito', 'Pre-Inscrito', 'Transferido para']]);
+            $request->merge(['situacao' => ['Readmitido', 'Inscrito', 'Pre-Inscrito', 'Transferido Para']]);
         }
         $waitingLists = WaitingList::with('admin', 'schedule', 'contacts')
             ->when($request->num_processo, fn($q) => $q->where('num_processo', $request->num_processo))
             ->when($request->situacao, fn($q) => $q->whereIn('situacao', (array) $request->situacao))
             ->when($request->estado, fn($q) => $q->where('estado', $request->estado))
-            // des_diagnostico
+            ->when($request->prioridade, fn($q) => $q->where('prioridade', $request->prioridade))
             ->when($request->des_diagnostico, fn($q) => $q->where('des_diagnostico', 'like', '%' . $request->des_diagnostico . '%'))
             ->orderBy('data_marcacao', 'asc')
             ->paginate(20)
@@ -56,17 +56,24 @@ class WaitingListController extends Controller
             ->with('team')
             ->get();
 
+        $prioridadeOptionsState = WaitingList::query()
+            ->select('prioridade')
+            ->distinct()
+            ->pluck('prioridade');
+
         return Inertia::render('WaitingList/Index', [
             'waitingLists' => $waitingLists,
             'situacaoOptions' => $situacaoOptions,
             'estadoOptions' => $estadoOptions,
             'equipaOptions' => $equipaOptions,
             'slotsDisponiveis' => $slotsDisponiveis,
+            'prioridadeOptionsState' => $prioridadeOptionsState,
             'filters' => [
                 'num_processo' => $request->num_processo,
                 'situacao' => $request->situacao,
                 'estado' => $request->estado,
                 'des_diagnostico' => $request->des_diagnostico,
+
             ],
         ]);
     }

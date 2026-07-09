@@ -14,6 +14,7 @@ export default function Index({
     estadoOptions,
     equipaOptions,
     slotsDisponiveis,
+    prioridadeOptionsState,
 }: PageProps<{
     waitingLists: any;
     filters: any;
@@ -37,6 +38,7 @@ export default function Index({
     const [numProcesso, setNumProcesso] = useState(safeFilters.num_processo ?? '');
     const [situacao, setSituacao] = useState(Array.isArray(safeFilters.situacao) ? safeFilters.situacao : []);
     const [showSituacaoDropdown, setShowSituacaoDropdown] = useState(false);
+    const [prioridade, setPrioridade] = useState(safeFilters.prioridade ?? '');
 
     const [estado, setEstado] = useState(safeFilters.estado ?? '');
     //des_diagnostico
@@ -92,6 +94,7 @@ export default function Index({
                 situacao: situacao,
                 estado: estado,
                 des_diagnostico: desDiagnostico,
+                prioridade: prioridade,
             },
             {
                 preserveState: true,
@@ -137,24 +140,6 @@ export default function Index({
         setSelectedSchedule(null);
     };
 
-    const updateSituacao = (newSituacao: string) => {
-        setSituacao(newSituacao);
-
-        router.get(
-            '/waiting-lists',
-            {
-                num_processo: numProcesso,
-                situacao: newSituacao,
-                estado: estado,
-                des_diagnostico: desDiagnostico,
-            },
-            {
-                preserveState: true,
-                preserveScroll: true,
-            },
-        );
-    };
-
     const updateEstado = (newEstado: string) => {
         setEstado(newEstado);
 
@@ -165,6 +150,7 @@ export default function Index({
                 situacao: situacao,
                 estado: newEstado,
                 des_diagnostico: desDiagnostico,
+                prioridade: prioridade,
             },
             {
                 preserveState: true,
@@ -172,6 +158,43 @@ export default function Index({
             },
         );
     };
+
+    // quando situacao muda, atualizar a lista
+    useEffect(() => {
+        router.get(
+            '/waiting-lists',
+            {
+                num_processo: numProcesso,
+                situacao: situacao,
+                estado: estado,
+                des_diagnostico: desDiagnostico,
+                prioridade: prioridade,
+            },
+            {
+                preserveState: true,
+                preserveScroll: true,
+            },
+        );
+    }, [situacao]);
+
+    const updatePrioridade = (newSituacao: string) => {
+        setPrioridade(newSituacao);
+
+        router.get(
+            '/waiting-lists',
+            {
+                num_processo: numProcesso,
+                situacao: situacao,
+                estado: estado,
+                des_diagnostico: desDiagnostico,
+                prioridade: newSituacao,
+            },
+            {
+                preserveState: true,
+                preserveScroll: true,
+            },
+        );
+    }
 
     const hasAdminData = (item: any) => {
         const admin = item.admin;
@@ -197,6 +220,7 @@ export default function Index({
             href: '/waiting-lists',
         },
     ];
+
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -283,6 +307,18 @@ export default function Index({
                     </div>
 
                     <div className="flex flex-col">
+                        <label className="mb-1 text-sm text-gray-600">Prioridade</label>
+                        <select value={prioridade} onChange={(e) => updatePrioridade(e.target.value)} className="rounded border px-3 py-2">
+                            <option value="">Todas</option>
+                            {prioridadeOptionsState.map((option) => (
+                                <option key={option} value={option}>
+                                    {option}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="flex flex-col">
                         <label className="mb-1 text-sm text-gray-600">Estado</label>
                         <select value={estado} onChange={(e) => updateEstado(e.target.value)} className="rounded border px-3 py-2">
                             <option value="">Todos</option>
@@ -314,6 +350,9 @@ export default function Index({
                             <tr className="text-left text-sm font-medium text-gray-600">
                                 <th className="px-4 py-3">ID</th>
                                 <th className="px-4 py-3">Nº Processo</th>
+                                <th className="px-4 py-3">Prioridade</th>
+                                <th className="px-4 py-3">P. Absoluta</th>
+                                <th className="px-4 py-3">P. Relativa</th>
                                 <th className="px-4 py-3">Diagnóstico</th>
                                 <th className="px-4 py-3">Data LE</th>
                                 <th className="px-4 py-3">Situação</th>
@@ -326,10 +365,13 @@ export default function Index({
                                 <tr key={i.id} className={`transition hover:bg-gray-100 ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
                                     <td className="px-4 py-3 font-medium text-gray-900">{i.id}</td>
                                     <td className="px-4 py-3">{i.num_processo}</td>
+                                    <td className="px-4 py-3">{i.prioridade}</td>
+                                    <td className="px-4 py-3">{i.posicao_lista ?? '—'}</td>
+                                    <td className="px-4 py-3">{i.posicao_patologia ?? '—'}</td>
                                     <td className="px-4 py-3">{i.des_diagnostico}</td>
                                     <td className="px-4 py-3">{new Date(i.data_marcacao).toLocaleDateString()}</td>
                                     <td className="px-4 py-3">{i.situacao}</td>
-                                   <td className="px-4 py-3">{i.contacts?.length ?? 0}</td>
+                                    <td className="px-4 py-3">{i.contacts?.length ?? 0}</td>
                                     <td className="px-4 py-3">
                                         <button
                                             onClick={() => openModal(i)}

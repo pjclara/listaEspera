@@ -118,11 +118,65 @@ class ExcelImportService
             DB::table('waiting_list_history')->insert($history);
         }
 
+        $this->updatePositions();
+        $this->updatePositionsByPatologia();
+
+
         return [
             "importados" => $imported,
             "atualizados" => $updated,
             "inalterados" => $unchanged,
         ];
+    }
+
+    public function updatePositionsByPatologia()
+    {
+        $grupos = DB::table('waiting_list')
+            ->selectRaw('LEFT(patologia, 2) as grupo')
+            ->groupBy('grupo')
+            ->pluck('grupo');
+
+        foreach ($grupos as $grupo) {
+
+            $ativos = DB::table('waiting_list')
+                ->whereRaw('LEFT(patologia, 2) = ?', [$grupo])
+                ->whereNotIn('estado', ['F', 'C'])
+                ->whereNotIn('situacao', ['Operado', 'Cancelado'])
+                ->orderBy('prioridade')
+                ->orderBy('data_marcacao')
+                ->orderBy('id')
+                ->get();
+
+            $pos = 1;
+
+            foreach ($ativos as $a) {
+                DB::table('waiting_list')
+                    ->where('id', $a->id)
+                    ->update(['posicao_patologia' => $pos]);
+                $pos++;
+            }
+        }
+    }
+
+
+    public function updatePositions()
+    {
+        $ativos = DB::table('waiting_list')
+            ->whereNotIn('estado', ['F', 'C'])
+            ->whereNotIn('situacao', ['Operado', 'Cancelado'])
+            ->orderBy('prioridade')
+            ->orderBy('data_marcacao')
+            ->orderBy('id')
+            ->get();
+
+        $pos = 1;
+
+        foreach ($ativos as $a) {
+            DB::table('waiting_list')
+                ->where('id', $a->id)
+                ->update(['posicao_lista' => $pos]);
+            $pos++;
+        }
     }
 
 
