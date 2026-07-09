@@ -1,6 +1,8 @@
 import AppLayoutTemplate from '@/layouts/app/app-sidebar-layout';
 import { type BreadcrumbItem } from '@/types';
 import { usePage } from '@inertiajs/react';
+import { useEffect } from 'react';
+import { toast, Toaster } from 'sonner';
 interface AppLayoutProps {
     children: React.ReactNode;
     breadcrumbs?: BreadcrumbItem[];
@@ -8,13 +10,21 @@ interface AppLayoutProps {
 
 export default ({ children, breadcrumbs, ...props }: AppLayoutProps) => {
     const { props: pageProps } = usePage();
+    const { toast: serverToast } = usePage().props;
+    useEffect(() => {
+        if (serverToast) {
+            const { type = 'success', title, description } = serverToast;
+            toast[type](title, { description });
+        }
+    }, [serverToast]);
     return (
         <AppLayoutTemplate breadcrumbs={breadcrumbs} {...props}>
             <div>
-                {pageProps.flash?.success && <div className="mb-4 bg-green-500 p-2 text-white">{pageProps.flash.success}</div>}
-
-            {children}
-        </div>
-    </AppLayoutTemplate>
+                <>
+                    {children}
+                    <Toaster richColors position="top-right" />
+                </>
+            </div>
+        </AppLayoutTemplate>
     );
-}
+};

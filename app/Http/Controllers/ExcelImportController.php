@@ -16,9 +16,11 @@ class ExcelImportController extends Controller
 
         $result = $service->import($request->file('file'));
 
-        return back()->with([
-            'success' => 'Importação concluída',
-            'result' => $result
+        dd($result);
+        return back()->with('toast', [
+            'type' => 'success',
+            'title' => 'Importação concluída',
+            'description' => "{$result['importados']} registros importados, {$result['atualizados']} registros atualizados, {$result['inalterados']} registros sem alterações."
         ]);
     }
 
