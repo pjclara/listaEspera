@@ -20,11 +20,13 @@ class WaitingListExport implements FromCollection, WithHeadings
                 'ID' => $item->id,
                 'Nº Processo' => $item->num_processo,
                 'Situação' => $item->situacao,
-                'Estado' => $item->estado,
                 'Diagnóstico' => $item->des_diagnostico,
                 'Data Marcação' => $item->data_marcacao,
                 'Data Operado' => $item->data_operado,
                 'Data Agenda' => $item->data_agenda,
+                'Posição' => $item->posicao_lista,
+                'Posição Patologia' => $item->posicao_patologia,
+                'Nome Clínico' => $item->nome_clinico,
             ];
         });
     }
@@ -35,11 +37,13 @@ class WaitingListExport implements FromCollection, WithHeadings
             'ID',
             'Nº Processo',
             'Situação',
-            'Estado',
             'Diagnóstico',
             'Data Marcação',
             'Data Operado',
             'Data Agenda',
+            'Posição',
+            'Posição Patologia',
+            'Médico',
         ];
     }
 }
