@@ -13,6 +13,12 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // Seed Users
+        User::create([
+            'name' => 'Admin User',
+            'email' => 'admin@gmail.com',
+            'password' => bcrypt('password')
+        ]);
         // Seed Teams
         $this->call(TeamSeeder::class);
     }

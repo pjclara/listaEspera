@@ -52,6 +52,11 @@ class WaitingList extends Model
         return $this->hasOne(WaitingListAdmin::class);
     }
 
+    public function contacts()
+    {
+        return $this->hasMany(WaitingListContact::class);
+    }
+
     public function team()
     {
         return $this->belongsTo(Team::class, 'equipa_id');
@@ -62,7 +67,7 @@ class WaitingList extends Model
         return $this->hasOne(Schedule::class);
     }
 
-        public function schedules()
+    public function schedules()
     {
         return $this->hasMany(Schedule::class);
     }

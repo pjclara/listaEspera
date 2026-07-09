@@ -10,7 +10,14 @@ class ExcelImportService
 {
     public function import($file)
     {
-        $rows = Excel::toArray([], $file)[0]; // primeira sheet
+        $rows = Excel::toArray([], $file)[0];
+
+        // 1) Carregar toda a waiting_list numa só query
+        $existing = DB::table('waiting_list')->get()->keyBy('id');
+
+        $toInsert = [];
+        $toUpdate = [];
+        $history = [];
 
         $imported = 0;
         $updated = 0;
@@ -18,18 +25,13 @@ class ExcelImportService
 
         foreach ($rows as $index => $row) {
 
-            // Ignorar header
             if ($index === 0) continue;
-
-            // Garantir que existe NUM_LISTA_ESPERA
             if (empty($row[0]) || !is_numeric($row[0])) continue;
 
             $id = intval($row[0]);
 
-            // Só importar cirurgias
             if (($row[10] ?? '') !== "HSA - CIRURGIA") continue;
 
-            // Mapear colunas
             $data = [
                 "id"                => $id,
                 "data_marcacao"     => $this->normalizeDate($row[1] ?? null),
@@ -52,47 +54,68 @@ class ExcelImportService
                 "des_cancel"        => $row[18] ?? "",
             ];
 
-
-            $existing = DB::table('waiting_list')->where('id', $id)->first();
-
-            if (!$existing) {
-                DB::table('waiting_list')->insert($data);
+            // 2) Verificar se existe em memória (sem SELECT)
+            if (!isset($existing[$id])) {
+                $toInsert[] = $data;
                 $imported++;
                 continue;
             }
 
+            $old = (array) $existing[$id];
             $changed = false;
 
             foreach ($data as $field => $newValue) {
-                $oldValue = $existing->$field;
 
-                $oldNorm = $this->normalizeDate($oldValue);
-                $newNorm = $this->normalizeDate($newValue);
+                $oldValue = $old[$field];
 
-                if ($oldNorm != $newNorm) {
+                if (in_array($field, ['data_marcacao', 'data_operado', 'data_agenda', 'data_cancel'])) {
+                    $oldNorm = $this->normalizeDate($oldValue);
+                    $newNorm = $this->normalizeDate($newValue);
+                } else {
+                    $oldNorm = trim((string)$oldValue);
+                    $newNorm = trim((string)$newValue);
+                }
+
+                if ($oldNorm !== $newNorm) {
                     $changed = true;
-                    $this->saveHistory($id, $field, $oldNorm, $newNorm);
+
+                    $history[] = [
+                        'waiting_list_id' => $id,
+                        'campo_alterado'  => $field,
+                        'valor_antigo'    => $oldNorm,
+                        'valor_novo'      => $newNorm,
+                        'alterado_em'     => now(),
+                        'origem'          => 'excel',
+                    ];
                 }
             }
 
             if ($changed) {
-                $timestamp = Carbon::now()->format("Y-m-d H:i:s");
-
-                $this->saveHistory(
-                    $id,
-                    "updated_from_excel_at",
-                    $existing->updated_from_excel_at ?? "",
-                    $timestamp
-                );
-
-                $data["updated_from_excel_at"] = $timestamp;
-
-                DB::table('waiting_list')->where('id', $id)->update($data);
-
+                $data['updated_from_excel_at'] = now();
+                $toUpdate[] = $data;
                 $updated++;
             } else {
                 $unchanged++;
             }
+        }
+
+        // 3) Bulk insert (muito mais rápido)
+        if (!empty($toInsert)) {
+            DB::table('waiting_list')->insert($toInsert);
+        }
+
+        // 4) Bulk update (via upsert)
+        if (!empty($toUpdate)) {
+            DB::table('waiting_list')->upsert(
+                $toUpdate,
+                ['id'], // chave
+                array_keys($toUpdate[0]) // campos a atualizar
+            );
+        }
+
+        // 5) Bulk insert do histórico
+        if (!empty($history)) {
+            DB::table('waiting_list_history')->insert($history);
         }
 
         return [
@@ -101,6 +124,8 @@ class ExcelImportService
             "inalterados" => $unchanged,
         ];
     }
+
+
 
     private function normalizeDate($value)
     {
@@ -129,7 +154,7 @@ class ExcelImportService
         } catch (\Exception $e) {
         }
 
-        return null;
+        return $value;
     }
 
     private function saveHistory($id, $field, $old, $new)

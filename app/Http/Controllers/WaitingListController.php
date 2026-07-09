@@ -6,6 +6,7 @@ use App\Exports\WaitingListExport;
 use App\Models\Schedule;
 use App\Models\Team;
 use App\Models\WaitingList;
+use App\Models\WaitingListContact;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Maatwebsite\Excel\Facades\Excel;
@@ -23,7 +24,7 @@ class WaitingListController extends Controller
         if (!$request->situacao) {
             $request->merge(['situacao' => ['Readmitido', 'Inscrito', 'Pre-Inscrito', 'Transferido para']]);
         }
-        $waitingLists = WaitingList::with('admin', 'schedule')
+        $waitingLists = WaitingList::with('admin', 'schedule', 'contacts')
             ->when($request->num_processo, fn($q) => $q->where('num_processo', $request->num_processo))
             ->when($request->situacao, fn($q) => $q->whereIn('situacao', (array) $request->situacao))
             ->when($request->estado, fn($q) => $q->where('estado', $request->estado))
@@ -122,18 +123,30 @@ class WaitingListController extends Controller
     public function updateAdmin(Request $request, WaitingList $waitingList)
     {
         $data = $request->validate([
-            'contactado' => 'boolean',
-            'data_contacto' => 'required_if:contactado,true|date',
-            'contactado_por' => 'required_if:contactado,true|string|max:255',
-            'observacoes' => 'nullable|string',
+            'contactado'      => 'boolean',
+            'data_contacto'   => 'required|date',
+            'contactado_por'  => 'required|string|max:255',
+            'contact_result'  => 'required|string',
+            'observacoes'     => 'nullable|string',
         ]);
 
-        $waitingList->admin()->updateOrCreate(
-            ['waiting_list_id' => $waitingList->id],
-            $data
-        );
+        // Guardar histórico
+        WaitingListContact::create([
+            'waiting_list_id' => $waitingList->id,
+            'data_contacto'   => $data['data_contacto'],
+            'contactado_por'  => $data['contactado_por'],
+            'contact_result'  => $data['contact_result'],
+            'observacoes'     => $data['observacoes'],
+        ]);
 
-        return back()->with('success', 'Dados administrativos atualizados.');
+        // Atualizar estado atual
+        $waitingList->admin()->update($data);
+
+        return back()->with('toast', [
+            'type' => 'success',
+            'title' => 'Contacto registado',
+            'description' => 'O contacto foi guardado com sucesso.',
+        ]);
     }
 
     public function storeSchedule(Request $request, WaitingList $waitingList)
@@ -167,7 +180,7 @@ class WaitingListController extends Controller
 
     public function export(Request $request)
     {
-       
+
         $query = WaitingList::query();
 
         if ($request->num_processo) {

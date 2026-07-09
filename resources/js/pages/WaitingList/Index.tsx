@@ -317,6 +317,7 @@ export default function Index({
                                 <th className="px-4 py-3">Diagnóstico</th>
                                 <th className="px-4 py-3">Data LE</th>
                                 <th className="px-4 py-3">Situação</th>
+                                <th className="px-4 py-3">Contactos</th>
                             </tr>
                         </thead>
 
@@ -328,7 +329,7 @@ export default function Index({
                                     <td className="px-4 py-3">{i.des_diagnostico}</td>
                                     <td className="px-4 py-3">{new Date(i.data_marcacao).toLocaleDateString()}</td>
                                     <td className="px-4 py-3">{i.situacao}</td>
-
+                                   <td className="px-4 py-3">{i.contacts?.length ?? 0}</td>
                                     <td className="px-4 py-3">
                                         <button
                                             onClick={() => openModal(i)}
