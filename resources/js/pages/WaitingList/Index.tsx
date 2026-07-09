@@ -1,9 +1,11 @@
+import AdminObservacoesModal from '@/components/waiting-lists/AdminObservacoesModal';
 import AppLayout from '@/layouts/app-layout';
 import { Head, Link, PageProps, router } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 
-import { usePage } from '@inertiajs/react';
+import ScheduleModal from '@/components/waiting-lists/ScheduleModal';
 import { BreadcrumbItem } from '@/types';
+import { usePage } from '@inertiajs/react';
 
 export default function Index({
     waitingLists,
@@ -375,186 +377,15 @@ export default function Index({
                     </div>
                 </div>
             </div>
-            {showModal && selected !== null && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-                    <div className="w-full max-w-lg animate-[fadeIn_0.2s_ease] rounded-xl bg-white p-6 shadow-xl">
-                        <h2 className="mb-4 text-xl font-semibold">Dados Administrativos — Nº {selected.num_processo}</h2>
-
-                        <form
-                            onSubmit={(e) => {
-                                e.preventDefault();
-                                router.post(
-                                    `/waiting-lists/${selected.id}/admin`,
-                                    {
-                                        contactado: form.contactado,
-                                        data_contacto: form.data_contacto,
-                                        contactado_por: form.contactado_por,
-                                        observacoes: form.observacoes,
-                                    },
-                                    {
-                                        preserveScroll: true,
-                                        onSuccess: () => closeModal(),
-                                    },
-                                );
-                            }}
-                            className="space-y-4"
-                        >
-                            {/* Contactado */}
-                            <label className="block">
-                                <span className="text-sm text-gray-600">Contactado?</span>
-                                <input
-                                    type="checkbox"
-                                    checked={!!form.contactado}
-                                    onChange={(e) => setForm({ ...form, contactado: e.target.checked })}
-                                    className="ml-2"
-                                />
-                                {errors.contactado && <p className="mt-1 text-sm text-red-600">{errors.contactado}</p>}
-                            </label>
-
-                            {/* Data contacto */}
-                            <label className="block">
-                                <span className="text-sm text-gray-600">Data de contacto</span>
-                                <input
-                                    type="date"
-                                    value={form.data_contacto || ''}
-                                    onChange={(e) => setForm({ ...form, data_contacto: e.target.value })}
-                                    className="w-full rounded border px-3 py-2"
-                                />
-                                {errors.data_contacto && <p className="mt-1 text-sm text-red-600">{errors.data_contacto}</p>}
-                            </label>
-
-                            {/* Contactado por */}
-                            <label className="block">
-                                <span className="text-sm text-gray-600">Contactado por</span>
-                                <input
-                                    type="text"
-                                    value={form.contactado_por || ''}
-                                    onChange={(e) => setForm({ ...form, contactado_por: e.target.value })}
-                                    className="w-full rounded border px-3 py-2"
-                                />
-                                {errors.contactado_por && <p className="mt-1 text-sm text-red-600">{errors.contactado_por}</p>}
-                            </label>
-
-                            {/* Observações */}
-                            <label className="block">
-                                <span className="text-sm text-gray-600">Observações</span>
-                                <textarea
-                                    value={form.observacoes || ''}
-                                    onChange={(e) => setForm({ ...form, observacoes: e.target.value })}
-                                    className="h-24 w-full rounded border px-3 py-2"
-                                />
-                                {errors.observacoes && <p className="mt-1 text-sm text-red-600">{errors.observacoes}</p>}
-                            </label>
-
-                            <div className="mt-6 flex justify-end gap-3">
-                                <button type="button" onClick={closeModal} className="rounded bg-gray-300 px-4 py-2 transition hover:bg-gray-400">
-                                    Cancelar
-                                </button>
-
-                                <button type="submit" className="rounded bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-700">
-                                    Guardar
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-            {showScheduleModal && selectedSchedule && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-                    <div className="w-full max-w-lg animate-[fadeIn_0.2s_ease] rounded-xl bg-white p-6 shadow-xl">
-                        <h2 className="mb-4 text-xl font-semibold">
-                            {selectedSchedule.schedule ? 'Editar Agendamento' : `Agendar — Nº ${selectedSchedule.num_processo}`}
-                        </h2>
-
-                        <form
-                            onSubmit={(e) => {
-                                e.preventDefault();
-
-                                if (selectedSchedule.schedule) {
-                                    router.put(
-                                        `/waiting-lists/${selectedSchedule.id}/schedule/${selectedSchedule.schedule.id}`,
-                                        {
-                                            slot_id: scheduleForm.slot_id,
-                                            duracao_estimada: scheduleForm.duracao_estimada,
-                                            estado: 'agendado',
-                                        },
-                                        {
-                                            preserveScroll: true,
-                                            onSuccess: () => closeScheduleModal(),
-                                        },
-                                    );
-                                } else {
-                                    router.post(
-                                        `/waiting-lists/${selectedSchedule.id}/schedule`,
-                                        {
-                                            slot_id: scheduleForm.slot_id,
-                                            duracao_estimada: scheduleForm.duracao_estimada,
-                                            estado: 'agendado',
-                                        },
-                                        {
-                                            preserveScroll: true,
-                                            onSuccess: () => closeScheduleModal(),
-                                        },
-                                    );
-                                }
-                            }}
-                            className="space-y-4"
-                        >
-                            {/* Slot */}
-                            <label className="block">
-                                <span className="text-sm text-gray-600">Slot disponível</span>
-                                <select
-                                    value={scheduleForm.slot_id || ''}
-                                    onChange={(e) => setScheduleForm({ ...scheduleForm, slot_id: e.target.value })}
-                                    className="w-full rounded border px-3 py-2"
-                                >
-                                    <option value="">Selecione um slot</option>
-
-                                    {slotsDisponiveis.map((slot) => (
-                                        <option key={slot.id} value={slot.id}>
-                                            {new Date(slot.data).toLocaleDateString()} — {slot.hora_inicio} — Equipa {slot.team.nome}
-                                        </option>
-                                    ))}
-                                </select>
-
-                                {errors.slot_id && <p className="mt-1 text-sm text-red-600">{errors.slot_id}</p>}
-                            </label>
-
-                            {/* Duração estimada */}
-                            <label className="block">
-                                <span className="text-sm text-gray-600">Duração estimada (minutos)</span>
-                                <input
-                                    type="number"
-                                    min="1"
-                                    value={scheduleForm.duracao_estimada || ''}
-                                    onChange={(e) =>
-                                        setScheduleForm({
-                                            ...scheduleForm,
-                                            duracao_estimada: e.target.value,
-                                        })
-                                    }
-                                    className="w-full rounded border px-3 py-2"
-                                />
-                                {errors.duracao_estimada && <p className="mt-1 text-sm text-red-600">{errors.duracao_estimada}</p>}
-                            </label>
-
-                            <div className="mt-6 flex justify-end gap-3">
-                                <button
-                                    type="button"
-                                    onClick={closeScheduleModal}
-                                    className="rounded bg-gray-300 px-4 py-2 transition hover:bg-gray-400"
-                                >
-                                    Cancelar
-                                </button>
-
-                                <button type="submit" className="rounded bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-700">
-                                    {selectedSchedule.schedule ? 'Guardar Alterações' : 'Guardar Agendamento'}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
+            <AdminObservacoesModal open={showModal} selected={selected} form={form} setForm={setForm} errors={errors} onClose={closeModal} />
+            <ScheduleModal
+                open={showScheduleModal}
+                selected={selectedSchedule}
+                scheduleForm={scheduleForm}
+                setScheduleForm={setScheduleForm}
+                slotsDisponiveis={slotsDisponiveis}
+                onClose={closeScheduleModal}
+            />
         </AppLayout>
     );
 }
