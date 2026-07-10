@@ -3,6 +3,6 @@ export interface Schedule {
   slot_id: number;
   waiting_list_id: number;
   user_id: number;
-  estado: "agendado" | "realizado" | "cancelado";
+  estado: "proposto" | "agendado" | "realizado" | "cancelado";
   duracao_estimada: number | null;
 }

@@ -1,25 +1,50 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export function SearchableSelect({ value, onChange, options }) {
     const [query, setQuery] = useState("");
     const [open, setOpen] = useState(false);
+    const ref = useRef(null);
 
+    // --- FECHAR AO CLICAR FORA ---
+    useEffect(() => {
+        function handleClickOutside(e) {
+            if (ref.current && !ref.current.contains(e.target)) {
+                setOpen(false);
+            }
+        }
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    // --- FECHAR COM ESC ---
+    useEffect(() => {
+        function handleEsc(e) {
+            if (e.key === "Escape") setOpen(false);
+        }
+
+        document.addEventListener("keydown", handleEsc);
+        return () => document.removeEventListener("keydown", handleEsc);
+    }, []);
+
+    // --- FILTRAR ---
     const filtered = options.filter((w) =>
         `${w.num_processo} ${w.des_diagnostico}`
             .toLowerCase()
             .includes(query.toLowerCase())
     );
 
+    // --- LABEL DO ITEM SELECIONADO ---
+    const selectedItem = options.find((o) => o.id === Number(value));
+
     return (
-        <div className="relative">
-            {/* Input de pesquisa */}
+        <div ref={ref} className="relative">
+            {/* INPUT */}
             <input
                 type="text"
                 value={
-                    value
-                        ? options.find((o) => o.id === Number(value))?.num_processo +
-                          " — " +
-                          options.find((o) => o.id === Number(value))?.des_diagnostico
+                    selectedItem
+                        ? `${selectedItem.num_processo} — ${selectedItem.des_diagnostico}`
                         : query
                 }
                 onChange={(e) => {
@@ -32,7 +57,7 @@ export function SearchableSelect({ value, onChange, options }) {
                 placeholder="Pesquisar doente..."
             />
 
-            {/* Dropdown */}
+            {/* DROPDOWN */}
             {open && (
                 <div className="absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded border bg-white shadow-lg">
                     {filtered.length === 0 && (
@@ -47,7 +72,7 @@ export function SearchableSelect({ value, onChange, options }) {
                             onClick={() => {
                                 onChange(w.id);
                                 setQuery("");
-                                setOpen(false);
+                                setOpen(false); // FECHA AO CLICAR
                             }}
                             className="cursor-pointer px-3 py-2 hover:bg-gray-100"
                         >

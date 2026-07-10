@@ -107,6 +107,7 @@ export default function Index({
     const [scheduleForm, setScheduleForm] = useState({
         slot_id: '',
         duracao_estimada: '',
+        estado: '', // Adicione o campo 'estado' ao estado do formulário
     });
     const [selectedSchedule, setSelectedSchedule] = useState(null);
 
@@ -139,12 +140,14 @@ export default function Index({
             setScheduleForm({
                 slot_id: item.schedule.slot_id,
                 duracao_estimada: item.schedule.duracao_estimada,
+                estado: item.schedule.estado, // Preenche o campo 'estado' com o valor existente
             });
         } else {
             // modo criação
             setScheduleForm({
                 slot_id: '',
                 duracao_estimada: '',
+                estado: '', // Adicione o campo 'estado' ao estado do formulário
             });
         }
 
@@ -378,6 +381,7 @@ export default function Index({
                                 <th className="px-4 py-3">Diagnóstico</th>
                                 <th className="px-4 py-3">Data LE</th>
                                 <th className="px-4 py-3">Situação</th>
+                                <th className="px-4 py-3">Observações</th>
                                 <th className="px-4 py-3">Contactos</th>
                             </tr>
                         </thead>
@@ -393,7 +397,9 @@ export default function Index({
                                     <td className="px-4 py-3">{i.des_diagnostico}</td>
                                     <td className="px-4 py-3">{new Date(i.data_marcacao).toLocaleDateString()}</td>
                                     <td className="px-4 py-3">{i.situacao}</td>
+                                    <td className="px-4 py-3">{i.observacoes ?? '—'}</td>
                                     <td className="px-4 py-3">{i.contacts?.length ?? 0}</td>
+
                                     <td className="px-4 py-3">
                                         <button
                                             onClick={() => openModal(i)}

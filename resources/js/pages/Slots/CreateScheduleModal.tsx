@@ -1,6 +1,6 @@
 import { SearchableSelect } from '@/components/SearchableSelect';
 import { router, usePage } from '@inertiajs/react';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 export function CreateScheduleModal({ slot, close }) {
     const { errors, waitingLists } = usePage().props;
@@ -9,8 +9,20 @@ export function CreateScheduleModal({ slot, close }) {
         waiting_list_id: '',
         slot_id: slot.id,
         duracao_estimada: '',
-        estado: 'agendado',
+        estado: 'proposto',
     });
+    const ref = useRef(null);
+
+    useEffect(() => {
+        function handleClickOutside(e) {
+            if (ref.current && !ref.current.contains(e.target)) {
+                close();
+            }
+        }
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     function submit(e) {
         e.preventDefault();
@@ -26,7 +38,7 @@ export function CreateScheduleModal({ slot, close }) {
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-            <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl">
+            <div ref={ref} className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl">
                 <h2 className="mb-4 text-xl font-semibold">Novo Agendamento</h2>
 
                 <form onSubmit={submit} className="space-y-4">
@@ -40,6 +52,30 @@ export function CreateScheduleModal({ slot, close }) {
                         />
 
                         {errors?.waiting_list_id && <p className="text-sm text-red-600">{errors.waiting_list_id}</p>}
+                    </label>
+
+                    {/* Estado do agendamento */}
+                    <label className="block">
+                        <span className="text-sm text-gray-600">Estado do agendamento</span>
+
+                        <select
+                            value={form.estado}
+                            onChange={(e) =>
+                                setForm({
+                                    ...form,
+                                    estado: e.target.value,
+                                })
+                            }
+                            className="w-full rounded border px-3 py-2"
+                        >
+                            <option value="proposto">Proposto</option>
+                            <option value="pronto">Pronto</option>
+                            <option value="agendado">Agendado</option>
+                            <option value="operado">Operado</option>
+                            <option value="cancelado">Cancelado</option>
+                        </select>
+
+                        {errors.estado && <p className="mt-1 text-sm text-red-600">{errors.estado}</p>}
                     </label>
 
                     {/* Duração */}

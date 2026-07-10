@@ -35,20 +35,13 @@ function formatYmdLocal(date: Date): string {
     return `${year}-${month}-${day}`;
 }
 
-export default function Semana({
-    agenda,
-    start,
-    end,
-    teamColors,
-}: SemanaPageProps) {
+export default function Semana({ agenda, start, end, teamColors }: SemanaPageProps) {
     const [slotModal, setSlotModal] = useState<AgendaSlot | null>(null);
 
     const diasSemana = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta'];
 
     // ORDENAR AS DATAS
-    const datasOrdenadas = Object.keys(agenda).sort(
-        (a, b) => parseYmdLocal(a).getTime() - parseYmdLocal(b).getTime()
-    );
+    const datasOrdenadas = Object.keys(agenda).sort((a, b) => parseYmdLocal(a).getTime() - parseYmdLocal(b).getTime());
 
     // MAPEAR PELO DIA REAL DA SEMANA (Seg=1 ... Sex=5)
     const mapaDias: Record<string, string | null> = {
@@ -117,9 +110,7 @@ export default function Semana({
                                 <h2 className="mb-3 text-lg font-semibold">
                                     {diaNome}
                                     <br />
-                                    <span className="text-sm text-gray-600">
-                                        {data ? parseYmdLocal(data).toLocaleDateString('pt-PT') : ''}
-                                    </span>
+                                    <span className="text-sm text-gray-600">{data ? parseYmdLocal(data).toLocaleDateString('pt-PT') : ''}</span>
                                 </h2>
 
                                 <div className="space-y-3">
@@ -138,17 +129,26 @@ export default function Semana({
                                                     {slot.hora_inicio} — {slot.hora_fim}
                                                 </div>
 
-                                                <div className="text-sm text-gray-600">
-                                                    Equipa: {slot.team.nome}
-                                                </div>
+                                                <div className="text-sm text-gray-600">Equipa: {slot.team.nome}</div>
 
-                                                <div className="text-sm text-gray-600">
-                                                    Sala: {slot.sala || '—'}
-                                                </div>
+                                                <div className="text-sm text-gray-600">Sala: {slot.sala || '—'}</div>
 
-                                                <div className="mt-1 text-sm font-semibold">
-                                                    Nº de cirurgias agendadas: {slot.schedules.length}
-                                                </div>
+                                                <div className="mt-1 text-sm font-semibold">Nº de cirurgias agendadas: {slot.schedules.length}</div>
+                                                {slot.schedules.length > 0 && (
+                                                    <div className="mt-2 space-y-2">
+                                                        {slot.schedules.map((sch) => (
+                                                            <div key={sch.id} className="rounded border bg-white/70 px-3 py-2">
+                                                                <div className="text-sm font-medium">Doente: {sch.waiting_list?.num_processo}</div>
+
+                                                                <div className="text-xs text-gray-600">{sch.waiting_list?.des_diagnostico}</div>
+
+                                                                <div className="mt-1 text-xs text-gray-700">Estado: {sch.estado}</div>
+
+                                                                <div className="text-xs text-gray-700">Duração: {sch.duracao_estimada} min</div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
                                             </div>
                                         ))}
                                 </div>
@@ -157,13 +157,7 @@ export default function Semana({
                     })}
                 </div>
 
-                {slotModal && (
-                    <SlotModal
-                        slot={slotModal}
-                        teamColors={teamColors}
-                        close={() => setSlotModal(null)}
-                    />
-                )}
+                {slotModal && <SlotModal slot={slotModal} teamColors={teamColors} close={() => setSlotModal(null)} />}
             </div>
         </AppLayout>
     );

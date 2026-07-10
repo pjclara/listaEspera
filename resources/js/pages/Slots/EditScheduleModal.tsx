@@ -43,6 +43,30 @@ export function EditScheduleModal({ schedule, slot, close }) {
                         </select>
                     </label>
 
+                    {/* Estado do agendamento */}
+                    <label className="block">
+                        <span className="text-sm text-gray-600">Estado do agendamento</span>
+
+                        <select
+                            value={form.estado}
+                            onChange={(e) =>
+                                setForm({
+                                    ...form,
+                                    estado: e.target.value,
+                                })
+                            }
+                            className="w-full rounded border px-3 py-2"
+                        >
+                            <option value="proposto">Proposto</option>
+                            <option value="pronto">Pronto</option>
+                            <option value="agendado">Agendado</option>
+                            <option value="operado">Operado</option>
+                            <option value="cancelado">Cancelado</option>
+                        </select>
+
+                        {errors.estado && <p className="mt-1 text-sm text-red-600">{errors.estado}</p>}
+                    </label>
+                    
                     {/* Duração */}
                     <label className="block">
                         <span className="text-sm text-gray-600">Duração estimada (min)</span>

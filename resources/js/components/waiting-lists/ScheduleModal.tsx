@@ -2,10 +2,12 @@ import { router, usePage } from '@inertiajs/react';
 
 interface Slot {
     id: number;
-    team: {
+    team?: {
         id: number;
         nome: string;
     };
+    team_id?: number;
+    team_nome?: string;
     data: string;
     hora_inicio: string;
 }
@@ -18,7 +20,7 @@ interface ScheduleModalProps {
         mes: string;
         slot_id: string;
         duracao_estimada: string;
-        
+        estado: string; // <- ADICIONADO
     };
     setScheduleForm: React.Dispatch<
         React.SetStateAction<{
@@ -26,6 +28,7 @@ interface ScheduleModalProps {
             mes: string;
             slot_id: string;
             duracao_estimada: string;
+            estado: string; // <- ADICIONADO
         }>
     >;
     slotsDisponiveis: Slot[];
@@ -44,41 +47,63 @@ export default function ScheduleModal({
 
     if (!open || !selected) return null;
 
-    console.log('slotsDisponiveis', slotsDisponiveis);
-    // --- EQUIPAS ÚNICAS ---
-    const equipas = Array.from(
-        new Set(slotsDisponiveis.map((s) => s.team.id))
-    ).map((teamId) => ({
-        id: teamId,
-        nome: slotsDisponiveis.find((s) => s.team.id === teamId)?.team.nome,
-    }));
+    console.log("slotsDisponiveis", slotsDisponiveis);
 
-    // --- MESES ÚNICOS ---
-    const meses = Array.from(
+    // --- EQUIPAS ÚNICAS (robusto)
+    const equipas = Array.from(
         new Set(
             slotsDisponiveis.map(
-                (s) => new Date(s.data).getMonth() + 1
+                (s) => s.team?.id ?? s.team_id ?? null
             )
         )
-    );
+    )
+        .filter((id) => id !== null)
+        .map((teamId) => ({
+            id: teamId,
+            nome:
+                slotsDisponiveis.find(
+                    (s) =>
+                        (s.team?.id ?? s.team_id) === teamId
+                )?.team?.nome ??
+                slotsDisponiveis.find(
+                    (s) =>
+                        (s.team?.id ?? s.team_id) === teamId
+                )?.team_nome ??
+                "Equipa " + teamId,
+        }));
 
-    // --- FILTRAR SLOTS POR EQUIPA E MÊS ---
+    // --- MESES ÚNICOS (robusto)
+    const meses = Array.from(
+        new Set(
+            slotsDisponiveis.map((s) => {
+                if (!s.data) return null;
+                return new Date(s.data).getMonth() + 1;
+            })
+        )
+    ).filter((mes) => mes !== null);
+
+    // --- FILTRAR SLOTS POR EQUIPA E MÊS (robusto)
     const slotsFiltrados = slotsDisponiveis.filter((slot) => {
-        const slotMes = new Date(slot.data).getMonth() + 1;
-        const slotTeam = slot.team.id;
+        const slotMes = slot.data
+            ? new Date(slot.data).getMonth() + 1
+            : null;
+
+        const slotTeam = slot.team?.id ?? slot.team_id ?? null;
 
         return (
-            (!scheduleForm.team_id || scheduleForm.team_id == slotTeam) &&
-            (!scheduleForm.mes || scheduleForm.mes == slotMes)
+            (!scheduleForm.team_id ||
+                scheduleForm.team_id == slotTeam) &&
+            (!scheduleForm.mes ||
+                scheduleForm.mes == slotMes)
         );
     });
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-            <div className="w-full max-w-lg animate-[fadeIn_0.2s_ease] rounded-xl bg-white p-6 shadow-xl">
+            <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl">
                 <h2 className="mb-4 text-xl font-semibold">
                     {selected.schedule
-                        ? 'Editar Agendamento'
+                        ? "Editar Agendamento"
                         : `Agendar — Nº ${selected.num_processo}`}
                 </h2>
 
@@ -89,7 +114,7 @@ export default function ScheduleModal({
                         const payload = {
                             slot_id: scheduleForm.slot_id,
                             duracao_estimada: scheduleForm.duracao_estimada,
-                            estado: 'agendado',
+                            estado: scheduleForm.estado,
                         };
 
                         if (selected.schedule) {
@@ -114,7 +139,7 @@ export default function ScheduleModal({
                     }}
                     className="space-y-4"
                 >
-                    {/* FILTRO POR EQUIPA */}
+                    {/* EQUIPA */}
                     <label className="block">
                         <span className="text-sm text-gray-600">Equipa</span>
 
@@ -124,7 +149,7 @@ export default function ScheduleModal({
                                 setScheduleForm({
                                     ...scheduleForm,
                                     team_id: e.target.value,
-                                    slot_id: "", // limpar slot
+                                    slot_id: "",
                                 })
                             }
                             className="w-full rounded border px-3 py-2"
@@ -139,7 +164,7 @@ export default function ScheduleModal({
                         </select>
                     </label>
 
-                    {/* FILTRO POR MÊS */}
+                    {/* MÊS */}
                     <label className="block">
                         <span className="text-sm text-gray-600">Mês</span>
 
@@ -149,7 +174,7 @@ export default function ScheduleModal({
                                 setScheduleForm({
                                     ...scheduleForm,
                                     mes: e.target.value,
-                                    slot_id: "", // limpar slot
+                                    slot_id: "",
                                 })
                             }
                             className="w-full rounded border px-3 py-2"
@@ -164,7 +189,7 @@ export default function ScheduleModal({
                         </select>
                     </label>
 
-                    {/* SLOT FILTRADO */}
+                    {/* SLOT */}
                     <label className="block">
                         <span className="text-sm text-gray-600">Slot disponível</span>
 
@@ -182,8 +207,9 @@ export default function ScheduleModal({
 
                             {slotsFiltrados.map((slot) => (
                                 <option key={slot.id} value={slot.id}>
-                                    {new Date(slot.data).toLocaleDateString()} —{' '}
-                                    {slot.hora_inicio} — Equipa {slot.team.nome}
+                                    {new Date(slot.data).toLocaleDateString()} —{" "}
+                                    {slot.hora_inicio} — Equipa{" "}
+                                    {slot.team?.nome ?? slot.team_nome}
                                 </option>
                             ))}
                         </select>
@@ -191,6 +217,34 @@ export default function ScheduleModal({
                         {errors.slot_id && (
                             <p className="mt-1 text-sm text-red-600">
                                 {errors.slot_id}
+                            </p>
+                        )}
+                    </label>
+
+                    {/* ESTADO */}
+                    <label className="block">
+                        <span className="text-sm text-gray-600">Estado do agendamento</span>
+
+                        <select
+                            value={scheduleForm.estado}
+                            onChange={(e) =>
+                                setScheduleForm({
+                                    ...scheduleForm,
+                                    estado: e.target.value,
+                                })
+                            }
+                            className="w-full rounded border px-3 py-2"
+                        >
+                            <option value="proposto">Proposto</option>
+                            <option value="pronto">Pronto</option>
+                            <option value="agendado">Agendado</option>
+                            <option value="operado">Operado</option>
+                            <option value="cancelado">Cancelado</option>
+                        </select>
+
+                        {errors.estado && (
+                            <p className="mt-1 text-sm text-red-600">
+                                {errors.estado}
                             </p>
                         )}
                     </label>
@@ -225,18 +279,18 @@ export default function ScheduleModal({
                         <button
                             type="button"
                             onClick={onClose}
-                            className="rounded bg-gray-300 px-4 py-2 transition hover:bg-gray-400"
+                            className="rounded bg-gray-300 px-4 py-2 hover:bg-gray-400"
                         >
                             Cancelar
                         </button>
 
                         <button
                             type="submit"
-                            className="rounded bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-700"
+                            className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
                         >
                             {selected.schedule
-                                ? 'Guardar Alterações'
-                                : 'Guardar Agendamento'}
+                                ? "Guardar Alterações"
+                                : "Guardar Agendamento"}
                         </button>
                     </div>
                 </form>
