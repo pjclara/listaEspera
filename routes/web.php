@@ -42,6 +42,8 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/waiting-lists/{waitingList}/observacoes-gerais', [WaitingListController::class, 'updateObservacoesGerais']);
 
     Route::resource('users', UserController::class);
+
+    Route::resource('teams', \App\Http\Controllers\TeamController::class);
 });
 
 

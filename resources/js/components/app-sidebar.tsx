@@ -66,7 +66,13 @@ const mainNavItems: NavItem[] = [
         url: '/users',
         icon: LayoutGrid,
         permissions: ['view-users'],
-    }
+    },
+    {
+        title: 'Equipas',
+        url: '/teams',
+        icon: LayoutGrid,
+        permissions: ['view-teams'],
+    },
 ];
 
 /**
