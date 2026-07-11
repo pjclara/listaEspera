@@ -145,6 +145,7 @@ export default function Semana({ agenda, start, end, teamColors }: SemanaPagePro
                                                                 <div className="mt-1 text-xs text-gray-700">Estado: {sch.estado}</div>
 
                                                                 <div className="text-xs text-gray-700">Duração: {sch.duracao_estimada} min</div>
+                                                                <div className="text-xs text-gray-700">Posição: {sch.waiting_list?.posicao_lista} / {sch.waiting_list?.posicao_patologia}</div>
                                                             </div>
                                                         ))}
                                                     </div>
