@@ -9,7 +9,7 @@ type AgendaSlot = {
     hora_inicio: string;
     hora_fim: string;
     sala?: string | null;
-    team: { nome: string };
+    team: { nome: string, cor: string };
     schedules: Array<unknown>;
 };
 
@@ -120,8 +120,8 @@ export default function Semana({ agenda, start, end, teamColors }: SemanaPagePro
                                                 key={slot.id}
                                                 className="cursor-pointer rounded-lg border p-3"
                                                 style={{
-                                                    backgroundColor: teamColors[slot.team_id] + '20',
-                                                    borderColor: teamColors[slot.team_id],
+                                                    backgroundColor: slot.team.cor + '20',
+                                                    borderColor: slot.team.cor,
                                                 }}
                                                 onClick={() => setSlotModal(slot)}
                                             >

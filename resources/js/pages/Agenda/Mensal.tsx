@@ -107,7 +107,7 @@ export default function Mensal({
                                             <div
                                                 key={slot.id}
                                                 className="cursor-pointer rounded border p-1 text-xs"
-                                                style={{ backgroundColor: teamColors[slot.team_id] + '20', borderColor: teamColors[slot.team_id] }}
+                                                style={{ backgroundColor: slot.team.cor + '10', borderColor: slot.team.cor }}
                                                 onClick={() => setSlotModal(slot)}
                                             >
                                                 {slot.hora_inicio} — {slot.hora_fim}

@@ -27,7 +27,6 @@ class TeamController extends Controller
     {
         $data = $request->validate([
             'nome' => 'required|string|max:255',
-            'especialidade' => 'nullable|string|max:255',
             'cor' => 'required|string|max:20',
             'sala_default' => 'nullable|string|max:255',
             'ativa' => 'required|boolean',
@@ -50,7 +49,6 @@ class TeamController extends Controller
     {
         $data = $request->validate([
             'nome' => 'required|string|max:255',
-            'especialidade' => 'nullable|string|max:255',
             'cor' => 'required|string|max:20',
             'sala_default' => 'nullable|string|max:255',
             'ativa' => 'required|boolean',

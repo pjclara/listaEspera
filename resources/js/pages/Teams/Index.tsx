@@ -45,7 +45,6 @@ export default function TeamsIndex() {
                         <thead className="bg-gray-100">
                             <tr>
                                 <th className="px-4 py-2 text-left">Nome</th>
-                                <th className="px-4 py-2 text-left">Especialidade</th>
                                 <th className="px-4 py-2 text-left">Cor</th>
                                 <th className="px-4 py-2 text-left">Estado</th>
                                 <th className="px-4 py-2 text-left">Ações</th>
@@ -56,7 +55,6 @@ export default function TeamsIndex() {
                             {teams.map((team) => (
                                 <tr key={team.id} className="border-t">
                                     <td className="px-4 py-2">{team.nome}</td>
-                                    <td className="px-4 py-2">{team.especialidade || '—'}</td>
 
                                     <td className="px-4 py-2">
                                         <span className="inline-block h-4 w-4 rounded" style={{ backgroundColor: team.cor }} />

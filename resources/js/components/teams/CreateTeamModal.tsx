@@ -6,7 +6,6 @@ export default function CreateTeamModal({ team, close }) {
 
     const [form, setForm] = useState({
         nome: team?.nome || "",
-        especialidade: team?.especialidade || "",
         cor: team?.cor || "#3b82f6",
         sala_default: team?.sala_default || "",
         ativa: team?.ativa ?? true,
@@ -47,16 +46,6 @@ export default function CreateTeamModal({ team, close }) {
                         {errors?.nome && <p className="text-red-600">{errors.nome}</p>}
                     </label>
 
-                    <label className="block">
-                        <span className="text-sm text-gray-600">Especialidade</span>
-                        <input
-                            value={form.especialidade}
-                            onChange={(e) =>
-                                setForm({ ...form, especialidade: e.target.value })
-                            }
-                            className="w-full rounded border px-3 py-2"
-                        />
-                    </label>
 
                     <label className="block">
                         <span className="text-sm text-gray-600">Cor</span>
