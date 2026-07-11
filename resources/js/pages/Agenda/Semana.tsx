@@ -136,8 +136,8 @@ export default function Semana({ agenda, start, end, teamColors }: SemanaPagePro
                                                 <div className="mt-1 text-sm font-semibold">Nº de cirurgias agendadas: {slot.schedules.length}</div>
                                                 {slot.schedules.length > 0 && (
                                                     <div className="mt-2 space-y-2">
-                                                        {slot.schedules.map((sch) => (
-                                                            <div key={sch.id} className="rounded border bg-white/70 px-3 py-2">
+                                                        {slot.schedules.map((sch: any) => (
+                                                            <div key={sch.id} className={`rounded border border-${sch.estado_cor} ${sch.estado_cor} px-3 py-2`}>
                                                                 <div className="text-sm font-medium">Doente: {sch.waiting_list?.num_processo}</div>
 
                                                                 <div className="text-xs text-gray-600">{sch.waiting_list?.des_diagnostico}</div>

@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Models;
+use App\Enum\ScheduleEstadoTypes;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -13,6 +14,10 @@ class Schedule extends Model
         'user_id',
         'estado',
         'duracao_estimada',
+    ];
+
+    public $appends = [
+        'estado_cor',
     ];
 
     // set the default user_id to the currently authenticated user when creating a new Schedule
@@ -38,5 +43,10 @@ class Schedule extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function getEstadoCorAttribute(): string
+    {
+        return ScheduleEstadoTypes::from($this->estado)->color();
     }
 }

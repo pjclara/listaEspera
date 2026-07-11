@@ -25,10 +25,10 @@ enum ScheduleEstadoTypes: string
     public function color(): string
     {
         return match ($this) {
-            self::PROPOSTO => 'bg-gray-500',
+            self::PROPOSTO => 'bg-yellow-500',
             self::PRONTO => 'bg-blue-500',
-            self::AGENDADO => 'bg-green-500',
-            self::OPERADO => 'bg-yellow-500',
+            self::AGENDADO => 'bg-orange-500',
+            self::OPERADO => 'bg-green-500',
             self::CANCELADO => 'bg-red-500',
         };
     }
