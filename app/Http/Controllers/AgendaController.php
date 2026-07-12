@@ -45,7 +45,6 @@ class AgendaController extends Controller
                 return Carbon::parse($slot->data)->toDateString();
             });
 
-            dd($slotsByDay);
         $pdf = Pdf::loadView('agenda.pdf', [
             'type' => $type,
             'title' => $title,
