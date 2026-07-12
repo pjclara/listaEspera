@@ -16,6 +16,7 @@ export default function Index({
     equipaOptions,
     slotsDisponiveis,
     prioridadeOptionsState,
+    permissions,
 }: PageProps<{
     waitingLists: any;
     filters: any;
@@ -110,7 +111,6 @@ export default function Index({
         estado: '', // Adicione o campo 'estado' ao estado do formulário
     });
     const [selectedSchedule, setSelectedSchedule] = useState(null);
-
 
     const [showObservacoesGeraisModal, setShowObservacoesGeraisModal] = useState(false);
     const [observacoesGeraisForm, setObservacoesGeraisForm] = useState({
@@ -247,6 +247,7 @@ export default function Index({
         },
     ];
 
+    console.log('permissions', permissions ? permissions : []);
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Lista de Espera" />
@@ -254,10 +255,12 @@ export default function Index({
             <div className="flex h-full flex-1 flex-col gap-6 rounded-xl p-6">
                 <div className="flex items-center justify-between">
                     <h1 className="text-2xl font-semibold tracking-tight">Lista de Espera</h1>
-
-                    <Link href="/waiting-list/import" className="rounded-lg bg-blue-600 px-4 py-2 text-white shadow transition hover:bg-blue-700">
-                        Importar Excel
-                    </Link>
+                    {/* can waiting_list.import */}
+                    {permissions.includes('waiting_list.import') && (
+                        <Link href="/waiting-list/import" className="rounded-lg bg-blue-600 px-4 py-2 text-white shadow transition hover:bg-blue-700">
+                            Importar Excel
+                        </Link>
+                    )}
                 </div>
 
                 {/* FILTROS */}
@@ -403,30 +406,34 @@ export default function Index({
                                     <td className="px-4 py-3">
                                         <button
                                             onClick={() => openModal(i)}
-                                            className={`rounded px-3 py-1 text-sm text-white transition ${
-                                                hasAdminData(i) ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-700 hover:bg-gray-800'
+                                            className={`rounded px-3 py-1 text-sm text-white transition cursor-pointer ${
+                                                i.contacts?.length ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-700 hover:bg-gray-800'
                                             }`}
                                         >
                                             Contactos
                                         </button>
                                     </td>
                                     <td className="px-4 py-3">
-                                        <button
-                                            onClick={() => openModalObservacoesGerais(i)}
-                                            className={`rounded px-3 py-1 text-sm text-white transition ${
-                                                i.observacoes_gerais ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-700 hover:bg-gray-800'
-                                            }`}
-                                        >
-                                            Observações Gerais
-                                        </button>
+                                        {permissions.includes('waiting_list.observacoes.gerais') && (
+                                            <button
+                                                onClick={() => openModalObservacoesGerais(i)}
+                                                className={`rounded px-3 py-1 text-sm text-white transition ${
+                                                    i.observacoes_gerais ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-700 hover:bg-gray-800'
+                                                }`}
+                                            >
+                                                Observações Gerais
+                                            </button>
+                                        )}
                                     </td>
                                     <td className="px-4 py-3">
-                                        <button
-                                            onClick={() => openScheduleModal(i)}
-                                            className={`rounded px-3 py-1 text-sm text-white transition ${i.schedule ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'} `}
-                                        >
-                                            Agendar
-                                        </button>
+                                        {permissions.includes('schedules.create') && (
+                                            <button
+                                                onClick={() => openScheduleModal(i)}
+                                                className={`rounded px-3 py-1 text-sm text-white transition ${i.schedule ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'} `}
+                                            >
+                                                Agendar
+                                            </button>
+                                        )}
                                     </td>
                                 </tr>
                             ))}
@@ -458,7 +465,7 @@ export default function Index({
                     </div>
                 </div>
             </div>
-            <AdminObservacoesModal open={showModal} selected={selected} form={form} setForm={setForm} errors={errors} onClose={closeModal} />
+            <AdminObservacoesModal open={showModal} selected={selected} form={form} setForm={setForm} errors={errors} onClose={closeModal} permissions={permissions} />
             <ScheduleModal
                 open={showScheduleModal}
                 selected={selectedSchedule}
@@ -466,6 +473,7 @@ export default function Index({
                 setScheduleForm={setScheduleForm}
                 slotsDisponiveis={slotsDisponiveis}
                 onClose={closeScheduleModal}
+                permissions={permissions}
             />
             <ObservacoesGeraisModal
                 open={showObservacoesGeraisModal}

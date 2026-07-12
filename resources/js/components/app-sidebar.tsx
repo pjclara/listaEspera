@@ -39,15 +39,18 @@ const mainNavItems: NavItem[] = [
         title: 'Slots',
         url: '/slots',
         icon: LayoutGrid,
+        permissions: ['slots.view'], // Apenas visível para utilizadores com estas permissões
     },
     {
         title: 'Agenda',
         icon: Calendar,
+        permissions: ['slots.view', 'agenda.view'], // Apenas visível para utilizadores com estas permissões
         children: [
             {
                 title: 'Slots',
                 url: '/agenda',
                 icon: LayoutGrid,
+                
             },
             {
                 title: 'Semana',
@@ -77,7 +80,7 @@ const mainNavItems: NavItem[] = [
         title: 'Roles & Permissões',
         url: '/access-control',
         icon: LayoutGrid,
-        permissions: ['users.manage'],
+        permissions: ['roles.view'],
     },
 ];
 

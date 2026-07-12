@@ -30,7 +30,6 @@ class WaitingListController extends Controller
         $user = $request->user();
 
         $waitingLists = WaitingList::with('admin', 'schedule', 'contacts')
-            ->when(! $user->isAdmin() && ! $user->isSecretary(), fn($q) => $q->where('equipa_id', $user->team_id))
             ->when($request->num_processo, fn($q) => $q->where('num_processo', $request->num_processo))
             ->when($request->situacao, fn($q) => $q->whereIn('situacao', (array) $request->situacao))
             ->when($request->estado, fn($q) => $q->where('estado', $request->estado))
@@ -76,6 +75,8 @@ class WaitingListController extends Controller
             'equipaOptions' => $equipaOptions,
             'slotsDisponiveis' => $slotsDisponiveis,
             'prioridadeOptionsState' => $prioridadeOptionsState,
+            // users permissions
+            'permissions' => $request->user()->getAllPermissions()->pluck('name')->toArray(),
             'filters' => [
                 'num_processo' => $request->num_processo,
                 'situacao' => $request->situacao,
