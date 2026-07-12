@@ -112,7 +112,7 @@
                                                 Processo: {{ $schedule->waitingList->num_processo ?? '—' }} |
                                                 Diagnóstico: {{ $schedule->waitingList->des_diagnostico ?? '—' }} |
                                                 Pernoita: {{ $schedule->pernoita ?? '—' }}
-                                                Posição: {{ $schedule->waitingList?->posicao_patologia ?? '—' }} / {{ $schedule->waitingList?->posicao_lista ?? '—' }} |
+                                                Posição (absoluta/relativa): {{ $schedule->waitingList?->posicao_lista ?? '—' }} / {{ $schedule->waitingList?->posicao_patologia ?? '—' }} |
                                             </li>
                                         @endforeach
                                     </ul>

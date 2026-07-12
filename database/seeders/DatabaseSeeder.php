@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\User;
 use Database\Seeders\TeamSeeder;
+use Database\Seeders\RolesSeeder;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -21,5 +22,6 @@ class DatabaseSeeder extends Seeder
         ]);
         // Seed Teams
         $this->call(TeamSeeder::class);
+        $this->call(RolesSeeder::class);
     }
 }
