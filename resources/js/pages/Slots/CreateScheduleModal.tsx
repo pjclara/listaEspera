@@ -1,6 +1,6 @@
 import { SearchableSelect } from '@/components/SearchableSelect';
 import { router, usePage } from '@inertiajs/react';
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 export function CreateScheduleModal({ slot, close }) {
@@ -11,6 +11,7 @@ export function CreateScheduleModal({ slot, close }) {
         slot_id: slot.id,
         duracao_estimada: '',
         estado: 'proposto',
+        pernoita: 'nao',
     });
     const ref = useRef(null);
 
@@ -88,6 +89,18 @@ export function CreateScheduleModal({ slot, close }) {
                     </label>
 
                     {/* Duração */}
+
+                    <select
+                        value={form.pernoita}
+                        onChange={(e) => setForm({ ...form, pernoita: e.target.value })}
+                        className="w-full rounded border px-3 py-2"
+                    >
+                        <option value="nao">Não</option>
+                        <option value="sim">Sim</option>
+                        <option value="talvez">Talvez</option>
+                    </select>
+
+                    {/* Duração */}
                     <label className="block">
                         <span className="text-sm text-gray-600">Duração estimada (min)</span>
                         <input
@@ -104,14 +117,14 @@ export function CreateScheduleModal({ slot, close }) {
                         <button
                             type="button"
                             onClick={close}
-                            className="rounded bg-gray-300 px-4 py-2 transition-all duration-150 hover:bg-gray-400 active:scale-95 active:bg-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2"
+                            className="rounded bg-gray-300 px-4 py-2 transition-all duration-150 hover:bg-gray-400 focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95 active:bg-gray-500"
                         >
                             Cancelar
                         </button>
 
                         <button
                             type="submit"
-                            className="rounded bg-blue-600 px-4 py-2 text-white transition-all duration-150 hover:bg-blue-700 active:scale-95 active:bg-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                            className="rounded bg-blue-600 px-4 py-2 text-white transition-all duration-150 hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95 active:bg-blue-800"
                         >
                             Guardar
                         </button>

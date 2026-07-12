@@ -68,6 +68,15 @@ export default function Mensal({
         }
     }
 
+    function exportarPdf() {
+        const params = new URLSearchParams({
+            type: 'mensal',
+            month,
+        });
+
+        window.open(`/agenda/export/pdf?${params.toString()}`, '_blank');
+    }
+
     useEffect(() => {
         refreshSlotModal();
     }, [agendaAtualizada]);
@@ -86,6 +95,10 @@ export default function Mensal({
                     </h1>
 
                     <div className="flex gap-3">
+                        <button onClick={exportarPdf} className="rounded bg-red-600 px-4 py-2 text-white hover:bg-red-700">
+                            Exportar PDF
+                        </button>
+
                         <button onClick={() => mudarMes(-1)} className="rounded bg-gray-200 px-4 py-2 hover:bg-gray-300">
                             Mês anterior
                         </button>

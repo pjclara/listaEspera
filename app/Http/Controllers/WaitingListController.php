@@ -162,6 +162,7 @@ class WaitingListController extends Controller
             'slot_id' => 'required|exists:slots,id',
             'duracao_estimada' => 'nullable|integer|min:1',
             'estado' => 'required|string',
+            'pernoita' => 'required|string|in:sim,nao,talvez',
         ]);
 
         Schedule::create([
@@ -170,6 +171,7 @@ class WaitingListController extends Controller
             'user_id' => auth()->id(),
             'estado' => $data['estado'],
             'duracao_estimada' => $data['duracao_estimada'],
+            'pernoita' => $data['pernoita'],
         ]);
 
         return back()->with('toast', [
@@ -185,6 +187,7 @@ class WaitingListController extends Controller
             'slot_id' => 'required|exists:slots,id',
             'duracao_estimada' => 'nullable|integer|min:1',
             'estado' => 'required|string',
+            'pernoita' => 'required|string|in:sim,nao,talvez',
         ]);
 
         $schedule->update($data);

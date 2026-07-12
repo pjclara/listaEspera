@@ -1,24 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
 import { Head, router, usePage } from '@inertiajs/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { SlotModal } from '../Slots/SlotModal';
-
-type AgendaSlot = {
-    id: number;
-    team_id: number;
-    hora_inicio: string;
-    hora_fim: string;
-    sala?: string | null;
-    team: { nome: string, cor: string };
-    schedules: Array<unknown>;
-};
-
-type SemanaPageProps = {
-    agenda: Record<string, AgendaSlot[]>;
-    start: string;
-    end: string;
-    teamColors: Record<number, string>;
-};
 
 function parseYmdLocal(ymd: string): Date {
     const [year, month, day] = ymd.split('-').map(Number);
@@ -35,14 +18,34 @@ function formatYmdLocal(date: Date): string {
     return `${year}-${month}-${day}`;
 }
 
-export default function Semana({ agenda, start, end, teamColors }: SemanaPageProps) {
-    const [slotModal, setSlotModal] = useState<AgendaSlot | null>(null);
-    const { agenda: agendaAtualizada } = usePage().props as { agenda: Record<string, AgendaSlot[]> };
+export default function Semana({
+    agenda,
+    start,
+    end,
+    teamColors,
+}: {
+    agenda: Record<string, any[]>;
+    start: string;
+    end: string;
+    teamColors: Record<number, string>;
+}) {
+    const [slotModal, setSlotModal] = useState<any | null>(null);
+    const { agenda: agendaAtualizada } = usePage().props as unknown as { agenda: Record<string, any[]> };
+
+    const agendaNormalizada: Record<string, any[]> = {};
+    Object.keys(agenda).forEach((key) => {
+        agendaNormalizada[key.slice(0, 10)] = agenda[key];
+    });
+
+    const agendaNormalizadaAtualizada: Record<string, any[]> = {};
+    Object.keys(agendaAtualizada).forEach((key) => {
+        agendaNormalizadaAtualizada[key.slice(0, 10)] = agendaAtualizada[key];
+    });
 
     const diasSemana = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta'];
 
     // ORDENAR AS DATAS
-    const datasOrdenadas = Object.keys(agenda).sort((a, b) => parseYmdLocal(a).getTime() - parseYmdLocal(b).getTime());
+    const datasOrdenadas = Object.keys(agendaNormalizada).sort((a, b) => parseYmdLocal(a).getTime() - parseYmdLocal(b).getTime());
 
     // MAPEAR PELO DIA REAL DA SEMANA (Seg=1 ... Sex=5)
     const mapaDias: Record<string, string | null> = {
@@ -80,14 +83,27 @@ export default function Semana({ agenda, start, end, teamColors }: SemanaPagePro
     function refreshSlotModal() {
         if (!slotModal) return;
 
-        const updatedSlot = Object.values(agendaAtualizada)
+        const updatedSlot = Object.values(agendaNormalizadaAtualizada)
             .flat()
-            .find((s) => s.id === slotModal.id);
+            .find((s: any) => s.id === slotModal.id);
 
         if (updatedSlot) {
             setSlotModal(updatedSlot);
         }
     }
+
+    function exportarPdf() {
+        const params = new URLSearchParams({
+            type: 'semana',
+            start,
+        });
+
+        window.open(`/agenda/export/pdf?${params.toString()}`, '_blank');
+    }
+
+    useEffect(() => {
+        refreshSlotModal();
+    }, [agendaAtualizada]);
 
     return (
         <AppLayout breadcrumbs={[{ title: 'Agenda Cirúrgica', href: '/agenda' }]}>
@@ -100,6 +116,10 @@ export default function Semana({ agenda, start, end, teamColors }: SemanaPagePro
                     </h1>
 
                     <div className="flex gap-3">
+                        <button onClick={exportarPdf} className="rounded bg-red-600 px-4 py-2 text-white hover:bg-red-700">
+                            Exportar PDF
+                        </button>
+
                         <button onClick={() => mudarSemana(-1)} className="rounded bg-gray-200 px-4 py-2 hover:bg-gray-300">
                             Semana anterior
                         </button>
@@ -128,7 +148,7 @@ export default function Semana({ agenda, start, end, teamColors }: SemanaPagePro
 
                                 <div className="space-y-3">
                                     {data &&
-                                        agenda[data]?.map((slot: AgendaSlot) => (
+                                        agendaNormalizada[data]?.map((slot: any) => (
                                             <div
                                                 key={slot.id}
                                                 className="cursor-pointer rounded-lg border p-3"
@@ -150,14 +170,21 @@ export default function Semana({ agenda, start, end, teamColors }: SemanaPagePro
                                                 {slot.schedules.length > 0 && (
                                                     <div className="mt-2 space-y-2">
                                                         {slot.schedules.map((sch: any) => (
-                                                            <div key={sch.id} className={`rounded border border-${sch.estado_cor} ${sch.estado_cor} px-3 py-2`}>
+                                                            <div
+                                                                key={sch.id}
+                                                                className={`rounded border border-${sch.estado_cor} ${sch.estado_cor} px-3 py-2`}
+                                                            >
                                                                 <div className="text-sm font-medium">Doente: {sch.waiting_list?.num_processo}</div>
                                                                 <div className="text-xs text-gray-600">{sch.waiting_list?.des_diagnostico}</div>
                                                                 <div className="mt-1 text-xs text-gray-700">Estado: {sch.estado}</div>
-                                                                <div className="text-xs text-gray-700">Prioridade: {sch.waiting_list?.prioridade}</div>
-                                                                <div className="text-xs text-gray-700">Posição: {sch.waiting_list?.posicao_lista} / {sch.waiting_list?.posicao_patologia}</div>
+                                                                <div className="text-xs text-gray-700">
+                                                                    Prioridade: {sch.waiting_list?.prioridade}
+                                                                </div>
+                                                                <div className="text-xs text-gray-700">
+                                                                    Posição: {sch.waiting_list?.posicao_lista} / {sch.waiting_list?.posicao_patologia}
+                                                                </div>
+                                                                <div className="text-xs text-gray-700">Pernoita: {sch.pernoita}</div>
                                                                 <div className="text-xs text-gray-700">Duração: {sch.duracao_estimada} min</div>
-
                                                             </div>
                                                         ))}
                                                     </div>

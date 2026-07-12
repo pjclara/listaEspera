@@ -14,6 +14,7 @@ class Schedule extends Model
         'user_id',
         'estado',
         'duracao_estimada',
+        'pernoita'
     ];
 
     public $appends = [

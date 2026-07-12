@@ -12,6 +12,7 @@ export function EditScheduleModal({ schedule, slot, close }) {
         slot_id: schedule.slot_id,
         duracao_estimada: schedule.duracao_estimada,
         estado: schedule.estado,
+        pernoita: schedule.pernoita ? schedule.pernoita : 'nao',
     });
 
     const { errors } = usePage().props;
@@ -76,7 +77,21 @@ export function EditScheduleModal({ schedule, slot, close }) {
 
                         {errors.estado && <p className="mt-1 text-sm text-red-600">{errors.estado}</p>}
                     </label>
-                    
+
+                    {/* Pernoita */}
+                    <div>
+                        <label className="block text-sm text-gray-600">Pernoita</label>
+                        <select
+                            value={form.pernoita}
+                            onChange={(e) => setForm({ ...form, pernoita: e.target.value })}
+                            className="w-full rounded border px-3 py-2"
+                        >
+                            <option value="nao">Não</option>
+                            <option value="sim">Sim</option>
+                            <option value="talvez">Talvez</option>
+                        </select>
+                    </div>
+
                     {/* Duração */}
                     <label className="block">
                         <span className="text-sm text-gray-600">Duração estimada (min)</span>
@@ -107,7 +122,7 @@ export function EditScheduleModal({ schedule, slot, close }) {
                                     },
                                 )
                             }
-                            className="cursor-pointer rounded bg-red-600 px-4 py-2 text-white transition-all duration-150 hover:bg-red-700 active:scale-95 active:bg-red-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
+                            className="cursor-pointer rounded bg-red-600 px-4 py-2 text-white transition-all duration-150 hover:bg-red-700 focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95 active:bg-red-800"
                         >
                             Cancelar
                         </button>
@@ -116,14 +131,14 @@ export function EditScheduleModal({ schedule, slot, close }) {
                             <button
                                 type="button"
                                 onClick={close}
-                                className="cursor-pointer rounded bg-gray-300 px-4 py-2 transition-all duration-150 hover:bg-gray-400 active:scale-95 active:bg-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2"
+                                className="cursor-pointer rounded bg-gray-300 px-4 py-2 transition-all duration-150 hover:bg-gray-400 focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95 active:bg-gray-500"
                             >
                                 Fechar
                             </button>
 
                             <button
                                 type="submit"
-                                className="cursor-pointer rounded bg-blue-600 px-4 py-2 text-white transition-all duration-150 hover:bg-blue-700 active:scale-95 active:bg-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                                className="cursor-pointer rounded bg-blue-600 px-4 py-2 text-white transition-all duration-150 hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95 active:bg-blue-800"
                             >
                                 Guardar
                             </button>

@@ -8,6 +8,11 @@ type SlotModalProps = {
     teamColors: Record<number, string>;
     refreshSlot?: () => void;
 };
+const pernoitaColors: Record<string, string> = {
+    sim: 'bg-green-100 text-green-800',
+    nao: 'bg-gray-100 text-gray-800',
+    talvez: 'bg-yellow-100 text-yellow-800',
+};
 
 export function SlotModal({ slot, close, teamColors, refreshSlot }: SlotModalProps) {
     const [editingSchedule, setEditingSchedule] = useState<any>(null);
@@ -29,7 +34,12 @@ export function SlotModal({ slot, close, teamColors, refreshSlot }: SlotModalPro
 
                     <div className="space-y-2">
                         {slot.schedules.map((s: any) => (
-                            <div key={s.id} className={`cursor-pointer rounded ${s.estado_cor} border p-3`} style={{ backgroundColor: `${s.estado_cor}` }} onClick={() => setEditingSchedule(s)}>
+                            <div
+                                key={s.id}
+                                className={`cursor-pointer rounded ${s.estado_cor} border p-3`}
+                                style={{ backgroundColor: `${s.estado_cor}` }}
+                                onClick={() => setEditingSchedule(s)}
+                            >
                                 <div className="text-sm font-medium">Doente: {s.waiting_list?.num_processo}</div>
                                 <div className="text-xs text-gray-600">{s.waiting_list?.des_diagnostico}</div>
                                 <div className="mt-1 text-xs text-gray-700">Estado: {s.estado}</div>
@@ -37,6 +47,7 @@ export function SlotModal({ slot, close, teamColors, refreshSlot }: SlotModalPro
                                 <div className="text-xs text-gray-700">
                                     Posição: {s.waiting_list?.posicao_lista} / {s.waiting_list?.posicao_patologia}
                                 </div>
+                                <div className="text-xs text-gray-700">Pernoita: {s.pernoita}</div>
                                 <div className="text-xs text-gray-700">Duração: {s.duracao_estimada} min</div>
                             </div>
                         ))}
@@ -45,7 +56,7 @@ export function SlotModal({ slot, close, teamColors, refreshSlot }: SlotModalPro
                     <div className="mt-6 flex items-center justify-between">
                         <button
                             onClick={() => setEditingSchedule({ novo: true })}
-                            className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white shadow-sm transition-all duration-150 hover:bg-blue-700 active:scale-95 active:bg-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                            className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white shadow-sm transition-all duration-150 hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95 active:bg-blue-800"
                         >
                             <span className="text-lg">＋</span>
                             <span>Adicionar</span>
@@ -53,7 +64,7 @@ export function SlotModal({ slot, close, teamColors, refreshSlot }: SlotModalPro
 
                         <button
                             onClick={close}
-                            className="flex items-center gap-2 rounded-lg bg-gray-200 px-4 py-2 text-gray-700 shadow-sm transition-all duration-150 hover:bg-gray-300 active:scale-95 active:bg-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2"
+                            className="flex items-center gap-2 rounded-lg bg-gray-200 px-4 py-2 text-gray-700 shadow-sm transition-all duration-150 hover:bg-gray-300 focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95 active:bg-gray-400"
                         >
                             <span className="text-lg">✕</span>
                             <span>Fechar</span>
@@ -72,7 +83,7 @@ export function SlotModal({ slot, close, teamColors, refreshSlot }: SlotModalPro
                         }}
                     />
                 ) : (
-                    <EditScheduleModal 
+                    <EditScheduleModal
                         slot={slot}
                         schedule={editingSchedule}
                         close={() => {

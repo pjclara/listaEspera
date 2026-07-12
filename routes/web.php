@@ -37,6 +37,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/agenda', [AgendaController::class, 'index']);
     Route::get('/agenda/semana', [AgendaController::class, 'semana']);
     Route::get('/agenda/mensal', [AgendaController::class, 'mensal']);
+    Route::get('/agenda/export/pdf', [AgendaController::class, 'exportPdf'])->name('agenda.export.pdf');
 
     Route::get('/waiting/export', [WaitingListController::class, 'export'])->name('waiting.export');
     Route::put('/waiting-lists/{waitingList}/observacoes-gerais', [WaitingListController::class, 'updateObservacoesGerais']);
