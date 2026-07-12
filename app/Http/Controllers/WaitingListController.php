@@ -171,6 +171,12 @@ class WaitingListController extends Controller
             'estado' => $data['estado'],
             'duracao_estimada' => $data['duracao_estimada'],
         ]);
+
+        return back()->with('toast', [
+            'type' => 'success',
+            'title' => 'Agendamento criado',
+            'description' => 'O agendamento foi registado com sucesso.',
+        ]);
     }
 
     public function updateSchedule(Request $request, WaitingList $waitingList, Schedule $schedule)
@@ -182,6 +188,12 @@ class WaitingListController extends Controller
         ]);
 
         $schedule->update($data);
+
+        return back()->with('toast', [
+            'type' => 'success',
+            'title' => 'Agendamento atualizado',
+            'description' => 'As alterações ao agendamento foram guardadas.',
+        ]);
     }
 
 

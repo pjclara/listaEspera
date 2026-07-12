@@ -1,6 +1,6 @@
 import AppLayout from '@/layouts/app-layout';
-import { Head, router } from '@inertiajs/react';
-import { useState } from 'react';
+import { Head, router, usePage } from '@inertiajs/react';
+import { useEffect, useState } from 'react';
 import { SlotModal } from '../Slots/SlotModal';
 
 export default function Mensal({
@@ -9,8 +9,8 @@ export default function Mensal({
     start,
     end,
     teamColors,
-}: ProsPageProps<{ agenda: Record<string, any[]>; month: string; start: string; end: string; teamColors: Record<number, string> }>) {
-    const [slotModal, setSlotModal] = useState(null);
+}: { agenda: Record<string, any[]>; month: string; start: string; end: string; teamColors: Record<number, string> }) {
+    const [slotModal, setSlotModal] = useState<any | null>(null);
 
     // normalizar chaves do backend
     const agendaNormalizada: Record<string, any[]> = {};
@@ -21,6 +21,12 @@ export default function Mensal({
     // gerar dias do calendário
     const startDate = new Date(start);
     const endDate = new Date(end);
+    const { agenda: agendaAtualizada } = usePage().props as unknown as { agenda: Record<string, any[]> };
+
+    const agendaNormalizadaAtualizada: Record<string, any[]> = {};
+    Object.keys(agendaAtualizada).forEach((key) => {
+        agendaNormalizadaAtualizada[key.slice(0, 10)] = agendaAtualizada[key];
+    });
 
     const dias = [];
     let d = new Date(startDate);
@@ -49,6 +55,22 @@ export default function Mensal({
             month: novaData.toISOString().slice(0, 10),
         });
     }
+
+    function refreshSlotModal() {
+        if (!slotModal) return;
+
+        const updatedSlot = Object.values(agendaNormalizadaAtualizada)
+            .flat()
+            .find((s: any) => s.id === slotModal.id);
+
+        if (updatedSlot) {
+            setSlotModal(updatedSlot);
+        }
+    }
+
+    useEffect(() => {
+        refreshSlotModal();
+    }, [agendaAtualizada]);
 
     return (
         <AppLayout breadcrumbs={[{ title: 'Agenda Cirúrgica', href: '/agenda' }]}>
@@ -124,7 +146,7 @@ export default function Mensal({
                     })}
                 </div>
 
-                {slotModal && <SlotModal slot={slotModal} teamColors={teamColors} close={() => setSlotModal(null)} />}
+                {slotModal && <SlotModal slot={slotModal} teamColors={teamColors} close={() => setSlotModal(null)} refreshSlot={refreshSlotModal} />}
             </div>
         </AppLayout>
     );

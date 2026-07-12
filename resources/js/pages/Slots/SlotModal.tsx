@@ -2,8 +2,15 @@ import { useState } from 'react';
 import { CreateScheduleModal } from './CreateScheduleModal';
 import { EditScheduleModal } from './EditScheduleModal';
 
-export function SlotModal({ slot, close, teamColors }) {
-    const [editingSchedule, setEditingSchedule] = useState(null);
+type SlotModalProps = {
+    slot: any;
+    close: () => void;
+    teamColors: Record<number, string>;
+    refreshSlot?: () => void;
+};
+
+export function SlotModal({ slot, close, teamColors, refreshSlot }: SlotModalProps) {
+    const [editingSchedule, setEditingSchedule] = useState<any>(null);
 
     return (
         <>
@@ -21,10 +28,16 @@ export function SlotModal({ slot, close, teamColors }) {
                     {slot.schedules.length === 0 && <p className="text-sm text-gray-500">Nenhum agendamento.</p>}
 
                     <div className="space-y-2">
-                        {slot.schedules.map((s) => (
-                            <div key={s.id} className="cursor-pointer rounded border p-3 hover:bg-gray-100" onClick={() => setEditingSchedule(s)}>
-                                <div className="font-medium">{s.waiting_list.des_diagnostico}</div>
-                                <div className="text-sm text-gray-600">Duração: {s.duracao_estimada} min</div>
+                        {slot.schedules.map((s: any) => (
+                            <div key={s.id} className={`cursor-pointer rounded ${s.estado_cor} border p-3`} style={{ backgroundColor: `${s.estado_cor}` }} onClick={() => setEditingSchedule(s)}>
+                                <div className="text-sm font-medium">Doente: {s.waiting_list?.num_processo}</div>
+                                <div className="text-xs text-gray-600">{s.waiting_list?.des_diagnostico}</div>
+                                <div className="mt-1 text-xs text-gray-700">Estado: {s.estado}</div>
+                                <div className="text-xs text-gray-700">Prioridade: {s.waiting_list?.prioridade}</div>
+                                <div className="text-xs text-gray-700">
+                                    Posição: {s.waiting_list?.posicao_lista} / {s.waiting_list?.posicao_patologia}
+                                </div>
+                                <div className="text-xs text-gray-700">Duração: {s.duracao_estimada} min</div>
                             </div>
                         ))}
                     </div>
@@ -32,7 +45,7 @@ export function SlotModal({ slot, close, teamColors }) {
                     <div className="mt-6 flex items-center justify-between">
                         <button
                             onClick={() => setEditingSchedule({ novo: true })}
-                            className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white shadow-sm transition hover:bg-blue-700"
+                            className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white shadow-sm transition-all duration-150 hover:bg-blue-700 active:scale-95 active:bg-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                         >
                             <span className="text-lg">＋</span>
                             <span>Adicionar</span>
@@ -40,7 +53,7 @@ export function SlotModal({ slot, close, teamColors }) {
 
                         <button
                             onClick={close}
-                            className="flex items-center gap-2 rounded-lg bg-gray-200 px-4 py-2 text-gray-700 shadow-sm transition hover:bg-gray-300"
+                            className="flex items-center gap-2 rounded-lg bg-gray-200 px-4 py-2 text-gray-700 shadow-sm transition-all duration-150 hover:bg-gray-300 active:scale-95 active:bg-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2"
                         >
                             <span className="text-lg">✕</span>
                             <span>Fechar</span>
@@ -51,9 +64,22 @@ export function SlotModal({ slot, close, teamColors }) {
 
             {editingSchedule &&
                 (editingSchedule.novo ? (
-                    <CreateScheduleModal slot={slot} close={() => setEditingSchedule(null)} />
+                    <CreateScheduleModal
+                        slot={slot}
+                        close={() => {
+                            setEditingSchedule(null);
+                            refreshSlot?.();
+                        }}
+                    />
                 ) : (
-                    <EditScheduleModal schedule={editingSchedule} slot={slot} close={() => setEditingSchedule(null)} />
+                    <EditScheduleModal 
+                        slot={slot}
+                        schedule={editingSchedule}
+                        close={() => {
+                            setEditingSchedule(null);
+                            refreshSlot?.();
+                        }}
+                    />
                 ))}
         </>
     );

@@ -1,6 +1,7 @@
 import { SearchableSelect } from '@/components/SearchableSelect';
 import { router, usePage } from '@inertiajs/react';
 import { useState, useEffect, useRef } from 'react';
+import { toast } from 'sonner';
 
 export function CreateScheduleModal({ slot, close }) {
     const { errors, waitingLists } = usePage().props;
@@ -32,6 +33,14 @@ export function CreateScheduleModal({ slot, close }) {
             onSuccess: () => {
                 router.reload({ only: ['agenda'] });
                 close();
+            },
+            onError: (formErrors) => {
+                const firstError = Object.values(formErrors)[0];
+                const message = Array.isArray(firstError) ? firstError[0] : firstError;
+
+                toast.error('Não foi possível criar o agendamento', {
+                    description: message || 'Verifica os dados e tenta novamente.',
+                });
             },
         });
     }
@@ -92,11 +101,18 @@ export function CreateScheduleModal({ slot, close }) {
                     </label>
 
                     <div className="mt-6 flex justify-end gap-3">
-                        <button type="button" onClick={close} className="rounded bg-gray-300 px-4 py-2 hover:bg-gray-400">
+                        <button
+                            type="button"
+                            onClick={close}
+                            className="rounded bg-gray-300 px-4 py-2 transition-all duration-150 hover:bg-gray-400 active:scale-95 active:bg-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2"
+                        >
                             Cancelar
                         </button>
 
-                        <button type="submit" className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">
+                        <button
+                            type="submit"
+                            className="rounded bg-blue-600 px-4 py-2 text-white transition-all duration-150 hover:bg-blue-700 active:scale-95 active:bg-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                        >
                             Guardar
                         </button>
                     </div>

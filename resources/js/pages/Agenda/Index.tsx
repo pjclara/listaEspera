@@ -1,7 +1,7 @@
 import { PlaceholderPattern } from '@/components/ui/placeholder-pattern';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import { SlotModal } from '../Slots/SlotModal';
 import { router } from '@inertiajs/react';
@@ -16,6 +16,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 export default function Agenda({ agenda, teamColors }:PropPageProps<{ agenda: Record<string, any[]>; teamColors: Record<number, string> }>) {
     const [slotModal, setSlotModal] = useState<any | null>(null);
+    const { agenda: agendaAtualizada } = usePage().props as { agenda: Record<string, any[]> };
     const dias = Object.keys(agenda); // ["2026-07-06", "2026-07-07", ...]
 
     const openSlotModal = (slot: any) => {
@@ -24,6 +25,18 @@ export default function Agenda({ agenda, teamColors }:PropPageProps<{ agenda: Re
 
     const closeSlotModal = () => {
         setSlotModal(null);
+    };
+
+    const refreshSlotModal = () => {
+        if (!slotModal) return;
+
+        const updatedSlot = Object.values(agendaAtualizada)
+            .flat()
+            .find((s: any) => s.id === slotModal.id);
+
+        if (updatedSlot) {
+            setSlotModal(updatedSlot);
+        }
     };
 
     return (
@@ -74,7 +87,7 @@ export default function Agenda({ agenda, teamColors }:PropPageProps<{ agenda: Re
                 ))}
             </div>
 
-            {slotModal && <SlotModal slot={slotModal} teamColors={teamColors} close={() => setSlotModal(null)} />}
+            {slotModal && <SlotModal slot={slotModal} teamColors={teamColors} close={() => setSlotModal(null)} refreshSlot={refreshSlotModal} />}
         </div>
         </AppLayout>
     );

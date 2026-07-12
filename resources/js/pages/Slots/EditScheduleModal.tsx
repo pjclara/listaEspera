@@ -1,5 +1,11 @@
 import { router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
+import { toast } from 'sonner';
+
+function getFirstErrorMessage(formErrors: Record<string, any>) {
+    const firstError = Object.values(formErrors)[0];
+    return Array.isArray(firstError) ? firstError[0] : firstError;
+}
 
 export function EditScheduleModal({ schedule, slot, close }) {
     const [form, setForm] = useState({
@@ -22,8 +28,12 @@ export function EditScheduleModal({ schedule, slot, close }) {
                         router.put(`/waiting-lists/${schedule.waiting_list_id}/schedule/${schedule.id}`, form, {
                             preserveScroll: true,
                             onSuccess: () => {
-                                router.reload({ only: ['agenda'] });
-                                close();
+                                close(form);
+                            },
+                            onError: (formErrors) => {
+                                toast.error('Não foi possível atualizar o agendamento', {
+                                    description: getFirstErrorMessage(formErrors) || 'Verifica os dados e tenta novamente.',
+                                });
                             },
                         });
                     }}
@@ -87,20 +97,34 @@ export function EditScheduleModal({ schedule, slot, close }) {
                                 router.put(
                                     `/waiting-lists/${schedule.waiting_list_id}/schedule/${schedule.id}`,
                                     { estado: 'cancelado', duracao_estimada: form.duracao_estimada, slot_id: form.slot_id },
-                                    { onSuccess: () => close() },
+                                    {
+                                        onSuccess: () => close(),
+                                        onError: (formErrors) => {
+                                            toast.error('Não foi possível cancelar o agendamento', {
+                                                description: getFirstErrorMessage(formErrors) || 'Tenta novamente.',
+                                            });
+                                        },
+                                    },
                                 )
                             }
-                            className="rounded bg-red-600 px-4 py-2 text-white hover:bg-red-700"
+                            className="cursor-pointer rounded bg-red-600 px-4 py-2 text-white transition-all duration-150 hover:bg-red-700 active:scale-95 active:bg-red-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
                         >
-                            Cancelar Agendamento
+                            Cancelar
                         </button>
 
                         <div className="flex gap-3">
-                            <button type="button" onClick={close} className="rounded bg-gray-300 px-4 py-2 hover:bg-gray-400">
+                            <button
+                                type="button"
+                                onClick={close}
+                                className="cursor-pointer rounded bg-gray-300 px-4 py-2 transition-all duration-150 hover:bg-gray-400 active:scale-95 active:bg-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2"
+                            >
                                 Fechar
                             </button>
 
-                            <button type="submit" className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">
+                            <button
+                                type="submit"
+                                className="cursor-pointer rounded bg-blue-600 px-4 py-2 text-white transition-all duration-150 hover:bg-blue-700 active:scale-95 active:bg-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                            >
                                 Guardar
                             </button>
                         </div>

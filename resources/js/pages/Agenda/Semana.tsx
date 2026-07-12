@@ -1,5 +1,5 @@
 import AppLayout from '@/layouts/app-layout';
-import { Head, router } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import { SlotModal } from '../Slots/SlotModal';
 
@@ -37,6 +37,7 @@ function formatYmdLocal(date: Date): string {
 
 export default function Semana({ agenda, start, end, teamColors }: SemanaPageProps) {
     const [slotModal, setSlotModal] = useState<AgendaSlot | null>(null);
+    const { agenda: agendaAtualizada } = usePage().props as { agenda: Record<string, AgendaSlot[]> };
 
     const diasSemana = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta'];
 
@@ -74,6 +75,18 @@ export default function Semana({ agenda, start, end, teamColors }: SemanaPagePro
         router.get('/agenda/semana', {
             start: formatYmdLocal(novaData),
         });
+    }
+
+    function refreshSlotModal() {
+        if (!slotModal) return;
+
+        const updatedSlot = Object.values(agendaAtualizada)
+            .flat()
+            .find((s) => s.id === slotModal.id);
+
+        if (updatedSlot) {
+            setSlotModal(updatedSlot);
+        }
     }
 
     return (
@@ -139,13 +152,12 @@ export default function Semana({ agenda, start, end, teamColors }: SemanaPagePro
                                                         {slot.schedules.map((sch: any) => (
                                                             <div key={sch.id} className={`rounded border border-${sch.estado_cor} ${sch.estado_cor} px-3 py-2`}>
                                                                 <div className="text-sm font-medium">Doente: {sch.waiting_list?.num_processo}</div>
-
                                                                 <div className="text-xs text-gray-600">{sch.waiting_list?.des_diagnostico}</div>
-
                                                                 <div className="mt-1 text-xs text-gray-700">Estado: {sch.estado}</div>
-
-                                                                <div className="text-xs text-gray-700">Duração: {sch.duracao_estimada} min</div>
+                                                                <div className="text-xs text-gray-700">Prioridade: {sch.waiting_list?.prioridade}</div>
                                                                 <div className="text-xs text-gray-700">Posição: {sch.waiting_list?.posicao_lista} / {sch.waiting_list?.posicao_patologia}</div>
+                                                                <div className="text-xs text-gray-700">Duração: {sch.duracao_estimada} min</div>
+
                                                             </div>
                                                         ))}
                                                     </div>
@@ -158,7 +170,7 @@ export default function Semana({ agenda, start, end, teamColors }: SemanaPagePro
                     })}
                 </div>
 
-                {slotModal && <SlotModal slot={slotModal} teamColors={teamColors} close={() => setSlotModal(null)} />}
+                {slotModal && <SlotModal slot={slotModal} teamColors={teamColors} close={() => setSlotModal(null)} refreshSlot={refreshSlotModal} />}
             </div>
         </AppLayout>
     );
