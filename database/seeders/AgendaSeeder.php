@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Seeder;
 
 class AgendaSeeder extends Seeder
@@ -12,6 +12,9 @@ class AgendaSeeder extends Seeder
      */
     public function run(): void
     {
-        //
+        DB::table('agenda')->insert([
+            ['created_at' => now(), 'updated_at' => now()],
+            ['created_at' => now(), 'updated_at' => now()],
+        ]);
     }
 }

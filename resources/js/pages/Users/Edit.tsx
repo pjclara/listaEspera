@@ -5,12 +5,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 export default function Edit() {
-    const { user, roles } = usePage().props;
+    const { user, roles, teams } = usePage().props;
 
     const { data, setData, put, processing } = useForm({
         name: user.name,
         email: user.email,
         role: user.roles[0]?.name || '',
+        team_id: user.team_id ? String(user.team_id) : '',
     });
 
     function submit(e) {
@@ -43,6 +44,22 @@ export default function Edit() {
                         {roles.map((role) => (
                             <option key={role.id} value={role.name}>
                                 {role.name}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                <div>
+                    <Label>Equipa</Label>
+                    <select
+                        className="border rounded p-2 w-full"
+                        value={data.team_id}
+                        onChange={(e) => setData('team_id', e.target.value)}
+                    >
+                        <option value="">Sem equipa</option>
+                        {teams.map((team) => (
+                            <option key={team.id} value={team.id}>
+                                {team.nome}
                             </option>
                         ))}
                     </select>

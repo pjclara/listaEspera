@@ -8,6 +8,7 @@ use App\Models\Team;
 use App\Models\WaitingList;
 use App\Models\WaitingListContact;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -18,13 +19,18 @@ class WaitingListController extends Controller
      */
     public function index(Request $request)
     {
+        $this->authorize('viewAny', WaitingList::class);
+
         if (!$request->estado) {
             $request->merge(['estado' => 'A']);
         }
         if (!$request->situacao) {
             $request->merge(['situacao' => ['Readmitido', 'Inscrito', 'Pre-Inscrito', 'Transferido Para']]);
         }
+        $user = $request->user();
+
         $waitingLists = WaitingList::with('admin', 'schedule', 'contacts')
+            ->when(! $user->isAdmin() && ! $user->isSecretary(), fn($q) => $q->where('equipa_id', $user->team_id))
             ->when($request->num_processo, fn($q) => $q->where('num_processo', $request->num_processo))
             ->when($request->situacao, fn($q) => $q->whereIn('situacao', (array) $request->situacao))
             ->when($request->estado, fn($q) => $q->where('estado', $request->estado))
@@ -47,12 +53,14 @@ class WaitingListController extends Controller
             ->pluck('estado');
 
         $equipaOptions = Team::query()
+            ->when(! $user->isAdmin() && ! $user->isSecretary(), fn($q) => $q->where('id', $user->team_id))
             ->select('id', 'nome')
             ->get();
 
         $slotsDisponiveis = \App\Models\Slot::query()
             ->where('data', '>=', now())
             ->where('is_swapped', false)
+            ->when(! $user->isAdmin() && ! $user->isSecretary(), fn($q) => $q->where('team_id', $user->team_id))
             ->with('team')
             ->get();
 
@@ -129,6 +137,8 @@ class WaitingListController extends Controller
 
     public function updateAdmin(Request $request, WaitingList $waitingList)
     {
+        $this->authorize('update', $waitingList);
+
         $data = $request->validate([
             'contactado'      => 'boolean',
             'data_contacto'   => 'required|date',
@@ -158,6 +168,8 @@ class WaitingListController extends Controller
 
     public function storeSchedule(Request $request, WaitingList $waitingList)
     {
+        $this->authorize('update', $waitingList);
+
         $data = $request->validate([
             'slot_id' => 'required|exists:slots,id',
             'duracao_estimada' => 'nullable|integer|min:1',
@@ -165,10 +177,16 @@ class WaitingListController extends Controller
             'pernoita' => 'required|string|in:sim,nao,talvez',
         ]);
 
+        $slot = \App\Models\Slot::findOrFail($data['slot_id']);
+
+        if (! $request->user()->can('schedule', $slot)) {
+            abort(403);
+        }
+
         Schedule::create([
             'waiting_list_id' => $waitingList->id,
             'slot_id' => $data['slot_id'],
-            'user_id' => auth()->id(),
+            'user_id' => Auth::id(),
             'estado' => $data['estado'],
             'duracao_estimada' => $data['duracao_estimada'],
             'pernoita' => $data['pernoita'],
@@ -183,12 +201,20 @@ class WaitingListController extends Controller
 
     public function updateSchedule(Request $request, WaitingList $waitingList, Schedule $schedule)
     {
+        $this->authorize('update', $waitingList);
+
         $data = $request->validate([
             'slot_id' => 'required|exists:slots,id',
             'duracao_estimada' => 'nullable|integer|min:1',
             'estado' => 'required|string',
             'pernoita' => 'required|string|in:sim,nao,talvez',
         ]);
+
+        $slot = \App\Models\Slot::findOrFail($data['slot_id']);
+
+        if (! $request->user()->can('schedule', $slot) || ! $request->user()->can('schedules.edit')) {
+            abort(403);
+        }
 
         $schedule->update($data);
 
@@ -202,8 +228,13 @@ class WaitingListController extends Controller
 
     public function export(Request $request)
     {
+        abort_unless($request->user()->can('waiting_list.export'), 403);
 
         $query = WaitingList::query();
+
+        if (! $request->user()->isAdmin() && ! $request->user()->isSecretary()) {
+            $query->where('equipa_id', $request->user()->team_id);
+        }
 
         if ($request->num_processo) {
             $query->where('num_processo', $request->num_processo);
@@ -228,6 +259,8 @@ class WaitingListController extends Controller
 
     public function updateObservacoesGerais(Request $request, WaitingList $waitingList)
     {
+        $this->authorize('update', $waitingList);
+
         $data = $request->validate([
             'observacoes_gerais' => 'nullable|string',
         ]);

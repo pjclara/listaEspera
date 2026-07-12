@@ -11,16 +11,37 @@ use Inertia\Inertia;
 
 class SlotController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $this->authorize('viewAny', Slot::class);
+
+        $user = $request->user();
+
+        $slotsQuery = Slot::with('team')->orderBy('data');
+
+        if (! $user->isAdmin() && ! $user->isSecretary()) {
+            $slotsQuery->where(function ($query) use ($user) {
+                $query->where('team_id', $user->team_id)
+                    ->orWhere('swapped_to_team_id', $user->team_id);
+            });
+        }
+
+        $teamsQuery = Team::query();
+
+        if (! $user->isAdmin() && ! $user->isSecretary()) {
+            $teamsQuery->where('id', $user->team_id);
+        }
+
         return Inertia::render('Slots/Index', [
-            'slots' => Slot::with('team')->orderBy('data')->get(),
-            'teams' => Team::all(),
+            'slots' => $slotsQuery->get(),
+            'teams' => $teamsQuery->get(),
         ]);
     }
 
     public function store(Request $request)
     {
+        $this->authorize('create', Slot::class);
+
         $data = $request->validate([
             'data' => 'required|date',
             'hora_inicio' => 'required',
@@ -75,6 +96,8 @@ class SlotController extends Controller
 
     public function update(Request $request, Slot $slot)
     {
+        $this->authorize('update', $slot);
+
         $data = $request->validate([
             'data' => 'required|date',
             'hora_inicio' => 'required',
@@ -91,6 +114,8 @@ class SlotController extends Controller
 
     public function destroy(Slot $slot)
     {
+        $this->authorize('delete', $slot);
+
         $slot->delete();
 
         return back()->with('success', 'Slot removido.');

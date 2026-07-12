@@ -4,35 +4,37 @@ namespace App\Services;
 
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Carbon\Carbon;
 
 class ExcelImportService
 {
     public function import($file)
     {
-        $rows = Excel::toArray([], $file)[0];
+        $sheets = Excel::toArray([], $file);
+        $rows = $sheets[0] ?? [];
 
-        // 1) Carregar toda a waiting_list numa só query
-        $existing = DB::table('waiting_list')->get()->keyBy('id');
+        if (empty($rows)) {
+            return [
+                "importados" => 0,
+                "atualizados" => 0,
+                "inalterados" => 0,
+            ];
+        }
 
-        $toInsert = [];
-        $toUpdate = [];
-        $history = [];
 
-        $imported = 0;
-        $updated = 0;
-        $unchanged = 0;
+        $parsedRows = [];
+        $ids = [];
 
         foreach ($rows as $index => $row) {
-
             if ($index === 0) continue;
             if (empty($row[0]) || !is_numeric($row[0])) continue;
+            if (($row[10] ?? '') !== "HSA - CIRURGIA") continue;
 
             $id = intval($row[0]);
 
-            if (($row[10] ?? '') !== "HSA - CIRURGIA") continue;
-
-            $data = [
+            $parsedRows[$id] = [
                 "id"                => $id,
                 "data_marcacao"     => $this->normalizeDate($row[1] ?? null),
                 "prioridade"        => $row[2] ?? "",
@@ -54,6 +56,30 @@ class ExcelImportService
                 "des_cancel"        => $row[18] ?? "",
             ];
 
+            $ids[] = $id;
+        }
+
+        if (empty($ids)) {
+            return [
+                "importados" => 0,
+                "atualizados" => 0,
+                "inalterados" => 0,
+            ];
+        }
+
+        // Carregar apenas registos que vêm no Excel (em vez da tabela toda)
+        $existing = DB::table('waiting_list')->whereIn('id', $ids)->get()->keyBy('id');
+
+        $toInsert = [];
+        $toUpdate = [];
+        $history = [];
+
+        $imported = 0;
+        $updated = 0;
+        $unchanged = 0;
+
+        foreach ($parsedRows as $id => $data) {
+
             // 2) Verificar se existe em memória (sem SELECT)
             if (!isset($existing[$id])) {
                 $toInsert[] = $data;
@@ -68,9 +94,9 @@ class ExcelImportService
 
                 $oldValue = $old[$field];
 
-                if (in_array($field, ['data_marcacao', 'data_operado', 'data_agenda', 'data_cancel'])) {
+                if (in_array($field, ['data_marcacao', 'data_operado', 'data_agenda', 'data_cancel'], true)) {
                     $oldNorm = $this->normalizeDate($oldValue);
-                    $newNorm = $this->normalizeDate($newValue);
+                    $newNorm = $newValue;
                 } else {
                     $oldNorm = trim((string)$oldValue);
                     $newNorm = trim((string)$newValue);
@@ -118,8 +144,14 @@ class ExcelImportService
             DB::table('waiting_list_history')->insert($history);
         }
 
-        $this->updatePositions();
-        $this->updatePositionsByPatologia();
+        if ($this->shouldRecalculatePositions()) {
+            $this->updatePositions();
+            $this->updatePositionsByPatologia();
+        } else {
+            Log::warning('Excel import: recálculo de posições adiado por volume elevado.', [
+                'total_waiting_list' => DB::table('waiting_list')->count(),
+            ]);
+        }
 
 
         return [
@@ -131,52 +163,48 @@ class ExcelImportService
 
     public function updatePositionsByPatologia()
     {
-        $grupos = DB::table('waiting_list')
-            ->selectRaw('LEFT(patologia, 2) as grupo')
-            ->groupBy('grupo')
-            ->pluck('grupo');
-
-        foreach ($grupos as $grupo) {
-
-            $ativos = DB::table('waiting_list')
-                ->whereRaw('LEFT(patologia, 2) = ?', [$grupo])
-                ->whereNotIn('estado', ['F', 'C'])
-                ->whereNotIn('situacao', ['Operado', 'Cancelado'])
-                ->orderBy('prioridade')
-                ->orderBy('data_marcacao')
-                ->orderBy('id')
-                ->get();
-
-            $pos = 1;
-
-            foreach ($ativos as $a) {
-                DB::table('waiting_list')
-                    ->where('id', $a->id)
-                    ->update(['posicao_patologia' => $pos]);
-                $pos++;
-            }
+        if (! Schema::hasColumn('waiting_list', 'posicao_patologia')) {
+            return;
         }
+
+        DB::statement("
+            UPDATE waiting_list wl
+            LEFT JOIN (
+                SELECT
+                    id,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY LEFT(COALESCE(patologia, ''), 2)
+                        ORDER BY prioridade, data_marcacao, id
+                    ) AS rn
+                FROM waiting_list
+                WHERE estado NOT IN ('F', 'C')
+                  AND situacao NOT IN ('Operado', 'Cancelado')
+            ) ranked ON ranked.id = wl.id
+            SET wl.posicao_patologia = ranked.rn
+        ");
     }
 
 
     public function updatePositions()
     {
-        $ativos = DB::table('waiting_list')
-            ->whereNotIn('estado', ['F', 'C'])
-            ->whereNotIn('situacao', ['Operado', 'Cancelado'])
-            ->orderBy('prioridade')
-            ->orderBy('data_marcacao')
-            ->orderBy('id')
-            ->get();
-
-        $pos = 1;
-
-        foreach ($ativos as $a) {
-            DB::table('waiting_list')
-                ->where('id', $a->id)
-                ->update(['posicao_lista' => $pos]);
-            $pos++;
+        if (! Schema::hasColumn('waiting_list', 'posicao_lista')) {
+            return;
         }
+
+        DB::statement("
+            UPDATE waiting_list wl
+            LEFT JOIN (
+                SELECT
+                    id,
+                    ROW_NUMBER() OVER (
+                        ORDER BY prioridade, data_marcacao, id
+                    ) AS rn
+                FROM waiting_list
+                WHERE estado NOT IN ('F', 'C')
+                  AND situacao NOT IN ('Operado', 'Cancelado')
+            ) ranked ON ranked.id = wl.id
+            SET wl.posicao_lista = ranked.rn
+        ");
     }
 
 
@@ -194,6 +222,14 @@ class ExcelImportService
 
         if ($value === "") return null;
 
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) {
+            return $value;
+        }
+
+        if (preg_match('/^\d{4}-\d{2}-\d{2}\s/', $value)) {
+            return substr($value, 0, 10);
+        }
+
         // dd/mm/yyyy
         if (str_contains($value, "/")) {
             try {
@@ -209,6 +245,18 @@ class ExcelImportService
         }
 
         return $value;
+    }
+
+    private function shouldRecalculatePositions(): bool
+    {
+        if (!Schema::hasColumn('waiting_list', 'posicao_lista') && !Schema::hasColumn('waiting_list', 'posicao_patologia')) {
+            return false;
+        }
+
+        $limit = (int) (getenv('EXCEL_IMPORT_POSITION_RECALC_LIMIT') ?: 20000);
+        $total = DB::table('waiting_list')->count();
+
+        return $total <= $limit;
     }
 
     private function saveHistory($id, $field, $old, $new)

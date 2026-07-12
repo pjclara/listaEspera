@@ -65,13 +65,19 @@ const mainNavItems: NavItem[] = [
         title: 'Utilizadores',
         url: '/users',
         icon: LayoutGrid,
-        permissions: ['view-users'],
+        permissions: ['users.view'],
     },
     {
         title: 'Equipas',
         url: '/teams',
         icon: LayoutGrid,
-        permissions: ['view-teams'],
+        permissions: ['teams.view'],
+    },
+    {
+        title: 'Roles & Permissões',
+        url: '/access-control',
+        icon: LayoutGrid,
+        permissions: ['users.manage'],
     },
 ];
 

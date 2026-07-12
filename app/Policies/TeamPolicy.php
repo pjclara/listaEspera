@@ -7,25 +7,52 @@ use App\Models\Team;
 
 class TeamPolicy
 {
+    public function viewAny(User $user): bool
+    {
+        return $user->can('teams.view');
+    }
+
     public function view(User $user, Team $team): bool
     {
+        if (! $user->can('teams.view')) {
+            return false;
+        }
+
         // Admin e secretária veem tudo
-        if ($user->role === 'admin' || $user->role === 'secretaria') {
+        if ($user->isAdmin() || $user->isSecretary()) {
             return true;
         }
 
-        // Membro só vê a sua equipa
-        return $user->team_id === $team->id;
+        // Líder e membro só veem a sua equipa
+        return $user->belongsToTeam($team->id);
+    }
+
+    public function create(User $user): bool
+    {
+        return $user->can('teams.manage');
     }
 
     public function update(User $user, Team $team): bool
     {
+        if (! $user->can('teams.manage')) {
+            return false;
+        }
+
         // Admin pode tudo
-        if ($user->role === 'admin') {
+        if ($user->isAdmin()) {
             return true;
         }
 
         // Líder pode editar a sua equipa
-        return $user->role === 'lider' && $user->team_id === $team->id;
+        return $user->isTeamLeader() && $user->belongsToTeam($team->id);
+    }
+
+    public function delete(User $user, Team $team): bool
+    {
+        if (! $user->can('teams.manage')) {
+            return false;
+        }
+
+        return $user->isAdmin();
     }
 }

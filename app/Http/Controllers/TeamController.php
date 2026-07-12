@@ -12,11 +12,27 @@ class TeamController extends Controller
     /**
      * Página principal de gestão de equipas
      */
-    public function index()
+    public function index(Request $request)
     {
+        $this->authorize('viewAny', Team::class);
+
+        $user = $request->user();
+
+        $teamsQuery = Team::with(['leader', 'users'])->orderBy('nome');
+
+        if (! $user->isAdmin() && ! $user->isSecretary()) {
+            $teamsQuery->where('id', $user->team_id);
+        }
+
+        $usersQuery = User::query()->orderBy('name');
+
+        if (! $user->isAdmin() && ! $user->isSecretary()) {
+            $usersQuery->where('team_id', $user->team_id);
+        }
+
         return Inertia::render('Teams/Index', [
-            'teams' => Team::with(['leader', 'users'])->orderBy('nome')->get(),
-            'users' => User::orderBy('name')->get(),
+            'teams' => $teamsQuery->get(),
+            'users' => $usersQuery->get(),
         ]);
     }
 
@@ -25,6 +41,8 @@ class TeamController extends Controller
      */
     public function store(Request $request)
     {
+        $this->authorize('create', Team::class);
+
         $data = $request->validate([
             'nome' => 'required|string|max:255',
             'cor' => 'required|string|max:20',
@@ -47,6 +65,8 @@ class TeamController extends Controller
      */
     public function update(Request $request, Team $team)
     {
+        $this->authorize('update', $team);
+
         $data = $request->validate([
             'nome' => 'required|string|max:255',
             'cor' => 'required|string|max:20',
@@ -69,6 +89,8 @@ class TeamController extends Controller
      */
     public function destroy(Team $team)
     {
+        $this->authorize('delete', $team);
+
         $team->delete();
 
         return back()->with('toast', [
@@ -83,12 +105,22 @@ class TeamController extends Controller
      */
     public function updateMembers(Request $request, Team $team)
     {
+        $this->authorize('update', $team);
+
         $data = $request->validate([
             'users' => 'array',
             'users.*' => 'exists:users,id',
         ]);
 
-        $team->users()->sync($data['users']);
+        $selectedUsers = $data['users'] ?? [];
+
+        // Remove utilizadores não selecionados desta equipa
+        User::query()->where('team_id', $team->id)
+            ->whereNotIn('id', $selectedUsers)
+            ->update(['team_id' => null]);
+
+        // Atribui equipa aos utilizadores selecionados
+        User::query()->whereIn('id', $selectedUsers)->update(['team_id' => $team->id]);
 
         return back()->with('toast', [
             'type' => 'success',

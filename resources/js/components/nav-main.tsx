@@ -16,13 +16,22 @@ import { NavItem } from "@/types";
 
 export function NavMain({ items }: { items: NavItem[] }) {
     const page = usePage();
+    const userPermissions = (page.props?.auth?.permissions ?? []) as string[];
+
+    const canViewItem = (item: NavItem) => {
+        if (!item.permissions?.length) {
+            return true;
+        }
+
+        return item.permissions.some((permission) => userPermissions.includes(permission));
+    };
 
     return (
         <SidebarGroup>
             <SidebarGroupLabel>Platform</SidebarGroupLabel>
 
             <SidebarMenu>
-                {items.map((item) => {
+                {items.filter(canViewItem).map((item) => {
                     if (item.children) {
                         return (
                             <Collapsible key={item.title} defaultOpen>

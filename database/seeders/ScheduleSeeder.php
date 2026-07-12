@@ -2,7 +2,10 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\Schedule;
+use App\Models\Slot;
+use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Seeder;
 
 class ScheduleSeeder extends Seeder
@@ -12,6 +15,6 @@ class ScheduleSeeder extends Seeder
      */
     public function run(): void
     {
-        //
+
     }
 }

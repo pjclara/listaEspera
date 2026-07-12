@@ -10,88 +10,100 @@ class RolesSeeder extends Seeder
 {
     public function run()
     {
-        /**
-         * ---------------------------------------------------------
-         * PERMISSÕES POR DOMÍNIO
-         * ---------------------------------------------------------
-         */
-        
+        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
-        // Agenda
-        Permission::create(['name' => 'agenda.view']);
-        Permission::create(['name' => 'agenda.manage']);
-
-        // Slots
-        Permission::create(['name' => 'slots.create']);
-        Permission::create(['name' => 'slots.edit']);
-        Permission::create(['name' => 'slots.delete']);
-
-        // Schedules (cirurgias)
-        Permission::create(['name' => 'schedules.view']);
-        Permission::create(['name' => 'schedules.create']);
-        Permission::create(['name' => 'schedules.edit']);
-        Permission::create(['name' => 'schedules.delete']);
-        Permission::create(['name' => 'schedules.move']);
-
-        // Waiting List
-        Permission::create(['name' => 'waiting_list.view']);
-        Permission::create(['name' => 'waiting_list.manage']);
-
-        // Users
-        Permission::create(['name' => 'users.view']);
-        Permission::create(['name' => 'users.manage']);
-
-        /**
-         * ---------------------------------------------------------
-         * ROLES
-         * ---------------------------------------------------------
-         */
-
-        $admin        = Role::create(['name' => 'admin']);
-        $secretaria   = Role::create(['name' => 'secretaria']);
-        $team_member  = Role::create(['name' => 'team_member']);
-        $team_leader  = Role::create(['name' => 'team_leader']);
-
-        /**
-         * ---------------------------------------------------------
-         * PERMISSÕES POR ROLE
-         * ---------------------------------------------------------
-         */
-
-        // ADMIN — tudo
-        $admin->givePermissionTo(Permission::all());
-
-        // SECRETARIA — gestão operacional
-        $secretaria->givePermissionTo([
+        $permissions = [
+            // Agenda
             'agenda.view',
+            'agenda.export',
+
+            // Slots
+            'slots.view',
             'slots.create',
             'slots.edit',
-            'waiting_list.view',
+            'slots.delete',
+
+            // Schedules (cirurgias)
             'schedules.view',
             'schedules.create',
             'schedules.edit',
+            'schedules.delete',
             'schedules.move',
+
+            // Waiting List
+            'waiting_list.view',
+            'waiting_list.manage',
+            'waiting_list.export',
+            'waiting_list.import',
+
+            // Users / Teams
             'users.view',
-        ]);
+            'users.manage',
+            'teams.view',
+            'teams.manage',
+        ];
 
-        // TEAM MEMBER — acesso clínico básico
-        $team_member->givePermissionTo([
-            'agenda.view',
-            'waiting_list.view',
-            'schedules.view',
-        ]);
+        foreach ($permissions as $permissionName) {
+            Permission::findOrCreate($permissionName, 'web');
+        }
 
-        // TEAM LEADER — acesso clínico avançado
-        $team_leader->givePermissionTo([
+        $admin = Role::findOrCreate('admin', 'web');
+        $secretaria = Role::findOrCreate('secretaria', 'web');
+        $teamMember = Role::findOrCreate('team_member', 'web');
+        $teamLeader = Role::findOrCreate('team_leader', 'web');
+
+        // Compatibilidade com nomes antigos
+        Role::findOrCreate('membro', 'web');
+        Role::findOrCreate('lider', 'web');
+
+        $allPermissions = Permission::all()->pluck('name')->toArray();
+
+        $admin->syncPermissions($allPermissions);
+
+        $secretaria->syncPermissions([
             'agenda.view',
-            'agenda.manage',
+            'agenda.export',
+            'slots.view',
             'slots.create',
             'slots.edit',
-            'waiting_list.view',
             'schedules.view',
             'schedules.create',
             'schedules.edit',
             'schedules.move',
+            'waiting_list.view',
+            'waiting_list.manage',
+            'waiting_list.export',
+            'waiting_list.import',
+            'users.view',
+            'teams.view',
         ]);
+
+        $teamMember->syncPermissions([
+            'agenda.view',
+            'slots.view',
+            'schedules.view',
+            'schedules.create',
+            'waiting_list.view',
+        ]);
+
+        $teamLeader->syncPermissions([
+            'agenda.view',
+            'agenda.export',
+            'slots.view',
+            'slots.create',
+            'slots.edit',
+            'schedules.view',
+            'schedules.create',
+            'schedules.edit',
+            'schedules.move',
+            'waiting_list.view',
+            'waiting_list.manage',
+            'waiting_list.export',
+            'teams.view',
+        ]);
+
+        // Roles legadas recebem o mesmo conjunto
+        Role::findByName('membro', 'web')->syncPermissions($teamMember->permissions);
+        Role::findByName('lider', 'web')->syncPermissions($teamLeader->permissions);
     }
 }

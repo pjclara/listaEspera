@@ -35,4 +35,29 @@ class User extends Authenticatable
     {
         return $this->hasMany(Schedule::class);
     }
+
+    public function isAdmin(): bool
+    {
+        return $this->hasRole('admin') || $this->role === 'admin';
+    }
+
+    public function isSecretary(): bool
+    {
+        return $this->hasRole('secretaria') || $this->role === 'secretaria';
+    }
+
+    public function isTeamLeader(): bool
+    {
+        return $this->hasAnyRole(['team_leader', 'lider']) || $this->role === 'lider';
+    }
+
+    public function isTeamMember(): bool
+    {
+        return $this->hasAnyRole(['team_member', 'membro']);
+    }
+
+    public function belongsToTeam(?int $teamId): bool
+    {
+        return ! is_null($teamId) && (int) $this->team_id === (int) $teamId;
+    }
 }
