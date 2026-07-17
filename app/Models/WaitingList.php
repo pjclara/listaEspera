@@ -36,12 +36,14 @@ class WaitingList extends Model
     public $incrementing = false; // porque o ID vem do Excel
 
     protected $casts = [
-        'data_marcacao' => 'date',
+        'data_marcacao' => 'date:Y-m-d',
+        'data_agenda'   => 'date:Y-m-d',
         'data_operado' => 'date',
-        'data_agenda' => 'date',
         'data_cancel' => 'date',
         'updated_from_excel_at' => 'datetime',
     ];
+
+
 
     public function history()
     {

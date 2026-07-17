@@ -3,35 +3,32 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Maatwebsite\Excel\Facades\Excel;
-use Maatwebsite\Excel\Excel as ExcelType;
-use App\Imports\WaitingListChunkImport;
+use App\Services\ExcelImportService;
 use Inertia\Inertia;
 
 class ExcelImportController extends Controller
 {
+    public function import(Request $request)
+    {
+        set_time_limit(0);
+        ini_set('max_execution_time', 0);
 
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx'
+        ]);
 
+        $uploadedFile = $request->file('file');
+        $extension = strtolower($uploadedFile->getClientOriginalExtension());
 
+        if ($extension !== 'xlsx') {
+            return redirect()->back()->withErrors(['file' => 'Apenas ficheiros .xlsx são suportados pelo importador atual.']);
+        }
 
-public function import(Request $request)
-{
-    set_time_limit(0);
-    ini_set('max_execution_time', 0);
-    
-    $request->validate([
-        'file' => 'required|file|mimes:xlsx,xls'
-    ]);
+        $importService = new ExcelImportService();
+        $importService->import($uploadedFile->path(), $extension);
 
-    Excel::import(
-        new WaitingListChunkImport(),
-        $request->file('file')
-    );
-
-    return redirect()->back()->with('success', 'Arquivo importado com sucesso.');
-}
-
-
+        return redirect()->back()->with('success', 'Arquivo importado com sucesso.');
+    }
 
     public function page()
     {

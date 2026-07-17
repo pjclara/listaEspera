@@ -2,7 +2,8 @@
 
 namespace App\Services;
 
-use Maatwebsite\Excel\Facades\Excel;
+use DateTimeInterface;
+use Spatie\SimpleExcel\SimpleExcelReader;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
@@ -10,50 +11,83 @@ use Carbon\Carbon;
 
 class ExcelImportService
 {
-    public function import($file)
+    public function import($file, string $type = 'xlsx')
     {
-        $sheets = Excel::toArray([], $file);
-        $rows = $sheets[0] ?? [];
-
-        if (empty($rows)) {
-            return [
-                "importados" => 0,
-                "atualizados" => 0,
-                "inalterados" => 0,
-            ];
-        }
-
+        // Lê o Excel com cabeçalho
+        $rows = SimpleExcelReader::create($file, $type)->getRows();
 
         $parsedRows = [];
         $ids = [];
 
-        foreach ($rows as $index => $row) {
-            if ($index === 0) continue;
-            if (empty($row[0]) || !is_numeric($row[0])) continue;
-            if (($row[10] ?? '') !== "HSA - CIRURGIA") continue;
+        // Mapa de equivalências de cabeçalhos
+        $headerMap = [
+            // ID
+            'Nº LISTA'          => 'id',
+            'NUM_LISTA'         => 'id',
+            'LISTA'             => 'id',
 
-            $id = intval($row[0]);
+            // Datas
+            'DTA_INSCR'         => 'data_marcacao',
+            'DTA_TMRG'          => 'data_marcacao',
+            'DATA_INSCRICAO'    => 'data_marcacao',
 
+            'DTA_AGEN'          => 'data_agenda',
+            'DATA_AGENDA'       => 'data_agenda',
+
+            // Prioridade
+            'PRIORIDADE'        => 'prioridade',
+            'PR'                => 'prioridade',
+
+            // Regime
+            'Regime'            => 'regime',
+            'Regim'             => 'regime',
+
+            // Situação
+            'Situacao'          => 'situacao',
+            'SITUACAO'          => 'situacao',
+
+            // Diagnóstico
+            'DES_DIAGNOSTICO'   => 'des_diagnostico',
+            'DES_DIAGNOSTIC'    => 'des_diagnostico',
+
+            // Nome clínico
+            'NOME_CLINICO'      => 'nome_clinico',
+            'NOME_CLIN'         => 'nome_clinico',
+
+            // Observações
+            'OBSERVACOES'       => 'observacoes_gerais',
+            'OBSER'             => 'observacoes_gerais',
+        ];
+
+        foreach ($rows as $row) {
+
+            // Converter cabeçalhos → nomes internos
+            $normalizedRow = [];
+
+            foreach ($row as $colName => $value) {
+                $colName = trim($colName);
+
+                if (isset($headerMap[$colName])) {
+                    $normalizedRow[$headerMap[$colName]] = $value;
+                }
+            }
+
+            // Extrair ID
+            $id = intval($normalizedRow['id'] ?? 0);
+            if ($id === 0) continue;
+
+            // Construir linha final
             $parsedRows[$id] = [
                 "id"                => $id,
-                "data_marcacao"     => $this->normalizeDate($row[1] ?? null),
-                "prioridade"        => $row[2] ?? "",
-                "regime"            => $row[3] ?? "",
-                "situacao"          => $row[4] ?? "",
-                "estado"            => $row[5] ?? "",
-                "data_operado"      => $this->normalizeDate($row[6] ?? null),
-                "data_agenda"       => $this->normalizeDate($row[7] ?? null),
-                "num_processo"      => $row[8] ?? "",
-                "sexo"              => $row[9] ?? "",
-                "des_grupo"         => $row[10] ?? "",
-                "cod_medico"        => $row[11] ?? "",
-                "nome_clinico"      => $row[12] ?? "",
-                "patologia"         => $row[13] ?? "",
-                "des_diagnostico"   => $row[14] ?? "",
-                "interv_cirurgica"  => $row[15] ?? "",
-                "data_cancel"       => $this->normalizeDate($row[16] ?? null),
-                "cancel"            => $row[17] ?? "",
-                "des_cancel"        => $row[18] ?? "",
+                "data_marcacao"     => $this->normalizeDate($normalizedRow['data_marcacao'] ?? null),
+                "prioridade"        => $normalizedRow['prioridade'] ?? "",
+                "regime"            => $normalizedRow['regime'] ?? "",
+                "situacao"          => $normalizedRow['situacao'] ?? "",
+                "data_agenda"       => $this->normalizeDate($normalizedRow['data_agenda'] ?? null),
+                "num_processo"      => $normalizedRow['num_processo'] ?? "",
+                "nome_clinico"      => $normalizedRow['nome_clinico'] ?? "",
+                "des_diagnostico"   => $normalizedRow['des_diagnostico'] ?? "",
+                "observacoes_gerais" => $normalizedRow['observacoes_gerais'] ?? "",
             ];
 
             $ids[] = $id;
@@ -67,7 +101,7 @@ class ExcelImportService
             ];
         }
 
-        // Carregar apenas registos que vêm no Excel (em vez da tabela toda)
+        // Carregar apenas os IDs presentes no Excel
         $existing = DB::table('waiting_list')->whereIn('id', $ids)->get()->keyBy('id');
 
         $toInsert = [];
@@ -80,7 +114,6 @@ class ExcelImportService
 
         foreach ($parsedRows as $id => $data) {
 
-            // 2) Verificar se existe em memória (sem SELECT)
             if (!isset($existing[$id])) {
                 $toInsert[] = $data;
                 $imported++;
@@ -96,10 +129,10 @@ class ExcelImportService
 
                 if (in_array($field, ['data_marcacao', 'data_operado', 'data_agenda', 'data_cancel'], true)) {
                     $oldNorm = $this->normalizeDate($oldValue);
-                    $newNorm = $newValue;
+                    $newNorm = $this->normalizeDate($newValue);
                 } else {
-                    $oldNorm = trim((string)$oldValue);
-                    $newNorm = trim((string)$newValue);
+                    $oldNorm = $this->normalizeString($oldValue);
+                    $newNorm = $this->normalizeString($newValue);
                 }
 
                 if ($oldNorm !== $newNorm) {
@@ -125,34 +158,30 @@ class ExcelImportService
             }
         }
 
-        // 3) Bulk insert (muito mais rápido)
+        // Inserções
         if (!empty($toInsert)) {
             DB::table('waiting_list')->insert($toInsert);
         }
 
-        // 4) Bulk update (via upsert)
+        // Atualizações via UPSERT
         if (!empty($toUpdate)) {
             DB::table('waiting_list')->upsert(
                 $toUpdate,
-                ['id'], // chave
-                array_keys($toUpdate[0]) // campos a atualizar
+                ['id'],
+                array_keys($toUpdate[0])
             );
         }
 
-        // 5) Bulk insert do histórico
+        // Histórico
         if (!empty($history)) {
             DB::table('waiting_list_history')->insert($history);
         }
 
+        // Recalcular posições
         if ($this->shouldRecalculatePositions()) {
             $this->updatePositions();
             $this->updatePositionsByPatologia();
-        } else {
-            Log::warning('Excel import: recálculo de posições adiado por volume elevado.', [
-                'total_waiting_list' => DB::table('waiting_list')->count(),
-            ]);
         }
-
 
         return [
             "importados" => $imported,
@@ -161,65 +190,19 @@ class ExcelImportService
         ];
     }
 
-    public function updatePositionsByPatologia()
-    {
-        if (! Schema::hasColumn('waiting_list', 'posicao_patologia')) {
-            return;
-        }
-
-        DB::statement("
-            UPDATE waiting_list wl
-            LEFT JOIN (
-                SELECT
-                    id,
-                    ROW_NUMBER() OVER (
-                        PARTITION BY LEFT(COALESCE(patologia, ''), 2)
-                        ORDER BY prioridade, data_marcacao, id
-                    ) AS rn
-                FROM waiting_list
-                WHERE estado NOT IN ('F', 'C')
-                  AND situacao NOT IN ('Operado', 'Cancelado')
-            ) ranked ON ranked.id = wl.id
-            SET wl.posicao_patologia = ranked.rn
-        ");
-    }
-
-
-    public function updatePositions()
-    {
-        if (! Schema::hasColumn('waiting_list', 'posicao_lista')) {
-            return;
-        }
-
-        DB::statement("
-            UPDATE waiting_list wl
-            LEFT JOIN (
-                SELECT
-                    id,
-                    ROW_NUMBER() OVER (
-                        ORDER BY prioridade, data_marcacao, id
-                    ) AS rn
-                FROM waiting_list
-                WHERE estado NOT IN ('F', 'C')
-                  AND situacao NOT IN ('Operado', 'Cancelado')
-            ) ranked ON ranked.id = wl.id
-            SET wl.posicao_lista = ranked.rn
-        ");
-    }
-
-
-
     private function normalizeDate($value)
     {
         if (!$value) return null;
 
-        // Excel date serial
+        if ($value instanceof DateTimeInterface) {
+            return Carbon::instance($value)->format('Y-m-d');
+        }
+
         if (is_numeric($value)) {
             return Carbon::createFromTimestamp(($value - 25569) * 86400)->format("Y-m-d");
         }
 
         $value = trim((string)$value);
-
         if ($value === "") return null;
 
         if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) {
@@ -230,26 +213,34 @@ class ExcelImportService
             return substr($value, 0, 10);
         }
 
-        // dd/mm/yyyy
         if (str_contains($value, "/")) {
             try {
                 return Carbon::createFromFormat("d/m/Y", $value)->format("Y-m-d");
-            } catch (\Exception $e) {
-            }
+            } catch (\Exception $e) {}
         }
 
-        // yyyy-mm-dd hh:mm:ss
         try {
             return Carbon::parse($value)->format("Y-m-d");
-        } catch (\Exception $e) {
+        } catch (\Exception $e) {}
+
+        return null;
+    }
+
+    private function normalizeString($value): string
+    {
+        if (is_null($value)) return '';
+
+        if ($value instanceof DateTimeInterface) {
+            return $value->format('Y-m-d H:i:s');
         }
 
-        return $value;
+        return trim((string)$value);
     }
 
     private function shouldRecalculatePositions(): bool
     {
-        if (!Schema::hasColumn('waiting_list', 'posicao_lista') && !Schema::hasColumn('waiting_list', 'posicao_patologia')) {
+        if (!Schema::hasColumn('waiting_list', 'posicao_lista') &&
+            !Schema::hasColumn('waiting_list', 'posicao_patologia')) {
             return false;
         }
 
@@ -259,15 +250,45 @@ class ExcelImportService
         return $total <= $limit;
     }
 
-    private function saveHistory($id, $field, $old, $new)
+    public function updatePositions()
     {
-        DB::table('waiting_list_history')->insert([
-            "waiting_list_id" => $id,
-            "campo_alterado"  => $field,
-            "valor_antigo"    => $old,
-            "valor_novo"      => $new,
-            "alterado_em"     => Carbon::now(),
-            "origem"          => "excel",
-        ]);
+        DB::statement("
+            UPDATE waiting_list wl
+            LEFT JOIN (
+                SELECT
+                    id,
+                    ROW_NUMBER() OVER (
+                        ORDER BY 
+                            prioridade,
+                            data_marcacao IS NULL,
+                            data_marcacao,
+                            id
+                    ) AS rn
+                FROM waiting_list
+            ) ranked ON ranked.id = wl.id
+            SET wl.posicao_lista = ranked.rn
+        ");
+    }
+
+    public function updatePositionsByPatologia()
+    {
+        DB::statement("
+            UPDATE waiting_list wl
+            LEFT JOIN (
+                SELECT
+                    id,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY LEFT(COALESCE(patologia, ''), 2)
+                        ORDER BY 
+                            prioridade,
+                            data_marcacao IS NULL,
+                            data_marcacao,
+                            id
+                    ) AS rn
+                FROM waiting_list
+                WHERE situacao NOT IN ('Operado', 'Cancelado')
+            ) ranked ON ranked.id = wl.id
+            SET wl.posicao_patologia = ranked.rn
+        ");
     }
 }

@@ -384,58 +384,71 @@ export default function Index({
                                 <th className="px-4 py-3">Diagnóstico</th>
                                 <th className="px-4 py-3">Data LE</th>
                                 <th className="px-4 py-3">Situação</th>
-                                <th className="px-4 py-3">Observações</th>
                                 <th className="px-4 py-3">Contactos</th>
                             </tr>
                         </thead>
 
                         <tbody className="text-sm text-gray-700">
                             {waitingLists.data.map((i: any, idx: number) => (
-                                <tr key={i.id} className={`transition hover:bg-gray-100 ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
-                                    <td className="px-4 py-3 font-medium text-gray-900">{i.id}</td>
-                                    <td className="px-4 py-3">{i.num_processo}</td>
-                                    <td className="px-4 py-3">{i.prioridade}</td>
-                                    <td className="px-4 py-3">{i.posicao_lista ?? '—'}</td>
-                                    <td className="px-4 py-3">{i.posicao_patologia ?? '—'}</td>
-                                    <td className="px-4 py-3">{i.des_diagnostico}</td>
-                                    <td className="px-4 py-3">{new Date(i.data_marcacao).toLocaleDateString()}</td>
-                                    <td className="px-4 py-3">{i.situacao}</td>
-                                    <td className="px-4 py-3">{i.observacoes ?? '—'}</td>
-                                    <td className="px-4 py-3">{i.contacts?.length ?? 0}</td>
+                                <>
+                                    <tr key={i.id} className={`transition hover:bg-gray-100 ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
+                                        <td className="px-4 py-3 font-medium text-gray-900">{i.id}</td>
+                                        <td className="px-4 py-3">{i.num_processo}</td>
+                                        <td className="px-4 py-3">{i.prioridade}</td>
+                                        <td className="px-4 py-3">{i.posicao_lista ?? '—'}</td>
+                                        <td className="px-4 py-3">{i.posicao_patologia ?? '—'}</td>
+                                        <td className="px-4 py-3">{i.des_diagnostico}</td>
+                                        <td className="px-4 py-3">{new Date(i.data_marcacao).toLocaleDateString()}</td>
+                                        <td className="px-4 py-3">{i.situacao}</td>
 
-                                    <td className="px-4 py-3">
-                                        <button
-                                            onClick={() => openModal(i)}
-                                            className={`rounded px-3 py-1 text-sm text-white transition cursor-pointer ${
-                                                i.contacts?.length ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-700 hover:bg-gray-800'
-                                            }`}
-                                        >
-                                            Contactos
-                                        </button>
-                                    </td>
-                                    <td className="px-4 py-3">
-                                        {permissions.includes('waiting_list.observacoes.gerais') && (
+                                        <td className="px-4 py-3">{i.contacts?.length ?? 0}</td>
+
+                                        {/* Botões */}
+                                        <td className="px-4 py-3">
                                             <button
-                                                onClick={() => openModalObservacoesGerais(i)}
-                                                className={`rounded px-3 py-1 text-sm text-white transition ${
-                                                    i.observacoes_gerais ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-700 hover:bg-gray-800'
+                                                onClick={() => openModal(i)}
+                                                className={`cursor-pointer rounded px-3 py-1 text-sm text-white transition ${
+                                                    i.contacts?.length ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-700 hover:bg-gray-800'
                                                 }`}
                                             >
-                                                Observações Gerais
+                                                Contactos
                                             </button>
-                                        )}
-                                    </td>
-                                    <td className="px-4 py-3">
-                                        {permissions.includes('schedules.create') && (
-                                            <button
-                                                onClick={() => openScheduleModal(i)}
-                                                className={`rounded px-3 py-1 text-sm text-white transition ${i.schedule ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'} `}
-                                            >
-                                                Agendar
-                                            </button>
-                                        )}
-                                    </td>
-                                </tr>
+                                        </td>
+
+                                        <td className="px-4 py-3">
+                                            {permissions.includes('waiting_list.observacoes.gerais') && (
+                                                <button
+                                                    onClick={() => openModalObservacoesGerais(i)}
+                                                    className={`rounded px-3 py-1 text-sm text-white transition ${
+                                                        i.observacoes_gerais ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-700 hover:bg-gray-800'
+                                                    }`}
+                                                >
+                                                    Observações Gerais
+                                                </button>
+                                            )}
+                                        </td>
+
+                                        <td className="px-4 py-3">
+                                            {permissions.includes('schedules.create') && (
+                                                <button
+                                                    onClick={() => openScheduleModal(i)}
+                                                    className={`rounded px-3 py-1 text-sm text-white transition ${i.schedule ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'} `}
+                                                >
+                                                    Agendar
+                                                </button>
+                                            )}
+                                        </td>
+                                    </tr>
+
+                                    {/* Linha extra com texto completo */}
+                                    {i.observacoes_gerais && i.observacoes_gerais.length > 0 && (
+                                        <tr className="bg-gray-50">
+                                            <td colSpan={13} className="px-4 py-3 text-gray-700 font-bold">
+                                                <div className="whitespace-pre-wrap">{i.observacoes_gerais}</div>
+                                            </td>
+                                        </tr>
+                                    )}
+                                </>
                             ))}
                         </tbody>
                     </table>
@@ -465,7 +478,15 @@ export default function Index({
                     </div>
                 </div>
             </div>
-            <AdminObservacoesModal open={showModal} selected={selected} form={form} setForm={setForm} errors={errors} onClose={closeModal} permissions={permissions} />
+            <AdminObservacoesModal
+                open={showModal}
+                selected={selected}
+                form={form}
+                setForm={setForm}
+                errors={errors}
+                onClose={closeModal}
+                permissions={permissions}
+            />
             <ScheduleModal
                 open={showScheduleModal}
                 selected={selectedSchedule}
