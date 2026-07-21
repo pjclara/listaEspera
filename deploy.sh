@@ -14,7 +14,7 @@ echo "==> composer install"
 composer install --no-dev --optimize-autoloader --quiet
 
 echo "==> migrate"
-php artisan migrate:fresh --seed --force
+php artisan migrate:fresh --seed
 
 
 echo "==> cache"
