@@ -9,7 +9,15 @@ export default function Mensal({
     start,
     end,
     teamColors,
-}: { agenda: Record<string, any[]>; month: string; start: string; end: string; teamColors: Record<number, string> }) {
+    teams,
+}: {
+    agenda: Record<string, any[]>;
+    month: string;
+    start: string;
+    end: string;
+    teamColors: Record<number, string>;
+    teams: { id: number; nome: string; cor: string }[];
+}) {
     const [slotModal, setSlotModal] = useState<any | null>(null);
 
     // normalizar chaves do backend
@@ -56,6 +64,8 @@ export default function Mensal({
         });
     }
 
+    const [creatingSlotDate, setCreatingSlotDate] = useState<string | null>(null);
+
     function refreshSlotModal() {
         if (!slotModal) return;
 
@@ -75,6 +85,113 @@ export default function Mensal({
         });
 
         window.open(`/agenda/export/pdf?${params.toString()}`, '_blank');
+    }
+
+    function CreateSlotModal({ date, onClose }) {
+        const [form, setForm] = useState({
+            data: date,
+            hora_inicio: '',
+            hora_fim: '',
+            team_id: '',
+            sala: '',
+            repeat_type: 'none',
+            repeat_until: '',
+            observacoes: '',
+        });
+
+        const { errors } = usePage().props;
+
+        const submit = () => {
+            router.post('/slots', form, {
+                onSuccess: onClose,
+            });
+        };
+
+        return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                <div className="w-full max-w-md rounded-xl bg-white p-6">
+                    <h2 className="mb-4 text-xl font-semibold">Criar Slot — {date}</h2>
+
+                    {/* Hora início */}
+                    <input
+                        type="time"
+                        value={form.hora_inicio}
+                        onChange={(e) => setForm({ ...form, hora_inicio: e.target.value })}
+                        className="mb-3 w-full rounded border px-3 py-2"
+                    />
+
+                    {/* Hora fim */}
+                    <input
+                        type="time"
+                        value={form.hora_fim}
+                        onChange={(e) => setForm({ ...form, hora_fim: e.target.value })}
+                        className="mb-3 w-full rounded border px-3 py-2"
+                    />
+
+                    {/* Equipa */}
+                    <select
+                        value={form.team_id}
+                        onChange={(e) => setForm({ ...form, team_id: e.target.value })}
+                        className="mb-3 w-full rounded border px-3 py-2"
+                    >
+                        <option value="">Selecione equipa…</option>
+                        {teams.map((team) => (
+                            <option key={team.id} value={team.id}>
+                                {team.nome}
+                            </option>
+                        ))}
+                    </select>
+
+                    {/* SALA */}
+                    <input
+                        type="text"
+                        placeholder="Sala"
+                        value={form.sala}
+                        onChange={(e) => setForm({ ...form, sala: e.target.value })}
+                        className="w-full rounded border px-3 py-2"
+                    />
+
+                    {/* REPETIÇÃO */}
+                    <select
+                        value={form.repeat_type}
+                        onChange={(e) => setForm({ ...form, repeat_type: e.target.value })}
+                        className="w-full rounded border px-3 py-2"
+                    >
+                        <option value="none">Não repetir</option>
+                        <option value="daily">Diariamente</option>
+                        <option value="weekly">Semanalmente</option>
+                        <option value="monthly">Mensalmente</option>
+                    </select>
+
+                    {/* Até data */}
+                    {form.repeat_type !== 'none' && (
+                        <input
+                            type="date"
+                            value={form.repeat_until || ''}
+                            onChange={(e) => setForm({ ...form, repeat_until: e.target.value })}
+                            className="w-full rounded border px-3 py-2"
+                        />
+                    )}
+
+                    {/* OBSERVAÇÕES */}
+                    <textarea
+                        placeholder="Observações"
+                        value={form.observacoes}
+                        onChange={(e) => setForm({ ...form, observacoes: e.target.value })}
+                        className="h-24 w-full rounded border px-3 py-2"
+                    />
+
+                    <div className="flex justify-end gap-3">
+                        <button onClick={onClose} className="rounded bg-gray-300 px-4 py-2">
+                            Cancelar
+                        </button>
+                        <button onClick={submit} className="rounded bg-blue-600 px-4 py-2 text-white">
+                            Criar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
     }
 
     useEffect(() => {
@@ -130,7 +247,15 @@ export default function Mensal({
                         const slotsDoDia = agendaNormalizada[data] ?? [];
 
                         return (
-                            <div key={data} className={`min-h-[120px] rounded-xl border bg-white p-2 ${mesAtual ? '' : 'opacity-40'}`}>
+                            <div
+                                key={data}
+                                className="min-h-[120px] cursor-pointer rounded-xl border bg-white p-2"
+                                onClick={(e) => {
+                                    if (e.target === e.currentTarget) {
+                                        setCreatingSlotDate(data);
+                                    }
+                                }}
+                            >
                                 <div className="mb-1 text-sm font-semibold">{diaMes}</div>
 
                                 <div className="space-y-1">
@@ -158,6 +283,16 @@ export default function Mensal({
                         );
                     })}
                 </div>
+
+                {creatingSlotDate && (
+                    <CreateSlotModal
+                        date={creatingSlotDate}
+                        onClose={() => {
+                            setCreatingSlotDate(null);
+                            router.reload({ only: ['agenda'] });
+                        }}
+                    />
+                )}
 
                 {slotModal && <SlotModal slot={slotModal} teamColors={teamColors} close={() => setSlotModal(null)} refreshSlot={refreshSlotModal} />}
             </div>

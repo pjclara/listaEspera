@@ -174,6 +174,8 @@ class AgendaController extends Controller
                 return Carbon::parse($slot->data)->toDateString(); // NORMALIZAÇÃO
             });
 
+
+
         $teams = \App\Models\Team::all();
 
         $teamColors = [];
@@ -203,6 +205,7 @@ class AgendaController extends Controller
             'start' => $start->toDateString(),
             'end' => $end->toDateString(),
             'teamColors' => $teamColors,
+            'teams' => $teams,
         ]);
     }
 }
