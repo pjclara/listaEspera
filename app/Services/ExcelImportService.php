@@ -44,6 +44,10 @@ class ExcelImportService
         'DTA_CANCEL' => 'data_cancel',
         'CANCEL' => 'cancel',
         'DES_CANCEL' => 'des_cancel',
+        'PATOLOGIA'          => 'patologia',
+        'COD_MEDICO'         => 'cod_medico',
+        'INTERV_CIRURGICA'   => 'interv_cirurgica',
+        'UTENTE'       => 'num_processo',
     ];
 
     private array $dateFields = [
@@ -55,6 +59,7 @@ class ExcelImportService
 
     public function import($file, string $type = 'xlsx', int $batchSize = self::DEFAULT_BATCH_SIZE)
     {
+
         $rows = SimpleExcelReader::create($file, $type)->getRows();
 
         $buffer = [];
@@ -65,13 +70,17 @@ class ExcelImportService
         ];
 
         foreach ($rows as $row) {
+
             $normalizedRow = $this->normalizeRow($row);
 
             if ($normalizedRow === null) {
                 continue;
             }
 
+
+
             $buffer[$normalizedRow['id']] = $normalizedRow;
+
 
             if (count($buffer) >= $batchSize) {
                 $stats = $this->mergeStats($stats, $this->processBatch($buffer));
@@ -103,11 +112,12 @@ class ExcelImportService
             }
         }
 
-        $desGrupo = $this->normalizeString($normalizedRow['des_grupo'] ?? null);
-        if (strtolower($desGrupo) !== strtolower(self::SERVICE_GROUP)) {
-            return null;
+        if (isset($normalizedRow['des_grupo'])) {
+            $desGrupo = $this->normalizeString($normalizedRow['des_grupo'] ?? null);
+            if (strtolower($desGrupo) !== strtolower(self::SERVICE_GROUP)) {
+                return null;
+            }
         }
-
         $id = (int) ($normalizedRow['id'] ?? 0);
         if ($id <= 0) {
             return null;
@@ -128,10 +138,12 @@ class ExcelImportService
             'des_diagnostico' => $normalizedRow['des_diagnostico'] ?? '',
             'observacoes_gerais' => $normalizedRow['observacoes_gerais'] ?? '',
             'sexo' => $normalizedRow['sexo'] ?? '',
-            'des_grupo' => $desGrupo,
             'cancel' => $normalizedRow['cancel'] ?? '',
             'des_cancel' => $normalizedRow['des_cancel'] ?? '',
             'patologia' => $normalizedRow['patologia'] ?? '',
+            'des_grupo'          => $normalizedRow['des_grupo'] ?? '',
+            'cod_medico'         => $normalizedRow['cod_medico'] ?? null,
+            'interv_cirurgica'   => $normalizedRow['interv_cirurgica'] ?? '',
         ];
     }
 
@@ -196,6 +208,8 @@ class ExcelImportService
                 $stats['inalterados']++;
             }
         }
+
+
 
         DB::transaction(function () use ($toInsert, $toUpdate, $history): void {
             $this->saveInsertBatch($toInsert);
