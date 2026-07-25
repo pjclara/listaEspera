@@ -24,7 +24,7 @@ export default function ObservacoesGeraisModal({
                         router.put(
                             `/waiting-lists/${selected.id}/observacoes-gerais`,
                             {
-                                observacoes_gerais: form.observacoes_gerais,
+                                observacoes_secretaria: form.observacoes_secretaria,
                             },
                             {
                                 preserveScroll: true,
@@ -40,19 +40,19 @@ export default function ObservacoesGeraisModal({
                         </span>
 
                         <textarea
-                            value={form.observacoes_gerais}
+                            value={form.observacoes_secretaria}
                             onChange={(e) =>
                                 setForm({
                                     ...form,
-                                    observacoes_gerais: e.target.value,
+                                    observacoes_secretaria: e.target.value,
                                 })
                             }
                             className="h-32 w-full rounded border px-3 py-2"
                         />
 
-                        {errors.observacoes_gerais && (
+                        {errors.observacoes_secretaria && (
                             <p className="mt-1 text-sm text-red-600">
-                                {errors.observacoes_gerais}
+                                {errors.observacoes_secretaria}
                             </p>
                         )}
                     </label>

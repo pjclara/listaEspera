@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::table('waiting_list', function (Blueprint $table) {
             $table->text('observacoes_gerais')->nullable()->after('des_cancel');
+            $table->text('observacoes_secretaria')->nullable()->after('observacoes_gerais');
         });
     }
 
@@ -23,6 +24,7 @@ return new class extends Migration
     {
         Schema::table('waiting_list', function (Blueprint $table) {
             $table->dropColumn('observacoes_gerais');
+            $table->dropColumn('observacoes_secretaria');
         });
     }
 };

@@ -31,6 +31,7 @@ class WaitingList extends Model
         'equipa_id',
         'updated_from_excel_at',
         'observacoes_gerais',
+        'observacoes_secretaria'
     ];
 
     public $incrementing = false; // porque o ID vem do Excel

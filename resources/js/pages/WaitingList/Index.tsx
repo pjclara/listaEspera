@@ -30,6 +30,7 @@ type WaitingListItem = {
     situacao?: string | null;
     contacts?: unknown[];
     observacoes_gerais?: string | null;
+    observacoes_secretaria?:string | null;
     admin?: {
         contactado?: boolean | null;
         data_contacto?: string | null;
@@ -65,7 +66,7 @@ type ScheduleForm = {
 };
 
 type ObservacoesGeraisForm = {
-    observacoes_gerais: string;
+    observacoes_secretaria: string;
 };
 
 type CallForm = {
@@ -143,7 +144,7 @@ export default function Index({
     const [showObservacoesGeraisModal, setShowObservacoesGeraisModal] = useState(false);
     const [selectedObservacoes, setSelectedObservacoes] = useState<WaitingListItem | null>(null);
     const [observacoesGeraisForm, setObservacoesGeraisForm] = useState<ObservacoesGeraisForm>({
-        observacoes_gerais: '',
+        observacoes_secretaria: '',
     });
 
     const [modalChamadaAberto, setModalChamadaAberto] = useState(false);
@@ -255,7 +256,7 @@ export default function Index({
     const openObservacoesGeraisModal = (item: WaitingListItem) => {
         setSelectedObservacoes(item);
         setObservacoesGeraisForm({
-            observacoes_gerais: item.observacoes_gerais ?? '',
+            observacoes_secretaria: item.observacoes_secretaria ?? '',
         });
         setShowObservacoesGeraisModal(true);
     };
@@ -477,7 +478,7 @@ export default function Index({
                                                         type="button"
                                                         onClick={() => openObservacoesGeraisModal(i)}
                                                         className={`rounded px-3 py-1 text-sm text-white transition ${
-                                                            i.observacoes_gerais ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-700 hover:bg-gray-800'
+                                                            i.observacoes_secretaria ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-700 hover:bg-gray-800'
                                                         }`}
                                                     >
                                                         Observações
@@ -512,7 +513,7 @@ export default function Index({
                                         {i.observacoes_gerais && (
                                             <tr className="bg-gray-50">
                                                 <td colSpan={12} className="px-4 py-3 text-gray-700">
-                                                    <div className="whitespace-pre-wrap">{i.observacoes_gerais}</div>
+                                                    <div className="whitespace-pre-wrap">{i.observacoes_gerais} | {i.observacoes_secretaria}</div>
                                                 </td>
                                             </tr>
                                         )}

@@ -261,7 +261,7 @@ class WaitingListController extends Controller
         $this->authorize('update', $waitingList);
 
         $data = $request->validate([
-            'observacoes_gerais' => 'nullable|string',
+            'observacoes_secretaria' => 'nullable|string',
         ]);
 
         $waitingList->update($data);
