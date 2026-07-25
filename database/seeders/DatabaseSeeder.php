@@ -17,7 +17,7 @@ class DatabaseSeeder extends Seeder
         // Seed Users
         $admin = User::create([
             'name' => 'Admin User',
-            'email' => 'admin@gmail.com',
+            'email' => 'pjclara@gmail.com',
             'password' => bcrypt('password')
         ]);
         // Seed Teams

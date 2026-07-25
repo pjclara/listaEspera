@@ -4,6 +4,7 @@ interface AdminObservacoesModalProps {
     open: boolean;
     selected: any;
     form: {
+        contactado: boolean;
         data_contacto: string;
         contactado_por: string;
         observacoes: string;
@@ -11,12 +12,14 @@ interface AdminObservacoesModalProps {
     };
     setForm: React.Dispatch<
         React.SetStateAction<{
+            contactado: boolean;
             data_contacto: string;
             contactado_por: string;
             observacoes: string;
             contact_result: string;
         }>
     >;
+    errors?: any;
     onClose: () => void;
     permissions: string[];
 }

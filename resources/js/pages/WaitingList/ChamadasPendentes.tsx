@@ -1,6 +1,7 @@
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
+import SecretariaRespostaModal from '@/components/waiting-lists/SecretariaRespostaModal';
 import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem } from '@/types';
 
@@ -24,6 +25,22 @@ export default function ChamadasPendentes() {
         if (filtro.data && c.pedido_em.slice(0, 10) !== filtro.data) return false;
         return true;
     });
+
+    const [modalAberto, setModalAberto] = useState(false);
+    const [callSelecionada, setCallSelecionada] = useState(null);
+    const [doenteSelecionado, setDoenteSelecionado] = useState(null);
+
+    function abrirModal(call: any) {
+        setCallSelecionada(call);
+        setDoenteSelecionado(call.doente);
+        setModalAberto(true);
+    }
+
+    function fecharModal() {
+        setModalAberto(false);
+        setCallSelecionada(null);
+        setDoenteSelecionado(null);
+    }
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -106,17 +123,17 @@ export default function ChamadasPendentes() {
 
                                     <td className="px-6 py-4">{c.tipo_chamada}</td>
 
-                                    <td className="px-6 py-4">{c.pedido_por_user?.nome}</td>
+                                    <td className="px-6 py-4">{c.pedido_por_user?.name}</td>
 
                                     <td className="px-6 py-4">{c.pedido_em}</td>
 
                                     <td className="px-6 py-4">
-                                        <Link
-                                            href={`/waiting-list/chamada/${c.id}/responder`}
-                                            className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+                                        <button
+                                            onClick={() => abrirModal(c)}
+                                            className="rounded-lg bg-green-600 px-4 py-2 text-white hover:bg-green-700"
                                         >
                                             Responder
-                                        </Link>
+                                        </button>
                                     </td>
                                 </tr>
                             ))}
@@ -126,6 +143,8 @@ export default function ChamadasPendentes() {
                     {chamadasFiltradas.length === 0 && <p className="py-6 text-center text-gray-500">Nenhuma chamada pendente encontrada.</p>}
                 </div>
             </div>
+
+            <SecretariaRespostaModal open={modalAberto} onClose={fecharModal} call={callSelecionada} doente={doenteSelecionado} />
         </AppLayout>
     );
 }

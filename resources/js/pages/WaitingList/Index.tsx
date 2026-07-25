@@ -1,12 +1,78 @@
 import AdminObservacoesModal from '@/components/waiting-lists/AdminObservacoesModal';
 import ObservacoesGeraisModal from '@/components/waiting-lists/ObservacoesGeraisModal';
-import AppLayout from '@/layouts/app-layout';
-import { Head, Link, PageProps, router } from '@inertiajs/react';
-import { useEffect, useState } from 'react';
-
+import PedirChamadaModal from '@/components/waiting-lists/PedirChamadaModal';
 import ScheduleModal from '@/components/waiting-lists/ScheduleModal';
+import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem } from '@/types';
-import { usePage } from '@inertiajs/react';
+import { Head, Link, PageProps, router, usePage } from '@inertiajs/react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
+
+type SlotDisponivel = {
+    id: number;
+    team_id: number;
+    team: { id: number; nome: string };
+    sala: string;
+    data: string;
+    hora_inicio: string;
+    hora_fim: string;
+    tipo: 'programado' | 'ambulatorio' | 'urgente';
+    is_swapped: boolean;
+};
+
+type WaitingListItem = {
+    id: number;
+    num_processo: string;
+    prioridade?: string | null;
+    posicao_lista?: number | null;
+    posicao_patologia?: number | null;
+    des_diagnostico?: string | null;
+    data_marcacao?: string | null;
+    situacao?: string | null;
+    contacts?: unknown[];
+    observacoes_gerais?: string | null;
+    admin?: {
+        contactado?: boolean | null;
+        data_contacto?: string | null;
+        contactado_por?: string | null;
+        observacoes?: string | null;
+    } | null;
+    schedule?: {
+        slot_id: string | number;
+        duracao_estimada: string | number;
+        estado: string;
+    } | null;
+};
+
+type Filters = {
+    num_processo?: string;
+    situacao?: string[] | string;
+    prioridade?: string;
+    estado?: string;
+    des_diagnostico?: string;
+};
+
+type ContactForm = {
+    contactado: boolean;
+    data_contacto: string;
+    contactado_por: string;
+    observacoes: string;
+};
+
+type ScheduleForm = {
+    slot_id: string;
+    duracao_estimada: string;
+    estado: string;
+};
+
+type ObservacoesGeraisForm = {
+    observacoes_gerais: string;
+};
+
+type CallForm = {
+    tipo_chamada: string;
+    data_pretendida: string;
+    observacoes: string;
+};
 
 export default function Index({
     waitingLists,
@@ -18,237 +84,198 @@ export default function Index({
     prioridadeOptionsState,
     permissions,
 }: PageProps<{
-    waitingLists: any;
-    filters: any;
+    waitingLists: {
+        data: WaitingListItem[];
+        current_page: number;
+        last_page: number;
+        links: Array<{
+            url: string | null;
+            label: string;
+            active: boolean;
+        }>;
+    };
+    filters: Filters;
     situacaoOptions: string[];
     estadoOptions: string[];
     equipaOptions: { id: number; nome: string }[];
-    slotsDisponiveis: {
-        id: number;
-        team_id: number;
-        team: { id: number; nome: string };
-        sala: string;
-        data: string;
-        hora_inicio: string;
-        hora_fim: string;
-        tipo: 'programado' | 'ambulatorio' | 'urgente';
-        is_swapped: boolean;
-    }[];
+    slotsDisponiveis: SlotDisponivel[];
+    prioridadeOptionsState: string[];
+    permissions: string[];
 }>) {
     const safeFilters = filters ?? {};
 
+    const initialSituacao = useMemo(() => {
+        if (Array.isArray(safeFilters.situacao)) {
+            return safeFilters.situacao;
+        }
+
+        if (typeof safeFilters.situacao === 'string' && safeFilters.situacao !== '') {
+            return [safeFilters.situacao];
+        }
+
+        return [];
+    }, [safeFilters.situacao]);
+
     const [numProcesso, setNumProcesso] = useState(safeFilters.num_processo ?? '');
-    const [situacao, setSituacao] = useState(Array.isArray(safeFilters.situacao) ? safeFilters.situacao : []);
+    const [situacao, setSituacao] = useState<string[]>(initialSituacao);
     const [showSituacaoDropdown, setShowSituacaoDropdown] = useState(false);
     const [prioridade, setPrioridade] = useState(safeFilters.prioridade ?? '');
-
     const [estado, setEstado] = useState(safeFilters.estado ?? '');
-    //des_diagnostico
     const [desDiagnostico, setDesDiagnostico] = useState(safeFilters.des_diagnostico ?? '');
 
-    const situacaoOptionsState = situacaoOptions ?? [];
-    const estadoOptionsState = estadoOptions ?? [];
-
-    const [showModal, setShowModal] = useState(false);
-    const [selected, setSelected] = useState<any>(null);
-
-    const { errors } = usePage().props;
-
-    const [form, setForm] = useState({
+    const [showContactModal, setShowContactModal] = useState(false);
+    const [selectedContact, setSelectedContact] = useState<WaitingListItem | null>(null);
+    const [contactForm, setContactForm] = useState<ContactForm>({
         contactado: false,
         data_contacto: '',
         contactado_por: '',
         observacoes: '',
     });
 
+    const [showScheduleModal, setShowScheduleModal] = useState(false);
+    const [selectedSchedule, setSelectedSchedule] = useState<WaitingListItem | null>(null);
+    const [scheduleForm, setScheduleForm] = useState<ScheduleForm>({
+        slot_id: '',
+        duracao_estimada: '',
+        estado: '',
+    });
+
+    const [showObservacoesGeraisModal, setShowObservacoesGeraisModal] = useState(false);
+    const [selectedObservacoes, setSelectedObservacoes] = useState<WaitingListItem | null>(null);
+    const [observacoesGeraisForm, setObservacoesGeraisForm] = useState<ObservacoesGeraisForm>({
+        observacoes_gerais: '',
+    });
+
+    const [modalChamadaAberto, setModalChamadaAberto] = useState(false);
+    const [doenteSelecionado, setDoenteSelecionado] = useState<string | null>(null);
+    const [callForm, setCallForm] = useState<CallForm>({
+        tipo_chamada: '',
+        data_pretendida: '',
+        observacoes: '',
+    });
+
+    const { errors } = usePage().props as { errors: Record<string, string> };
+
     useEffect(() => {
-        if (typeof safeFilters.situacao === 'string') {
-            setSituacao([safeFilters.situacao]);
-        }
-    }, []);
+        setSituacao(initialSituacao);
+    }, [initialSituacao]);
 
-    const openModal = (item: any) => {
-        setSelected(item);
+    const filterParams = () => ({
+        num_processo: numProcesso,
+        situacao,
+        estado,
+        des_diagnostico: desDiagnostico,
+        prioridade,
+    });
 
-        // format data
+    const applyFilters = () => {
+        router.get('/waiting-lists', filterParams(), {
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+        });
+    };
+
+    const resetFilters = () => {
+        setNumProcesso('');
+        setSituacao([]);
+        setPrioridade('');
+        setEstado('');
+        setDesDiagnostico('');
+
+        router.get(
+            '/waiting-lists',
+            {},
+            {
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+            },
+        );
+    };
+
+    const exportExcel = () => {
+        const params = new URLSearchParams();
+
+        if (numProcesso) params.set('num_processo', numProcesso);
+        if (estado) params.set('estado', estado);
+        if (desDiagnostico) params.set('des_diagnostico', desDiagnostico);
+        if (prioridade) params.set('prioridade', prioridade);
+
+        situacao.forEach((item) => params.append('situacao[]', item));
+
+        window.location.href = `${route('waiting.export')}?${params.toString()}`;
+    };
+
+    const openContactModal = (item: WaitingListItem) => {
+        setSelectedContact(item);
+
         const formattedData = item.admin?.data_contacto ? new Date(item.admin.data_contacto).toISOString().split('T')[0] : '';
 
-        setForm({
+        setContactForm({
             contactado: item.admin?.contactado ?? false,
             data_contacto: formattedData,
             contactado_por: item.admin?.contactado_por ?? '',
             observacoes: item.admin?.observacoes ?? '',
         });
 
-        setShowModal(true);
+        setShowContactModal(true);
     };
 
-    const closeModal = () => {
-        setShowModal(false);
-        setSelected(null);
+    const closeContactModal = () => {
+        setShowContactModal(false);
+        setSelectedContact(null);
     };
 
-    const applyFilters = () => {
-        router.get(
-            '/waiting-lists',
-            {
-                num_processo: numProcesso,
-                situacao: situacao,
-                estado: estado,
-                des_diagnostico: desDiagnostico,
-                prioridade: prioridade,
-            },
-            {
-                preserveState: true,
-                preserveScroll: true,
-            },
-        );
-    };
-    const [showScheduleModal, setShowScheduleModal] = useState(false);
-    const [scheduleForm, setScheduleForm] = useState({
-        slot_id: '',
-        duracao_estimada: '',
-        estado: '', // Adicione o campo 'estado' ao estado do formulário
-    });
-    const [selectedSchedule, setSelectedSchedule] = useState(null);
-
-    const [showObservacoesGeraisModal, setShowObservacoesGeraisModal] = useState(false);
-    const [observacoesGeraisForm, setObservacoesGeraisForm] = useState({
-        observacoes_gerais: '',
-    });
-
-    const openModalObservacoesGerais = (item: any) => {
-        setSelected(item);
-
-        setObservacoesGeraisForm({
-            observacoes_gerais: item.observacoes_gerais ?? '',
-        });
-
-        setShowObservacoesGeraisModal(true);
-    };
-
-    const closeObservacoesGeraisModal = () => {
-        setShowObservacoesGeraisModal(false);
-        setSelected(null);
-    };
-
-    const openScheduleModal = (item: any) => {
+    const openScheduleModal = (item: WaitingListItem) => {
         setSelectedSchedule(item);
 
         if (item.schedule) {
-            // modo edição
             setScheduleForm({
-                slot_id: item.schedule.slot_id,
-                duracao_estimada: item.schedule.duracao_estimada,
-                estado: item.schedule.estado, // Preenche o campo 'estado' com o valor existente
+                slot_id: String(item.schedule.slot_id ?? ''),
+                duracao_estimada: String(item.schedule.duracao_estimada ?? ''),
+                estado: item.schedule.estado ?? '',
             });
         } else {
-            // modo criação
             setScheduleForm({
                 slot_id: '',
                 duracao_estimada: '',
-                estado: '', // Adicione o campo 'estado' ao estado do formulário
+                estado: '',
             });
         }
 
         setShowScheduleModal(true);
     };
 
-    useEffect(() => {
-        if (typeof safeFilters.situacao === 'string') {
-            setSituacao([safeFilters.situacao]);
-        }
-    }, []);
-
     const closeScheduleModal = () => {
         setShowScheduleModal(false);
         setSelectedSchedule(null);
     };
 
-    const updateEstado = (newEstado: string) => {
-        setEstado(newEstado);
-
-        router.get(
-            '/waiting-lists',
-            {
-                num_processo: numProcesso,
-                situacao: situacao,
-                estado: newEstado,
-                des_diagnostico: desDiagnostico,
-                prioridade: prioridade,
-            },
-            {
-                preserveState: true,
-                preserveScroll: true,
-            },
-        );
+    const openObservacoesGeraisModal = (item: WaitingListItem) => {
+        setSelectedObservacoes(item);
+        setObservacoesGeraisForm({
+            observacoes_gerais: item.observacoes_gerais ?? '',
+        });
+        setShowObservacoesGeraisModal(true);
     };
 
-    // quando situacao muda, atualizar a lista
-    useEffect(() => {
-        router.get(
-            '/waiting-lists',
-            {
-                num_processo: numProcesso,
-                situacao,
-                estado,
-                des_diagnostico: desDiagnostico,
-                prioridade,
-            },
-            {
-                preserveState: true,
-                preserveScroll: true,
-                only: ['waitingLists'], // <- nome da prop que recebes no Inertia
-            },
-        );
-    }, [situacao, estado, prioridade, numProcesso, desDiagnostico]);
-
-    const updatePrioridade = (newSituacao: string) => {
-        setPrioridade(newSituacao);
-
-        router.get(
-            '/waiting-lists',
-            {
-                num_processo: numProcesso,
-                situacao: situacao,
-                estado: estado,
-                des_diagnostico: desDiagnostico,
-                prioridade: newSituacao,
-            },
-            {
-                preserveState: true,
-                preserveScroll: true,
-            },
-        );
+    const closeObservacoesGeraisModal = () => {
+        setShowObservacoesGeraisModal(false);
+        setSelectedObservacoes(null);
     };
 
-    const hasAdminData = (item: any) => {
-        const admin = item.admin;
+    const [modalAberto, setModalAberto] = useState(false);
 
-        if (!admin) return false;
-
-        return admin.contactado || admin.data_contacto || admin.contactado_por || admin.observacoes;
-    };
-
-    const [form, setForm] = useState({
-        tipo_chamada: '',
-        data_pretendida: '',
-        observacoes: '',
-    });
-
-    function update(field: string, value: any) {
-        setForm((prev) => ({ ...prev, [field]: value }));
+    function modalAbertoPedirChamadaModal(doente: any) {
+        setDoenteSelecionado(doente);
+        setModalAberto(true);
     }
 
-    const exportExcel = () => {
-        const params = new URLSearchParams({
-            num_processo: numProcesso,
-            estado: estado,
-            des_diagnostico: desDiagnostico,
-        });
-        situacao.forEach((item) => params.append('situacao[]', item));
-        window.location.href = route('waiting.export') + '?' + params.toString();
-    };
+    function fecharModalPedirChamadaModal() {
+        setModalAberto(false);
+        setDoenteSelecionado(null);
+    }
 
     const breadcrumbs: BreadcrumbItem[] = [
         {
@@ -257,28 +284,6 @@ export default function Index({
         },
     ];
 
-    const [modalAberto, setModalAberto] = useState(false);
-    const [doenteSelecionado, setDoenteSelecionado] = useState(null);
-
-    function abrirModalChamada(doente: any) {
-        setDoenteSelecionado(doente);
-        setModalAberto(true);
-    }
-
-    function fecharModal() {
-        setModalAberto(false);
-        setDoenteSelecionado(null);
-    }
-
-    function submit() {
-        router.post(`/waiting-list/${doenteSelecionado}/pedir-chamada`, form, {
-            preserveScroll: true,
-            onSuccess: () => {
-                fecharModal();
-            },
-        });
-    }
-
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Lista de Espera" />
@@ -286,7 +291,7 @@ export default function Index({
             <div className="flex h-full flex-1 flex-col gap-6 rounded-xl p-6">
                 <div className="flex items-center justify-between">
                     <h1 className="text-2xl font-semibold tracking-tight">Lista de Espera</h1>
-                    {/* can waiting_list.import */}
+
                     {permissions.includes('waiting_list.import') && (
                         <Link href="/waiting-list/import" className="rounded-lg bg-blue-600 px-4 py-2 text-white shadow transition hover:bg-blue-700">
                             Importar Excel
@@ -294,7 +299,6 @@ export default function Index({
                     )}
                 </div>
 
-                {/* FILTROS */}
                 <div className="flex flex-wrap items-end gap-4 rounded-xl border border-gray-200 bg-white p-4 shadow">
                     <div className="flex flex-col">
                         <label className="mb-1 text-sm text-gray-600">Nº Processo</label>
@@ -302,6 +306,9 @@ export default function Index({
                             type="text"
                             value={numProcesso}
                             onChange={(e) => setNumProcesso(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') applyFilters();
+                            }}
                             className="rounded border px-3 py-2"
                             placeholder="Ex: 12345"
                         />
@@ -313,12 +320,15 @@ export default function Index({
                             type="text"
                             value={desDiagnostico}
                             onChange={(e) => setDesDiagnostico(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') applyFilters();
+                            }}
                             className="rounded border px-3 py-2"
                             placeholder="Ex: Diagnóstico"
                         />
                     </div>
 
-                    <div className="relative flex flex-col">
+                    <div className="relative flex min-w-[220px] flex-col">
                         <label className="mb-1 block text-sm text-gray-600">Situação</label>
 
                         <button
@@ -341,7 +351,7 @@ export default function Index({
 
                         {showSituacaoDropdown && (
                             <div className="absolute top-full left-0 z-50 mt-1 w-full rounded border bg-white shadow">
-                                {situacaoOptionsState.map((option) => {
+                                {situacaoOptions.map((option) => {
                                     const checked = situacao.includes(option);
 
                                     return (
@@ -350,11 +360,7 @@ export default function Index({
                                                 type="checkbox"
                                                 checked={checked}
                                                 onChange={() => {
-                                                    if (checked) {
-                                                        setSituacao(situacao.filter((s) => s !== option));
-                                                    } else {
-                                                        setSituacao([...situacao, option]);
-                                                    }
+                                                    setSituacao((current) => (checked ? current.filter((s) => s !== option) : [...current, option]));
                                                 }}
                                             />
                                             {option}
@@ -367,7 +373,7 @@ export default function Index({
 
                     <div className="flex flex-col">
                         <label className="mb-1 text-sm text-gray-600">Prioridade</label>
-                        <select value={prioridade} onChange={(e) => updatePrioridade(e.target.value)} className="rounded border px-3 py-2">
+                        <select value={prioridade} onChange={(e) => setPrioridade(e.target.value)} className="rounded border px-3 py-2">
                             <option value="">Todas</option>
                             {prioridadeOptionsState.map((option) => (
                                 <option key={option} value={option}>
@@ -379,9 +385,9 @@ export default function Index({
 
                     <div className="flex flex-col">
                         <label className="mb-1 text-sm text-gray-600">Estado</label>
-                        <select value={estado} onChange={(e) => updateEstado(e.target.value)} className="rounded border px-3 py-2">
+                        <select value={estado} onChange={(e) => setEstado(e.target.value)} className="rounded border px-3 py-2">
                             <option value="">Todos</option>
-                            {estadoOptionsState.map((option) => (
+                            {estadoOptions.map((option) => (
                                 <option key={option} value={option}>
                                     {option}
                                 </option>
@@ -389,143 +395,177 @@ export default function Index({
                         </select>
                     </div>
 
-                    <div className="flex flex-col justify-end">
-                        <button onClick={applyFilters} className="rounded bg-blue-600 px-4 py-2 text-white shadow transition hover:bg-blue-700">
+                    <div className="flex gap-2">
+                        <button
+                            type="button"
+                            onClick={applyFilters}
+                            className="rounded bg-blue-600 px-4 py-2 text-white shadow transition hover:bg-blue-700"
+                        >
                             Filtrar
                         </button>
-                    </div>
 
-                    <div className="flex flex-col justify-end">
-                        <button onClick={exportExcel} className="rounded bg-green-600 px-4 py-2 text-white shadow transition hover:bg-green-700">
+                        <button
+                            type="button"
+                            onClick={resetFilters}
+                            className="rounded bg-gray-200 px-4 py-2 text-gray-800 shadow transition hover:bg-gray-300"
+                        >
+                            Limpar
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={exportExcel}
+                            className="rounded bg-green-600 px-4 py-2 text-white shadow transition hover:bg-green-700"
+                        >
                             Exportar Excel
                         </button>
                     </div>
                 </div>
 
-                {/* TABELA */}
                 <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow">
-                    <table className="w-full border-collapse">
-                        <thead className="sticky top-0 z-10 bg-gray-50">
-                            <tr className="text-left text-sm font-medium text-gray-600">
-                                <th className="px-4 py-3">ID</th>
-                                <th className="px-4 py-3">Nº Processo</th>
-                                <th className="px-4 py-3">Prioridade</th>
-                                <th className="px-4 py-3">P. Absoluta</th>
-                                <th className="px-4 py-3">P. Relativa</th>
-                                <th className="px-4 py-3">Diagnóstico</th>
-                                <th className="px-4 py-3">Data LE</th>
-                                <th className="px-4 py-3">Situação</th>
-                                <th className="px-4 py-3">Contactos</th>
-                            </tr>
-                        </thead>
+                    <div className="overflow-x-auto">
+                        <table className="w-full border-collapse">
+                            <thead className="sticky top-0 z-10 bg-gray-50">
+                                <tr className="text-left text-sm font-medium text-gray-600">
+                                    <th className="px-4 py-3">ID</th>
+                                    <th className="px-4 py-3">Nº Processo</th>
+                                    <th className="px-4 py-3">Prioridade</th>
+                                    <th className="px-4 py-3">P. Absoluta</th>
+                                    <th className="px-4 py-3">P. Relativa</th>
+                                    <th className="px-4 py-3">Diagnóstico</th>
+                                    <th className="px-4 py-3">Data LE</th>
+                                    <th className="px-4 py-3">Situação</th>
+                                    <th className="px-4 py-3">Contactos</th>
+                                    <th className="px-4 py-3">Observações</th>
+                                    <th className="px-4 py-3">Agendamento</th>
+                                    <th className="px-4 py-3 text-right">Chamada</th>
+                                </tr>
+                            </thead>
 
-                        <tbody className="text-sm text-gray-700">
-                            {waitingLists.data.map((i: any, idx: number) => (
-                                <>
-                                    <tr key={i.id} className={`transition hover:bg-gray-100 ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
-                                        <td className="px-4 py-3 font-medium text-gray-900">{i.id}</td>
-                                        <td className="px-4 py-3">{i.num_processo}</td>
-                                        <td className="px-4 py-3">{i.prioridade}</td>
-                                        <td className="px-4 py-3">{i.posicao_lista ?? '—'}</td>
-                                        <td className="px-4 py-3">{i.posicao_patologia ?? '—'}</td>
-                                        <td className="px-4 py-3">{i.des_diagnostico}</td>
-                                        <td className="px-4 py-3">{new Date(i.data_marcacao).toLocaleDateString()}</td>
-                                        <td className="px-4 py-3">{i.situacao}</td>
+                            <tbody className="text-sm text-gray-700">
+                                {waitingLists.data.map((i, idx) => (
+                                    <Fragment key={i.id}>
+                                        <tr className={`transition hover:bg-gray-100 ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
+                                            <td className="px-4 py-3 font-medium text-gray-900">{i.id}</td>
+                                            <td className="px-4 py-3">{i.num_processo}</td>
+                                            <td className="px-4 py-3">{i.prioridade ?? '—'}</td>
+                                            <td className="px-4 py-3">{i.posicao_lista ?? '—'}</td>
+                                            <td className="px-4 py-3">{i.posicao_patologia ?? '—'}</td>
+                                            <td className="px-4 py-3">{i.des_diagnostico ?? '—'}</td>
+                                            <td className="px-4 py-3">
+                                                {i.data_marcacao ? new Date(i.data_marcacao).toLocaleDateString('pt-PT') : '—'}
+                                            </td>
+                                            <td className="px-4 py-3">{i.situacao ?? '—'}</td>
 
-                                        <td className="px-4 py-3">{i.contacts?.length ?? 0}</td>
-
-                                        {/* Botões */}
-                                        <td className="px-4 py-3">
-                                            <button
-                                                onClick={() => openModal(i)}
-                                                className={`cursor-pointer rounded px-3 py-1 text-sm text-white transition ${
-                                                    i.contacts?.length ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-700 hover:bg-gray-800'
-                                                }`}
-                                            >
-                                                Contactos
-                                            </button>
-                                        </td>
-
-                                        <td className="px-4 py-3">
-                                            {permissions.includes('waiting_list.observacoes.gerais') && (
+                                            <td className="px-4 py-3">
                                                 <button
-                                                    onClick={() => openModalObservacoesGerais(i)}
+                                                    type="button"
+                                                    onClick={() => openContactModal(i)}
                                                     className={`rounded px-3 py-1 text-sm text-white transition ${
-                                                        i.observacoes_gerais ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-700 hover:bg-gray-800'
+                                                        (i.contacts?.length ?? 0) > 0
+                                                            ? 'bg-green-600 hover:bg-green-700'
+                                                            : 'bg-gray-700 hover:bg-gray-800'
                                                     }`}
                                                 >
-                                                    Observações Gerais
+                                                    {(i.contacts?.length ?? 0) > 0 ? `Contactos (${i.contacts?.length})` : 'Contactos'}
                                                 </button>
-                                            )}
-                                        </td>
+                                            </td>
 
-                                        <td className="px-4 py-3">
-                                            {permissions.includes('schedules.create') && (
+                                            <td className="px-4 py-3">
+                                                {permissions.includes('waiting_list.observacoes.gerais') && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => openObservacoesGeraisModal(i)}
+                                                        className={`rounded px-3 py-1 text-sm text-white transition ${
+                                                            i.observacoes_gerais ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-700 hover:bg-gray-800'
+                                                        }`}
+                                                    >
+                                                        Observações
+                                                    </button>
+                                                )}
+                                            </td>
+
+                                            <td className="px-4 py-3">
+                                                {permissions.includes('schedules.create') && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => openScheduleModal(i)}
+                                                        className={`rounded px-3 py-1 text-sm text-white transition ${
+                                                            i.schedule ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'
+                                                        }`}
+                                                    >
+                                                        {i.schedule ? 'Editar' : 'Agendar'}
+                                                    </button>
+                                                )}
+                                            </td>
+
+                                            <td className="px-4 py-3 text-right">
                                                 <button
-                                                    onClick={() => openScheduleModal(i)}
-                                                    className={`rounded px-3 py-1 text-sm text-white transition ${i.schedule ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'} `}
+                                                    onClick={() => modalAbertoPedirChamadaModal(i.id)}
+                                                    className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
                                                 >
-                                                    Agendar
+                                                    Pedir Chamada
                                                 </button>
-                                            )}
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <button
-                                                onClick={() => abrirModalChamada(i.num_processo)}
-                                                className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-                                            >
-                                                Pedir Chamada
-                                            </button>
-                                        </td>
-                                    </tr>
-
-                                    {/* Linha extra com texto completo */}
-                                    {i.observacoes_gerais && i.observacoes_gerais.length > 0 && (
-                                        <tr className="bg-gray-50">
-                                            <td colSpan={13} className="px-4 py-3 font-bold text-gray-700">
-                                                <div className="whitespace-pre-wrap">{i.observacoes_gerais}</div>
                                             </td>
                                         </tr>
-                                    )}
-                                </>
-                            ))}
-                        </tbody>
-                    </table>
+
+                                        {i.observacoes_gerais && (
+                                            <tr className="bg-gray-50">
+                                                <td colSpan={12} className="px-4 py-3 text-gray-700">
+                                                    <div className="whitespace-pre-wrap">{i.observacoes_gerais}</div>
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </Fragment>
+                                ))}
+
+                                {waitingLists.data.length === 0 && (
+                                    <tr>
+                                        <td colSpan={12} className="px-4 py-8 text-center text-gray-500">
+                                            Não existem registos para os filtros seleccionados.
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
-                {/* PAGINAÇÃO */}
-                <div className="mt-4 flex items-center justify-between">
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
                     <div className="text-sm text-gray-600">
                         Página {waitingLists.current_page} de {waitingLists.last_page}
                     </div>
 
-                    <div className="flex gap-2">
-                        {waitingLists.links.map((link: any, idx: number) => (
+                    <div className="flex flex-wrap gap-2">
+                        {waitingLists.links.map((link, idx) => (
                             <Link
                                 key={idx}
                                 href={link.url ?? '#'}
                                 preserveScroll
                                 preserveState
+                                data={filterParams()}
                                 className={`rounded border px-3 py-2 text-sm transition ${
                                     link.active
                                         ? 'border-blue-600 bg-blue-600 text-white'
                                         : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-100'
-                                } ${!link.url && 'cursor-not-allowed opacity-40'}`}
+                                } ${!link.url ? 'cursor-not-allowed opacity-40' : ''}`}
                                 dangerouslySetInnerHTML={{ __html: link.label }}
                             />
                         ))}
                     </div>
                 </div>
             </div>
+
             <AdminObservacoesModal
-                open={showModal}
-                selected={selected}
-                form={form}
-                setForm={setForm}
+                open={showContactModal}
+                selected={selectedContact}
+                form={contactForm}
+                setForm={setContactForm}
                 errors={errors}
-                onClose={closeModal}
+                onClose={closeContactModal}
                 permissions={permissions}
             />
+
             <ScheduleModal
                 open={showScheduleModal}
                 selected={selectedSchedule}
@@ -535,66 +575,16 @@ export default function Index({
                 onClose={closeScheduleModal}
                 permissions={permissions}
             />
+
             <ObservacoesGeraisModal
                 open={showObservacoesGeraisModal}
-                selected={selected}
+                selected={selectedObservacoes}
                 form={observacoesGeraisForm}
                 setForm={setObservacoesGeraisForm}
                 errors={errors}
                 onClose={closeObservacoesGeraisModal}
             />
-            {modalAberto && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-                    <div className="w-full max-w-lg space-y-6 rounded-xl bg-white p-6 shadow-xl">
-                        <h2 className="text-xl font-semibold">Pedir Chamada para {doenteSelecionado}</h2>
-
-                        <div className="space-y-4">
-                            <div>
-                                <label className="text-sm text-gray-700">Tipo de chamada</label>
-                                <select
-                                    value={form.tipo_chamada}
-                                    onChange={(e) => update('tipo_chamada', e.target.value)}
-                                    className="mt-1 w-full rounded-lg border-gray-300"
-                                >
-                                    <option value="">Selecione...</option>
-                                    <option value="Ambulatorio">Ambulatório</option>
-                                    <option value="Base">Base</option>
-                                    <option value="SIGIC">SIGIC</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className="text-sm text-gray-700">Data pretendida</label>
-                                <input
-                                    type="date"
-                                    value={form.data_pretendida}
-                                    onChange={(e) => update('data_pretendida', e.target.value)}
-                                    className="mt-1 w-full rounded-lg border-gray-300"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="text-sm text-gray-700">Observações</label>
-                                <textarea
-                                    value={form.observacoes}
-                                    onChange={(e) => update('observacoes', e.target.value)}
-                                    className="mt-1 h-24 w-full rounded-lg border-gray-300"
-                                />
-                            </div>
-                        </div>
-
-                        <div className="flex justify-end gap-4">
-                            <button onClick={fecharModal} className="rounded-lg bg-gray-200 px-4 py-2 hover:bg-gray-300">
-                                Cancelar
-                            </button>
-
-                            <button onClick={submit} className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">
-                                Enviar pedido
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <PedirChamadaModal open={modalAbertoPedirChamadaModal} onClose={fecharModalPedirChamadaModal} doente={doenteSelecionado} />
         </AppLayout>
     );
 }

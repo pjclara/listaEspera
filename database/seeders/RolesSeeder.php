@@ -35,12 +35,17 @@ class RolesSeeder extends Seeder
             'waiting_list.manage',
             'waiting_list.export',
             'waiting_list.import',
+            'waiting_list.observacoes.gerais',
 
             // Users / Teams
             'users.view',
             'users.manage',
             'teams.view',
             'teams.manage',
+
+            // roles
+            'roles.view',
+            'roles.manage'
         ];
 
         foreach ($permissions as $permissionName) {

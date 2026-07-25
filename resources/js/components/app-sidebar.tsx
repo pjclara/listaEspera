@@ -80,7 +80,11 @@ const mainNavItems: NavItem[] = [
         title: 'Roles & Permissões',
         url: '/access-control',
         icon: LayoutGrid,
-        permissions: ['roles.view'],
+    },
+        {
+        title: 'Doentes a contactar',
+        url: '/waiting-list/chamadas/pendentes',
+        icon: LayoutGrid,
     },
 ];
 

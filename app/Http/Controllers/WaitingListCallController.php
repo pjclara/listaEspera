@@ -29,7 +29,7 @@ class WaitingListCallController extends Controller
             'waiting_list_id'      => $id,
             'pedido_por_user_id'   => auth()->id(),
             'pedido_em'            => now(),
-            'tipo_chamada'         => $request->tipo, // Ambulatório/Base/SIGIC
+            'tipo_chamada'         => $request->tipo_chamada, // Ambulatório/Base/SIGIC
             'data_pretendida'      => $request->data_pretendida,
             'estado_anterior'      => $doente->estado_anterior,
             'estado_novo'          => 'Suspenso',
@@ -42,50 +42,72 @@ class WaitingListCallController extends Controller
 
     public function respostaChamada(Request $request, int $callId)
     {
+        $request->validate([
+            'resultado' => ['required', 'in:Agendado,VoltaLista,Recusou,NA,Indisponível'],
+            'data_agenda' => ['required_if:resultado,Agendado', 'nullable', 'date'],
+            'observacoes' => ['nullable', 'string'],
+        ]);
+
         $call = DB::table('waiting_list_calls')->where('id', $callId)->first();
-        $doente = WaitingList::findOrFail($call->waiting_list_id);
-
-        $resultado = $request->resultado; // Agendado / VoltaLista / Recusou / NA / Indisponível
-
-        if ($resultado === 'Agendado') {
-
-            $doente->estado = 'Agendado';
-            $doente->data_agenda = $request->data_agenda;
-            $doente->save();
-        } else {
-
-            // Volta à lista
-            $doente->estado = $call->estado_anterior ?? 'Ativo';
-            $doente->save();
+        if (!$call) {
+            return back()->with('error', 'Pedido de chamada não encontrado.');
         }
 
-        // Atualizar registo da chamada
+        $doente = DB::table('waiting_list')->where('id', $call->waiting_list_id)->first();
+        if (!$doente) {
+            return back()->with('error', 'Doente não encontrado.');
+        }
+
+        $estadoAnterior = $call->estado_anterior ?? 'Ativo';
+        $resultado = $request->resultado;
+
+        // 1. Atualizar estado do doente
+        if ($resultado === 'Agendado') {
+
+            DB::table('waiting_list')->where('id', $doente->id)->update([
+                'estado' => 'Agendado',
+                'data_agenda' => $request->data_agenda,
+                'ultima_chamada_em' => now(),
+                'ultima_chamada_por' => auth()->id(),
+                'updated_at' => now(),
+            ]);
+        } else {
+
+            DB::table('waiting_list')->where('id', $doente->id)->update([
+                'estado' => $estadoAnterior,
+                'ultima_chamada_em' => now(),
+                'ultima_chamada_por' => auth()->id(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        // 2. Atualizar o pedido de chamada
         DB::table('waiting_list_calls')->where('id', $callId)->update([
-            'resultado'           => $resultado,
-            'secretaria_user_id'  => auth()->id(),
-            'secretaria_em'       => now(),
-            'observacoes'         => $request->observacoes,
-            'updated_at'          => now(),
+            'resultado' => $resultado,
+            'secretaria_user_id' => auth()->id(),
+            'secretaria_em' => now(),
+            'observacoes' => $request->observacoes,
+            'updated_at' => now(),
         ]);
 
         return back()->with('success', 'Resposta registada com sucesso.');
     }
 
+
     public function chamadasPendentes()
-{
-    $chamadas = DB::table('waiting_list_calls')
-        ->whereNull('resultado')
-        ->orderBy('pedido_em', 'asc')
-        ->get()
-        ->map(function ($call) {
-            $call->doente = DB::table('waiting_list')->where('id', $call->waiting_list_id)->first();
-            $call->pedido_por_user = DB::table('users')->where('id', $call->pedido_por_user_id)->first();
-            return $call;
-        });
+    {
+        $chamadas = DB::table('waiting_list_calls')
+            ->whereNull('resultado')
+            ->orderBy('pedido_em', 'asc')
+            ->get()
+            ->map(function ($call) {
+                $call->doente = DB::table('waiting_list')->where('id', $call->waiting_list_id)->first();
+                $call->pedido_por_user = DB::table('users')->where('id', $call->pedido_por_user_id)->first();
+                return $call;
+            });
 
-    return Inertia::render('WaitingList/ChamadasPendentes', [
-        'chamadas' => $chamadas,
-    ]);
-}
-
+        return Inertia::render('WaitingList/ChamadasPendentes', [
+            'chamadas' => $chamadas,
+        ]);
+    }
 }

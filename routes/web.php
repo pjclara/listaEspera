@@ -88,8 +88,8 @@ Route::middleware(['auth'])->group(function () {
         ->middleware('permission:users.manage');
 });
 
-Route::post('/waiting-list/{id}/pedir-chamada', [WaitingListController::class, 'pedirChamada']);
-Route::post('/waiting-list/chamada/{callId}/resposta', [WaitingListController::class, 'respostaChamada']);
+Route::post('/waiting-list/{id}/pedir-chamada', [WaitingListCallController::class, 'pedirChamada']);
+Route::post('/waiting-list/chamada/{callId}/resposta', [WaitingListCallController::class, 'respostaChamada']);
 
 Route::get('/waiting-list/chamadas/pendentes', [WaitingListCallController::class, 'chamadasPendentes']);
 
