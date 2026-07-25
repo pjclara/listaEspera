@@ -5,7 +5,9 @@ use App\Http\Controllers\ExcelImportController;
 use App\Http\Controllers\RolePermissionController;
 use App\Http\Controllers\SlotController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\WaitingListCallController;
 use App\Http\Controllers\WaitingListController;
+use App\Models\WaitingListCall;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -86,6 +88,10 @@ Route::middleware(['auth'])->group(function () {
         ->middleware('permission:users.manage');
 });
 
+Route::post('/waiting-list/{id}/pedir-chamada', [WaitingListController::class, 'pedirChamada']);
+Route::post('/waiting-list/chamada/{callId}/resposta', [WaitingListController::class, 'respostaChamada']);
+
+Route::get('/waiting-list/chamadas/pendentes', [WaitingListCallController::class, 'chamadasPendentes']);
 
 Route::get('/phpinfo', function () {
     phpinfo();

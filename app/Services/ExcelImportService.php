@@ -123,28 +123,54 @@ class ExcelImportService
             return null;
         }
 
-        return [
+        $result = [
             'id' => $id,
-            'data_marcacao' => $this->normalizeDate($normalizedRow['data_marcacao'] ?? null),
-            'data_agenda' => $this->normalizeDate($normalizedRow['data_agenda'] ?? null),
-            'data_operado' => $this->normalizeDate($normalizedRow['data_operado'] ?? null),
-            'data_cancel' => $this->normalizeDate($normalizedRow['data_cancel'] ?? null),
-            'prioridade' => $normalizedRow['prioridade'] ?? '',
-            'regime' => $normalizedRow['regime'] ?? '',
-            'situacao' => $normalizedRow['situacao'] ?? '',
-            'estado' => $normalizedRow['estado'] ?? '',
-            'num_processo' => $normalizedRow['num_processo'] ?? '',
-            'nome_clinico' => $normalizedRow['nome_clinico'] ?? '',
-            'des_diagnostico' => $normalizedRow['des_diagnostico'] ?? '',
-            'observacoes_gerais' => $normalizedRow['observacoes_gerais'] ?? '',
-            'sexo' => $normalizedRow['sexo'] ?? '',
-            'cancel' => $normalizedRow['cancel'] ?? '',
-            'des_cancel' => $normalizedRow['des_cancel'] ?? '',
-            'patologia' => $normalizedRow['patologia'] ?? '',
-            'des_grupo'          => $normalizedRow['des_grupo'] ?? '',
-            'cod_medico'         => $normalizedRow['cod_medico'] ?? null,
-            'interv_cirurgica'   => $normalizedRow['interv_cirurgica'] ?? '',
         ];
+
+        // DATAS
+        if (array_key_exists('data_marcacao', $normalizedRow)) {
+            $result['data_marcacao'] = $this->normalizeDate($normalizedRow['data_marcacao']);
+        }
+
+        if (array_key_exists('data_agenda', $normalizedRow)) {
+            $result['data_agenda'] = $this->normalizeDate($normalizedRow['data_agenda']);
+        }
+
+        if (array_key_exists('data_operado', $normalizedRow)) {
+            $result['data_operado'] = $this->normalizeDate($normalizedRow['data_operado']);
+        }
+
+        if (array_key_exists('data_cancel', $normalizedRow)) {
+            $result['data_cancel'] = $this->normalizeDate($normalizedRow['data_cancel']);
+        }
+
+        // CAMPOS SIMPLES
+        foreach (
+            [
+                'prioridade',
+                'regime',
+                'situacao',
+                'estado',
+                'num_processo',
+                'nome_clinico',
+                'des_diagnostico',
+                'observacoes_gerais',
+                'sexo',
+                'cancel',
+                'des_cancel',
+                'patologia',
+                'des_grupo',
+                'cod_medico',
+                'interv_cirurgica',
+            ] as $field
+        ) {
+
+            if (array_key_exists($field, $normalizedRow)) {
+                $result[$field] = $normalizedRow[$field];
+            }
+        }
+
+        return $result;
     }
 
     private function processBatch(array $batch): array
@@ -158,6 +184,7 @@ class ExcelImportService
         }
 
         $ids = array_keys($batch);
+
         $existing = DB::table('waiting_list')->whereIn('id', $ids)->get()->keyBy('id');
 
         $toInsert = [];
@@ -169,7 +196,44 @@ class ExcelImportService
             'inalterados' => 0,
         ];
 
-        foreach ($batch as $id => $data) {
+        foreach ($batch as $id => $normalizedRow) {
+
+            // Construir o registo final dinamicamente
+            $data = ['id' => $id];
+
+            // Datas
+            foreach (['data_marcacao', 'data_agenda', 'data_operado', 'data_cancel'] as $dateField) {
+                if (array_key_exists($dateField, $normalizedRow)) {
+                    $data[$dateField] = $this->normalizeDate($normalizedRow[$dateField]);
+                }
+            }
+
+            // Campos simples
+            foreach (
+                [
+                    'prioridade',
+                    'regime',
+                    'situacao',
+                    'estado',
+                    'num_processo',
+                    'nome_clinico',
+                    'des_diagnostico',
+                    'observacoes_gerais',
+                    'sexo',
+                    'cancel',
+                    'des_cancel',
+                    'patologia',
+                    'des_grupo',
+                    'cod_medico',
+                    'interv_cirurgica',
+                ] as $field
+            ) {
+
+                if (array_key_exists($field, $normalizedRow)) {
+                    $data[$field] = $normalizedRow[$field];
+                }
+            }
+
             if (!isset($existing[$id])) {
                 $toInsert[] = $data;
                 $stats['importados']++;
@@ -180,14 +244,18 @@ class ExcelImportService
             $changed = false;
             $batchHistory = [];
 
-            foreach ($this->getComparableFields() as $field) {
+            foreach ($data as $field => $newValue) {
+
+                if ($field === 'id') {
+                    continue;
+                }
+
                 $oldValue = $old[$field] ?? null;
-                $newValue = $data[$field] ?? null;
-                $oldNorm = $this->normalizeComparableValue($field, $oldValue);
-                $newNorm = $this->normalizeComparableValue($field, $newValue);
+
 
                 if ($oldNorm !== $newNorm) {
                     $changed = true;
+
                     $batchHistory[] = [
                         'waiting_list_id' => $id,
                         'campo_alterado' => $field,

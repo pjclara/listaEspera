@@ -230,6 +230,16 @@ export default function Index({
         return admin.contactado || admin.data_contacto || admin.contactado_por || admin.observacoes;
     };
 
+    const [form, setForm] = useState({
+        tipo_chamada: '',
+        data_pretendida: '',
+        observacoes: '',
+    });
+
+    function update(field: string, value: any) {
+        setForm((prev) => ({ ...prev, [field]: value }));
+    }
+
     const exportExcel = () => {
         const params = new URLSearchParams({
             num_processo: numProcesso,
@@ -247,7 +257,28 @@ export default function Index({
         },
     ];
 
-    console.log('permissions', permissions ? permissions : []);
+    const [modalAberto, setModalAberto] = useState(false);
+    const [doenteSelecionado, setDoenteSelecionado] = useState(null);
+
+    function abrirModalChamada(doente: any) {
+        setDoenteSelecionado(doente);
+        setModalAberto(true);
+    }
+
+    function fecharModal() {
+        setModalAberto(false);
+        setDoenteSelecionado(null);
+    }
+
+    function submit() {
+        router.post(`/waiting-list/${doenteSelecionado}/pedir-chamada`, form, {
+            preserveScroll: true,
+            onSuccess: () => {
+                fecharModal();
+            },
+        });
+    }
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Lista de Espera" />
@@ -438,12 +469,20 @@ export default function Index({
                                                 </button>
                                             )}
                                         </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <button
+                                                onClick={() => abrirModalChamada(i.num_processo)}
+                                                className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+                                            >
+                                                Pedir Chamada
+                                            </button>
+                                        </td>
                                     </tr>
 
                                     {/* Linha extra com texto completo */}
                                     {i.observacoes_gerais && i.observacoes_gerais.length > 0 && (
                                         <tr className="bg-gray-50">
-                                            <td colSpan={13} className="px-4 py-3 text-gray-700 font-bold">
+                                            <td colSpan={13} className="px-4 py-3 font-bold text-gray-700">
                                                 <div className="whitespace-pre-wrap">{i.observacoes_gerais}</div>
                                             </td>
                                         </tr>
@@ -504,6 +543,58 @@ export default function Index({
                 errors={errors}
                 onClose={closeObservacoesGeraisModal}
             />
+            {modalAberto && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                    <div className="w-full max-w-lg space-y-6 rounded-xl bg-white p-6 shadow-xl">
+                        <h2 className="text-xl font-semibold">Pedir Chamada para {doenteSelecionado}</h2>
+
+                        <div className="space-y-4">
+                            <div>
+                                <label className="text-sm text-gray-700">Tipo de chamada</label>
+                                <select
+                                    value={form.tipo_chamada}
+                                    onChange={(e) => update('tipo_chamada', e.target.value)}
+                                    className="mt-1 w-full rounded-lg border-gray-300"
+                                >
+                                    <option value="">Selecione...</option>
+                                    <option value="Ambulatorio">Ambulatório</option>
+                                    <option value="Base">Base</option>
+                                    <option value="SIGIC">SIGIC</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="text-sm text-gray-700">Data pretendida</label>
+                                <input
+                                    type="date"
+                                    value={form.data_pretendida}
+                                    onChange={(e) => update('data_pretendida', e.target.value)}
+                                    className="mt-1 w-full rounded-lg border-gray-300"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="text-sm text-gray-700">Observações</label>
+                                <textarea
+                                    value={form.observacoes}
+                                    onChange={(e) => update('observacoes', e.target.value)}
+                                    className="mt-1 h-24 w-full rounded-lg border-gray-300"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex justify-end gap-4">
+                            <button onClick={fecharModal} className="rounded-lg bg-gray-200 px-4 py-2 hover:bg-gray-300">
+                                Cancelar
+                            </button>
+
+                            <button onClick={submit} className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">
+                                Enviar pedido
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </AppLayout>
     );
 }
