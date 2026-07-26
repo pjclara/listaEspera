@@ -285,6 +285,18 @@ export default function Index({
         },
     ];
 
+    const [colunasVisiveis, setColunasVisiveis] = useState({
+        prioridade: false,
+        posicao_lista: false,
+        posicao_patologia: false,
+        des_diagnostico: true,
+        data_marcacao: true,
+        situacao: true,
+        situacao_interna:true,
+        observacoes: true,
+        convocar: true,
+    });
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Lista de Espera" />
@@ -423,44 +435,75 @@ export default function Index({
                     </div>
                 </div>
 
+                <div className="mb-4 flex flex-wrap gap-4 rounded-lg bg-gray-100 p-4">
+                    {Object.keys(colunasVisiveis).map((col) => (
+                        <label key={col} className="flex items-center gap-2 text-sm">
+                            <input
+                                type="checkbox"
+                                checked={colunasVisiveis[col]}
+                                onChange={() =>
+                                    setColunasVisiveis({
+                                        ...colunasVisiveis,
+                                        [col]: !colunasVisiveis[col],
+                                    })
+                                }
+                                className="rounded"
+                            />
+                            {col.replace(/_/g, ' ').toUpperCase()}
+                        </label>
+                    ))}
+                </div>
+
                 <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow">
                     <div className="overflow-x-auto">
                         <table className="w-full border-collapse">
                             <thead className="sticky top-0 z-10 bg-gray-50">
                                 <tr className="text-left text-sm font-medium text-gray-600">
-                                    <th className="px-4 py-3">ID</th>
+                                    <th className="px-4 py-3">Nº Lista</th>
                                     <th className="px-4 py-3">Nº Processo</th>
-                                    <th className="px-4 py-3">Prioridade</th>
-                                    <th className="px-4 py-3">P. Absoluta</th>
-                                    <th className="px-4 py-3">P. Relativa</th>
-                                    <th className="px-4 py-3">Diagnóstico</th>
-                                    <th className="px-4 py-3">Data LE</th>
-                                    <th className="px-4 py-3">Situação</th>
-                                    <th className="px-4 py-3">Observações</th>
-                                    <th className="px-4 py-3 text-right">Convocar</th>
+                                    {colunasVisiveis.prioridade && <th className="px-4 py-3">Prioridade</th>}
+                                    {colunasVisiveis.posicao_lista && <th className="px-4 py-3">P. Absoluta</th>}
+                                    {colunasVisiveis.posicao_patologia && <th className="px-4 py-3">P. Relativa</th>}
+                                    {colunasVisiveis.des_diagnostico && <th className="px-4 py-3">Diagnóstico</th>}
+                                    {colunasVisiveis.data_marcacao && <th className="px-4 py-3">Data LE</th>}
+                                    {colunasVisiveis.situacao && <th className="px-4 py-3">Situação</th>}
+                                    {colunasVisiveis.situacao_interna && <th className="px-4 py-3">Situação Interna</th>}
+                                    {colunasVisiveis.observacoes && <th className="px-4 py-3">Observações</th>}
+                                    {colunasVisiveis.convocar && <th className="px-4 py-3 text-right">Convocar</th>}
                                 </tr>
                             </thead>
-
                             <tbody className="text-sm text-gray-700">
                                 {waitingLists.data.map((i, idx) => (
                                     <Fragment key={i.id}>
                                         <tr className={`transition hover:bg-gray-100 ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
                                             <td className="px-4 py-3 font-medium text-gray-900">{i.id}</td>
+
                                             <td className="px-4 py-3">{i.num_processo}</td>
-                                            <td className="px-4 py-3">{i.prioridade ?? '—'}</td>
-                                            <td className="px-4 py-3">{i.posicao_lista ?? '—'}</td>
-                                            <td className="px-4 py-3">{i.posicao_patologia ?? '—'}</td>
-                                            <td className="px-4 py-3">{i.des_diagnostico ?? '—'}</td>
-                                            <td className="px-4 py-3">
-                                                {i.data_marcacao ? new Date(i.data_marcacao).toLocaleDateString('pt-PT') : '—'}
-                                            </td>
-                                            <td className="px-4 py-3">{i.situacao ?? '—'}</td>
-                                            <td className="px-4 py-3">
-                                                {permissions.includes('waiting_list.observacoes.gerais') && (
+
+                                            {colunasVisiveis.prioridade && <td className="px-4 py-3">{i.prioridade ?? '—'}</td>}
+
+                                            {colunasVisiveis.posicao_lista && <td className="px-4 py-3">{i.posicao_lista ?? '—'}</td>}
+
+                                            {colunasVisiveis.posicao_patologia && <td className="px-4 py-3">{i.posicao_patologia ?? '—'}</td>}
+
+                                            {colunasVisiveis.des_diagnostico && <td className="px-4 py-3">{i.des_diagnostico ?? '—'}</td>}
+
+                                            {colunasVisiveis.data_marcacao && (
+                                                <td className="px-4 py-3">
+                                                    {i.data_marcacao ? new Date(i.data_marcacao).toLocaleDateString('pt-PT') : '—'}
+                                                </td>
+                                            )}
+
+                                            {colunasVisiveis.situacao && <td className="px-4 py-3">{i.situacao ?? '—'}</td>}
+
+                                            {colunasVisiveis.situacao_interna && <td className="px-4 py-3">{i.call?.estado_novo ?? 'Ativo'}</td>}
+
+                                            {colunasVisiveis.observacoes && (
+                                                <td className="px-4 py-3">
                                                     <button
                                                         type="button"
                                                         onClick={() => openObservacoesGeraisModal(i)}
-                                                        className={`disabled rounded px-3 py-1 text-sm text-white transition ${
+                                                        className={`rounded px-3 py-1 text-sm text-white transition ${
                                                             i.observacoes_secretaria
                                                                 ? 'bg-green-600 hover:bg-green-700'
                                                                 : 'bg-gray-700 hover:bg-gray-800'
@@ -468,23 +511,26 @@ export default function Index({
                                                     >
                                                         Observações
                                                     </button>
-                                                )}
-                                            </td>
-                                            <td className="px-4 py-3 text-right">
-                                                <button
-                                                    onClick={() => modalAbertoPedirChamadaModal(i.id)}
-                                                    disabled={!!i.call?.id}
-                                                    title={i.call?.id ? 'Já existe uma chamada pendente' : 'Convocar doente'}
-                                                    className={`rounded-lg px-4 py-2 text-white ${
-                                                        i.call?.id ? 'cursor-not-allowed bg-green-600 opacity-60' : 'bg-blue-600 hover:bg-blue-700'
-                                                    } `}
-                                                >
-                                                    Convocar
-                                                </button>
-                                            </td>
+                                                </td>
+                                            )}
 
+                                            {colunasVisiveis.convocar && (
+                                                <td className="px-4 py-3 text-right">
+                                                    <button
+                                                        onClick={() => modalAbertoPedirChamadaModal(i.id)}
+                                                        disabled={!!i.call?.id}
+                                                        title={i.call?.id ? 'Já existe uma chamada pendente' : 'Convocar doente'}
+                                                        className={`rounded-lg px-4 py-2 text-white ${
+                                                            i.call?.id
+                                                                ? 'cursor-not-allowed bg-green-600 opacity-60'
+                                                                : 'bg-blue-600 hover:bg-blue-700'
+                                                        }`}
+                                                    >
+                                                        Convocar
+                                                    </button>
+                                                </td>
+                                            )}
                                         </tr>
-
                                         {i.observacoes_gerais && (
                                             <tr className="bg-gray-50">
                                                 <td colSpan={12} className="px-4 py-3 text-gray-700">

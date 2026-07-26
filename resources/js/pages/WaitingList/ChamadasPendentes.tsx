@@ -31,6 +31,7 @@ export default function ChamadasPendentes() {
     const [doenteSelecionado, setDoenteSelecionado] = useState(null);
 
     function abrirModal(call: any) {
+        console.log(call);
         setCallSelecionada(call);
         setDoenteSelecionado(call.doente);
         setModalAberto(true);
@@ -41,6 +42,7 @@ export default function ChamadasPendentes() {
         setCallSelecionada(null);
         setDoenteSelecionado(null);
     }
+
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -117,7 +119,7 @@ export default function ChamadasPendentes() {
                             {chamadasFiltradas.map((c: any) => (
                                 <tr key={c.id}>
                                     <td className="px-6 py-4">
-                                        <div className="font-semibold">{c.doente.nome_clinico}</div>
+                                        <div className="font-semibold">{c.doente.nome}</div>
                                         <div className="text-sm text-gray-500">{c.doente.des_diagnostico}</div>
                                     </td>
 
@@ -130,9 +132,13 @@ export default function ChamadasPendentes() {
                                     <td className="px-6 py-4">
                                         <button
                                             onClick={() => abrirModal(c)}
-                                            className="rounded-lg bg-green-600 px-4 py-2 text-white hover:bg-green-700"
+                                            className={`rounded-lg px-4 py-2 text-white transition ${
+                                                !!c.estado_novo || !!c.data_agenda || !!c.observacoes_secretaria
+                                                    ? 'bg-blue-600 hover:bg-blue-700'
+                                                    : 'bg-green-600 hover:bg-green-700'
+                                            }`}
                                         >
-                                            Responder
+                                            {!!c.estado_novo || !!c.data_agenda || !!c.observacoes_secretaria ? 'Editar resposta' : 'Responder'}
                                         </button>
                                     </td>
                                 </tr>

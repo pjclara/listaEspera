@@ -12,39 +12,43 @@ class WaitingListCallController extends Controller
 {
     public function pedirChamada(Request $request, int $id)
     {
+        // validate
+        $validate = $request->validate([
+            'data_pretendida' => 'required|date|after:today',
+            'tipo_chamada' => 'required|string',
+            'observacoes' => 'nullable'
+        ]);
         $doente = WaitingList::findOrFail($id);
 
         // Não permitir chamar alguém já suspenso ou agendado
-        if (in_array($doente->estado, ['Suspenso', 'Agendado', 'Operado'])) {
+        if ($doente->call && in_array($doente->call->estado_novo, ['Suspenso', 'Agendado', 'Operado'])) {
             return back()->with('error', 'Doente não pode ser chamado.');
         }
-
-        // Atualizar estado para SUSPENSO
-        $doente->estado_anterior = $doente->estado;
-        $doente->estado = 'Suspenso';
-        $doente->save();
-
         // Registar pedido
         DB::table('waiting_list_calls')->insert([
             'waiting_list_id'      => $id,
             'pedido_por_user_id'   => auth()->id(),
             'pedido_em'            => now(),
-            'tipo_chamada'         => $request->tipo_chamada, // Ambulatório/Base/SIGIC
-            'data_pretendida'      => $request->data_pretendida,
-            'estado_anterior'      => $doente->estado_anterior,
+            'tipo_chamada'         => $validate['tipo_chamada'], // Ambulatório/Base/SIGIC
+            'data_pretendida'      => $validate['data_pretendida'],
+            'observacoes_pedido'   => $validate['observacoes'],
             'estado_novo'          => 'Suspenso',
             'created_at'           => now(),
             'updated_at'           => now(),
         ]);
 
-        return back()->with('success', 'Doente colocado em suspensão e pedido enviado à secretaria.');
+        return back()->with('toast', [
+            'type' => 'success',
+            'title' => 'Convocatória criada com sucesso',
+            'description' =>  'Doente colocado em suspensão e pedido enviado à secretaria.',
+        ]);
     }
 
     public function respostaChamada(Request $request, int $callId)
     {
         $request->validate([
-            'resultado' => ['required', 'in:Agendado,VoltaLista,Recusou,NA,Indisponível'],
-            'data_agenda' => ['required_if:resultado,Agendado', 'nullable', 'date'],
+            'resultado' => ['required', 'in:Agendado,VoltaLista,Recusou,Indisponível,NA,Aceitou Outro Hospital'],
+            'data_agendada' => ['required_if:resultado,Agendado', 'nullable', 'date'],
             'observacoes' => ['nullable', 'string'],
         ]);
 
@@ -58,13 +62,12 @@ class WaitingListCallController extends Controller
 
         // 2. Atualizar o pedido de chamada
         DB::table('waiting_list_calls')->where('id', $callId)->update([
-            'resultado' => $resultado,
             'secretaria_user_id' => auth()->id(),
             'secretaria_em' => now(),
             'estado_anterior' => $call->estado_novo,
             'estado_novo' => $request->resultado,
-            'data_agendada' => $request->data_agenda,
-            'observacoes' => $request->observacoes,
+            'data_agendada' => $request->data_agendada,
+            'observacoes_secretaria' => $request->observacoes,
             'updated_at' => now(),
         ]);
 

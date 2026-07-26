@@ -48,6 +48,7 @@ class ExcelImportService
         'COD_MEDICO'         => 'cod_medico',
         'INTERV_CIRURGICA'   => 'interv_cirurgica',
         'UTENTE'       => 'num_processo',
+        'NOME' => 'nome'
     ];
 
     private array $dateFields = [
@@ -162,6 +163,7 @@ class ExcelImportService
                 'des_grupo',
                 'cod_medico',
                 'interv_cirurgica',
+                'nome'
             ] as $field
         ) {
 
@@ -338,6 +340,7 @@ class ExcelImportService
             'cancel',
             'des_cancel',
             'patologia',
+            'nome'
         ];
     }
 
@@ -456,7 +459,7 @@ class ExcelImportService
                 SELECT
                     id,
                     ROW_NUMBER() OVER (
-                        PARTITION BY LEFT(COALESCE(patologia, ''), 2)
+                        PARTITION BY LEFT(COALESCE(des_diagnostico, ''), 2)
                         ORDER BY
                             prioridade,
                             data_marcacao IS NULL,

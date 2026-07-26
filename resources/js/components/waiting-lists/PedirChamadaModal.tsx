@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { router } from "@inertiajs/react";
+import { toast } from "sonner";
 
 interface Props {
     open: boolean;
@@ -35,6 +36,7 @@ export default function PedirChamadaModal({ open, onClose, doente }: Props) {
                     data_pretendida: "",
                     observacoes: "",
                 });
+                toast.success('asdas')
             },
             onError: () => setLoading(false),
         });

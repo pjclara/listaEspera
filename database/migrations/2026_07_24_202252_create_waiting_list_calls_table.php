@@ -28,6 +28,9 @@ return new class extends Migration
             // Data pretendida pela equipa
             $table->date('data_pretendida')->nullable();
 
+            // Observações de quem pede
+            $table->text('observacoes_pedido')->nullable();
+
             // Data pretendida pela equipa
             $table->date('data_agendada')->nullable();
 
@@ -48,7 +51,7 @@ return new class extends Migration
             $table->timestamp('secretaria_em')->nullable();
 
             // Observações da secretaria
-            $table->text('observacoes')->nullable();
+            $table->text('observacoes_secretaria')->nullable();
 
             $table->timestamps();
         });

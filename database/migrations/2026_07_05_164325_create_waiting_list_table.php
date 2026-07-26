@@ -25,6 +25,7 @@ return new class extends Migration {
             // Processo / paciente
             $table->string('num_processo')->nullable();     // NUM_PROCESSO
             $table->string('sexo')->nullable();             // SEXO
+            $table->string('nome')->nullable();             // SEXO
             $table->string('des_grupo')->nullable();        // DES_GRUPO
 
             // Médico
