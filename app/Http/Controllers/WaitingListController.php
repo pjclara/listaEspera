@@ -72,6 +72,11 @@ class WaitingListController extends Controller
             ->distinct()
             ->pluck('prioridade');
 
+        $lista = WaitingList::all()->map(function ($item) {
+            $item->situacao_color = ResultadoChamada::from($item->situacao_interna)->color();
+            return $item;
+        });
+
         return Inertia::render('WaitingList/Index', [
             'waitingLists' => $waitingLists,
             'situacaoOptions' => $situacaoOptions,
@@ -82,7 +87,7 @@ class WaitingListController extends Controller
             // users permissions
             'permissions' => $request->user()->getAllPermissions()->pluck('name')->toArray(),
             'resultados' => ResultadoChamada::getAll(),
-
+            'lista' => $lista,
             'filters' => [
                 'num_processo' => $request->num_processo,
                 'situacao' => $request->situacao,

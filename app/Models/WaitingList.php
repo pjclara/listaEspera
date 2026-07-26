@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enum\ResultadoChamada;
 use Illuminate\Database\Eloquent\Model;
 
 class WaitingList extends Model
@@ -36,6 +37,8 @@ class WaitingList extends Model
     ];
 
     public $incrementing = false; // porque o ID vem do Excel
+
+    protected $appends = ['situacao_color'];
 
     protected $casts = [
         'data_marcacao' => 'date:Y-m-d',
@@ -80,5 +83,10 @@ class WaitingList extends Model
     public function call()
     {
         return $this->hasOne(WaitingListCall::class);
+    }
+
+    public function getSituacaoColorAttribute(): string
+    {
+        return ResultadoChamada::from($this->situacao_interna)->color();
     }
 }

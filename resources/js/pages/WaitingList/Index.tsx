@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { SituacaoBadge } from '@/components/ui/SituacaoBadge';
 import AdminObservacoesModal from '@/components/waiting-lists/AdminObservacoesModal';
 import ObservacoesGeraisModal from '@/components/waiting-lists/ObservacoesGeraisModal';
 import PedirChamadaModal from '@/components/waiting-lists/PedirChamadaModal';
@@ -30,6 +31,8 @@ type WaitingListItem = {
     des_diagnostico?: string | null;
     data_marcacao?: string | null;
     situacao?: string | null;
+    situacao_interna?: string | null;
+    situacao_color?: string | null;
     contacts?: unknown[];
     observacoes_gerais?: string | null;
     observacoes_secretaria?: string | null;
@@ -43,6 +46,9 @@ type WaitingListItem = {
         slot_id: string | number;
         duracao_estimada: string | number;
         estado: string;
+    } | null;
+    call?: {
+        id?: number;
     } | null;
 };
 
@@ -86,7 +92,7 @@ export default function Index({
     slotsDisponiveis,
     prioridadeOptionsState,
     permissions,
-    resultados
+    resultados,
 }: PageProps<{
     waitingLists: {
         data: WaitingListItem[];
@@ -514,8 +520,9 @@ export default function Index({
                                             {colunasVisiveis.situacao && <td className="px-4 py-3">{i.situacao ?? '—'}</td>}
 
                                             {colunasVisiveis.situacao_interna && (
+                                                
                                                 <td className="cursor-pointer px-4 py-3 hover:bg-gray-100" onClick={() => abrirModalSituacao(i)}>
-                                                    {i.situacao_interna}
+                                                   <SituacaoBadge label={i.situacao_interna} color={i.situacao_color} />
                                                 </td>
                                             )}
 
