@@ -55,7 +55,7 @@ export default function Welcome() {
 
                 {/* Footer */}
                 <footer className="mt-10 text-xs text-gray-500 dark:text-gray-600">
-                    © {new Date().getFullYear()} SurgTuga — ULS Região de Leiria. Todos os direitos reservados.
+                    © {new Date().getFullYear()} SurgTuga. Todos os direitos reservados.
                 </footer>
             </div>
         </>
