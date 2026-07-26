@@ -9,6 +9,7 @@ import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem } from '@/types';
 import { Head, Link, PageProps, router, usePage } from '@inertiajs/react';
 import { Fragment, useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 
 type SlotDisponivel = {
     id: number;
@@ -279,6 +280,11 @@ export default function Index({
         setDoenteSituacao(null);
     }
 
+    const copiar = async (texto) => {
+        await navigator.clipboard.writeText(texto);
+        toast.success('Copiado!');
+    };
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Lista de Espera" />
@@ -460,7 +466,13 @@ export default function Index({
                                         <tr className={`transition hover:bg-gray-100 ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
                                             <td className="px-4 py-3 font-medium text-gray-900">{i.id}</td>
 
-                                            <td className="px-4 py-3">{i.num_processo}</td>
+                                            <td
+                                                className="cursor-pointer px-4 py-3 text-center hover:bg-gray-300"
+                                                title="Clique para copiar"
+                                                onClick={() => copiar(i.num_processo)}
+                                            >
+                                                {i.num_processo}
+                                            </td>
 
                                             {colunasVisiveis.prioridade && <td className="px-4 py-3">{i.prioridade ?? '—'}</td>}
 

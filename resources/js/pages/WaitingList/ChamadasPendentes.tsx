@@ -90,6 +90,7 @@ export default function ChamadasPendentes() {
                                 <th className="px-3 py-2 text-left text-[10px] font-semibold tracking-wide uppercase">Tipo</th>
                                 <th className="px-3 py-2 text-left text-[10px] font-semibold tracking-wide uppercase">Pedido por</th>
                                 <th className="px-3 py-2 text-left text-[10px] font-semibold tracking-wide uppercase">Data pedido</th>
+                                <th className="px-3 py-2 text-left text-[10px] font-semibold tracking-wide uppercase">Situação</th>
                                 <th className="px-3 py-2 text-left text-[10px] font-semibold tracking-wide uppercase">Ações</th>
                             </tr>
                         </thead>
@@ -108,6 +109,7 @@ export default function ChamadasPendentes() {
                                         <td className="px-3 py-2">{c.tipo_chamada}</td>
                                         <td className="px-3 py-2">{c.pedido_por_user?.name}</td>
                                         <td className="px-3 py-2">{c.pedido_em}</td>
+                                        <td className="px-3 py-2">{c.estado_novo}</td>
 
                                         <td className="px-3 py-2">
                                             <button
