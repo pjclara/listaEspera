@@ -75,4 +75,9 @@ class WaitingList extends Model
     {
         return $this->hasMany(Schedule::class);
     }
+
+    public function call()
+    {
+        return $this->hasOne(WaitingListCall::class);
+    }
 }

@@ -30,7 +30,7 @@ type WaitingListItem = {
     situacao?: string | null;
     contacts?: unknown[];
     observacoes_gerais?: string | null;
-    observacoes_secretaria?:string | null;
+    observacoes_secretaria?: string | null;
     admin?: {
         contactado?: boolean | null;
         data_contacto?: string | null;
@@ -436,10 +436,8 @@ export default function Index({
                                     <th className="px-4 py-3">Diagnóstico</th>
                                     <th className="px-4 py-3">Data LE</th>
                                     <th className="px-4 py-3">Situação</th>
-                                    <th className="px-4 py-3">Contactos</th>
                                     <th className="px-4 py-3">Observações</th>
-                                    <th className="px-4 py-3">Agendamento</th>
-                                    <th className="px-4 py-3 text-right">Chamada</th>
+                                    <th className="px-4 py-3 text-right">Convocar</th>
                                 </tr>
                             </thead>
 
@@ -457,63 +455,42 @@ export default function Index({
                                                 {i.data_marcacao ? new Date(i.data_marcacao).toLocaleDateString('pt-PT') : '—'}
                                             </td>
                                             <td className="px-4 py-3">{i.situacao ?? '—'}</td>
-
-                                            <td className="px-4 py-3">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => openContactModal(i)}
-                                                    className={`rounded px-3 py-1 text-sm text-white transition ${
-                                                        (i.contacts?.length ?? 0) > 0
-                                                            ? 'bg-green-600 hover:bg-green-700'
-                                                            : 'bg-gray-700 hover:bg-gray-800'
-                                                    }`}
-                                                >
-                                                    {(i.contacts?.length ?? 0) > 0 ? `Contactos (${i.contacts?.length})` : 'Contactos'}
-                                                </button>
-                                            </td>
-
                                             <td className="px-4 py-3">
                                                 {permissions.includes('waiting_list.observacoes.gerais') && (
                                                     <button
                                                         type="button"
                                                         onClick={() => openObservacoesGeraisModal(i)}
-                                                        className={`rounded px-3 py-1 text-sm text-white transition ${
-                                                            i.observacoes_secretaria ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-700 hover:bg-gray-800'
+                                                        className={`disabled rounded px-3 py-1 text-sm text-white transition ${
+                                                            i.observacoes_secretaria
+                                                                ? 'bg-green-600 hover:bg-green-700'
+                                                                : 'bg-gray-700 hover:bg-gray-800'
                                                         }`}
                                                     >
                                                         Observações
                                                     </button>
                                                 )}
                                             </td>
-
-                                            <td className="px-4 py-3">
-                                                {permissions.includes('schedules.create') && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => openScheduleModal(i)}
-                                                        className={`rounded px-3 py-1 text-sm text-white transition ${
-                                                            i.schedule ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'
-                                                        }`}
-                                                    >
-                                                        {i.schedule ? 'Editar' : 'Agendar'}
-                                                    </button>
-                                                )}
-                                            </td>
-
                                             <td className="px-4 py-3 text-right">
                                                 <button
                                                     onClick={() => modalAbertoPedirChamadaModal(i.id)}
-                                                    className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+                                                    disabled={!!i.call?.id}
+                                                    title={i.call?.id ? 'Já existe uma chamada pendente' : 'Convocar doente'}
+                                                    className={`rounded-lg px-4 py-2 text-white ${
+                                                        i.call?.id ? 'cursor-not-allowed bg-green-600 opacity-60' : 'bg-blue-600 hover:bg-blue-700'
+                                                    } `}
                                                 >
-                                                    Pedir Chamada
+                                                    Convocar
                                                 </button>
                                             </td>
+
                                         </tr>
 
                                         {i.observacoes_gerais && (
                                             <tr className="bg-gray-50">
                                                 <td colSpan={12} className="px-4 py-3 text-gray-700">
-                                                    <div className="whitespace-pre-wrap">{i.observacoes_gerais} | {i.observacoes_secretaria}</div>
+                                                    <div className="whitespace-pre-wrap">
+                                                        {i.observacoes_gerais} | {i.observacoes_secretaria}
+                                                    </div>
                                                 </td>
                                             </tr>
                                         )}

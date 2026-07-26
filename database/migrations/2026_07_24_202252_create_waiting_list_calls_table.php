@@ -28,6 +28,9 @@ return new class extends Migration
             // Data pretendida pela equipa
             $table->date('data_pretendida')->nullable();
 
+            // Data pretendida pela equipa
+            $table->date('data_agendada')->nullable();
+
             // Estado antes da suspensão
             $table->string('estado_anterior')->nullable();
 
@@ -50,43 +53,11 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // 2. Alterações à tabela waiting_list
-        Schema::table('waiting_list', function (Blueprint $table) {
-
-            // Estado atual do doente
-            if (!Schema::hasColumn('waiting_list', 'estado')) {
-                $table->string('estado')->default('Ativo')->index();
-            }
-
-            // Data de agenda (caso seja agendado pela secretaria)
-            if (!Schema::hasColumn('waiting_list', 'data_agenda')) {
-                $table->date('data_agenda')->nullable();
-            }
-
-            // Data da última chamada
-            if (!Schema::hasColumn('waiting_list', 'ultima_chamada_em')) {
-                $table->timestamp('ultima_chamada_em')->nullable();
-            }
-
-            // Quem fez a última chamada
-            if (!Schema::hasColumn('waiting_list', 'ultima_chamada_por')) {
-                $table->unsignedBigInteger('ultima_chamada_por')->nullable();
-                $table->foreign('ultima_chamada_por')->references('id')->on('users')->nullOnDelete();
-            }
-        });
     }
 
     public function down(): void
     {
         Schema::dropIfExists('waiting_list_calls');
 
-        Schema::table('waiting_list', function (Blueprint $table) {
-            $table->dropColumn([
-                'estado',
-                'data_agenda',
-                'ultima_chamada_em',
-                'ultima_chamada_por',
-            ]);
-        });
     }
 };

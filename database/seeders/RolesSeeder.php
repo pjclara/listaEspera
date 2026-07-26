@@ -66,44 +66,19 @@ class RolesSeeder extends Seeder
         $admin->syncPermissions($allPermissions);
 
         $secretaria->syncPermissions([
-            'agenda.view',
-            'agenda.export',
-            'slots.view',
-            'slots.create',
-            'slots.edit',
-            'schedules.view',
-            'schedules.create',
-            'schedules.edit',
-            'schedules.move',
             'waiting_list.view',
             'waiting_list.manage',
             'waiting_list.export',
             'waiting_list.import',
-            'users.view',
             'teams.view',
         ]);
 
         $teamMember->syncPermissions([
-            'agenda.view',
-            'slots.view',
-            'schedules.view',
-            'schedules.create',
             'waiting_list.view',
         ]);
 
         $teamLeader->syncPermissions([
-            'agenda.view',
-            'agenda.export',
-            'slots.view',
-            'slots.create',
-            'slots.edit',
-            'schedules.view',
-            'schedules.create',
-            'schedules.edit',
-            'schedules.move',
             'waiting_list.view',
-            'waiting_list.manage',
-            'waiting_list.export',
             'teams.view',
         ]);
 

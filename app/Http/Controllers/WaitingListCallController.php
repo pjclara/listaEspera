@@ -53,39 +53,17 @@ class WaitingListCallController extends Controller
             return back()->with('error', 'Pedido de chamada não encontrado.');
         }
 
-        $doente = DB::table('waiting_list')->where('id', $call->waiting_list_id)->first();
-        if (!$doente) {
-            return back()->with('error', 'Doente não encontrado.');
-        }
-
         $estadoAnterior = $call->estado_anterior ?? 'Ativo';
         $resultado = $request->resultado;
-
-        // 1. Atualizar estado do doente
-        if ($resultado === 'Agendado') {
-
-            DB::table('waiting_list')->where('id', $doente->id)->update([
-                'estado' => 'Agendado',
-                'data_agenda' => $request->data_agenda,
-                'ultima_chamada_em' => now(),
-                'ultima_chamada_por' => auth()->id(),
-                'updated_at' => now(),
-            ]);
-        } else {
-
-            DB::table('waiting_list')->where('id', $doente->id)->update([
-                'estado' => $estadoAnterior,
-                'ultima_chamada_em' => now(),
-                'ultima_chamada_por' => auth()->id(),
-                'updated_at' => now(),
-            ]);
-        }
 
         // 2. Atualizar o pedido de chamada
         DB::table('waiting_list_calls')->where('id', $callId)->update([
             'resultado' => $resultado,
             'secretaria_user_id' => auth()->id(),
             'secretaria_em' => now(),
+            'estado_anterior' => $call->estado_novo,
+            'estado_novo' => $request->resultado,
+            'data_agendada' => $request->data_agenda,
             'observacoes' => $request->observacoes,
             'updated_at' => now(),
         ]);

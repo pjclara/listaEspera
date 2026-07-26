@@ -1,23 +1,10 @@
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
-import {
-    Sidebar,
-    SidebarContent,
-    SidebarFooter,
-    SidebarHeader,
-    SidebarMenu,
-    SidebarMenuButton,
-    SidebarMenuItem,
-} from '@/components/ui/sidebar';
+import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import {
-    LayoutGrid,
-    Calendar,
-    CalendarDays,
-    CalendarRange,
-} from 'lucide-react';
+import { Calendar, CalendarDays, CalendarRange, LayoutGrid } from 'lucide-react';
 import AppLogo from './app-logo';
 
 /**
@@ -33,6 +20,13 @@ const mainNavItems: NavItem[] = [
     {
         title: 'Listas de Espera',
         url: '/waiting-lists',
+        icon: LayoutGrid,
+        permissions: ['waiting_list.view'], // Apenas visível para utilizadores com estas permissões
+    },
+
+    {
+        title: 'Doentes a contactar',
+        url: '/waiting-list/chamadas/pendentes',
         icon: LayoutGrid,
     },
     {
@@ -50,7 +44,6 @@ const mainNavItems: NavItem[] = [
                 title: 'Slots',
                 url: '/agenda',
                 icon: LayoutGrid,
-                
             },
             {
                 title: 'Semana',
@@ -74,17 +67,14 @@ const mainNavItems: NavItem[] = [
         title: 'Equipas',
         url: '/teams',
         icon: LayoutGrid,
-        permissions: ['teams.view'],
+        permissions: ['teams.vie'],
     },
     {
         title: 'Roles & Permissões',
         url: '/access-control',
         icon: LayoutGrid,
-    },
-        {
-        title: 'Doentes a contactar',
-        url: '/waiting-list/chamadas/pendentes',
-        icon: LayoutGrid,
+        permissions: ['roles.view'],
+
     },
 ];
 
@@ -124,10 +114,7 @@ export function AppSidebar() {
             {/* Rodapé */}
             <SidebarFooter>
                 {/* Menu inferior */}
-                <NavFooter
-                    items={footerNavItems}
-                    className="mt-auto"
-                />
+                <NavFooter items={footerNavItems} className="mt-auto" />
 
                 {/* Informações do utilizador */}
                 <NavUser />

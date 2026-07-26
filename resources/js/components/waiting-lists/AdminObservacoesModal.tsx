@@ -29,7 +29,7 @@ export default function AdminObservacoesModal({ open, selected, form, setForm, o
 
     if (!open || !selected) return null;
 
-    const canEdit = permissions.includes('waiting_list.admin');
+    const canEdit = permissions.includes('waiting_list.manage');
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();

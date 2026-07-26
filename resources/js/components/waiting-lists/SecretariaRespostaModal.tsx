@@ -74,6 +74,8 @@ export default function SecretariaRespostaModal({ open, onClose, call, doente }:
                             <option value="Recusou">Recusou</option>
                             <option value="NA">Não atende</option>
                             <option value="Indisponível">Indisponível</option>
+                            <option value="Indisponível">Aceitou ser operado noutro hospital</option>
+                            <option value="Indisponível">Outro</option>
                         </select>
                     </div>
 
