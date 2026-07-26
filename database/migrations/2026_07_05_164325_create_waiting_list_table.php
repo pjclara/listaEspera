@@ -20,6 +20,7 @@ return new class extends Migration {
             $table->integer('prioridade')->nullable();      // PRIORIDADE
             $table->string('regime')->nullable();           // Regime
             $table->string('situacao')->nullable();         // Situacao
+            $table->string('situacao_interna')->default('Ativo');         // Situacao
             $table->string('estado')->nullable();           // ESTADO
 
             // Processo / paciente

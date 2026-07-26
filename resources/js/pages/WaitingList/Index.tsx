@@ -1,7 +1,9 @@
+import { Button } from '@/components/ui/button';
 import AdminObservacoesModal from '@/components/waiting-lists/AdminObservacoesModal';
 import ObservacoesGeraisModal from '@/components/waiting-lists/ObservacoesGeraisModal';
 import PedirChamadaModal from '@/components/waiting-lists/PedirChamadaModal';
 import ScheduleModal from '@/components/waiting-lists/ScheduleModal';
+import SituacaoInternaModal from '@/components/waiting-lists/SituacaoInternaModal';
 import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem } from '@/types';
 import { Head, Link, PageProps, router, usePage } from '@inertiajs/react';
@@ -84,6 +86,7 @@ export default function Index({
     slotsDisponiveis,
     prioridadeOptionsState,
     permissions,
+    resultados
 }: PageProps<{
     waitingLists: {
         data: WaitingListItem[];
@@ -102,6 +105,7 @@ export default function Index({
     slotsDisponiveis: SlotDisponivel[];
     prioridadeOptionsState: string[];
     permissions: string[];
+    resultados: string[];
 }>) {
     const safeFilters = filters ?? {};
 
@@ -292,10 +296,23 @@ export default function Index({
         des_diagnostico: true,
         data_marcacao: true,
         situacao: true,
-        situacao_interna:true,
+        situacao_interna: true,
         observacoes: true,
         convocar: true,
     });
+
+    const [modalSituacao, setModalSituacao] = useState(false);
+    const [doenteSituacao, setDoenteSituacao] = useState(null);
+
+    function abrirModalSituacao(doente) {
+        setDoenteSituacao(doente);
+        setModalSituacao(true);
+    }
+
+    function fecharModalSituacao() {
+        setModalSituacao(false);
+        setDoenteSituacao(null);
+    }
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -496,46 +513,46 @@ export default function Index({
 
                                             {colunasVisiveis.situacao && <td className="px-4 py-3">{i.situacao ?? '—'}</td>}
 
-                                            {colunasVisiveis.situacao_interna && <td className="px-4 py-3">{i.call?.estado_novo ?? 'Ativo'}</td>}
+                                            {colunasVisiveis.situacao_interna && (
+                                                <td className="cursor-pointer px-4 py-3 hover:bg-gray-100" onClick={() => abrirModalSituacao(i)}>
+                                                    {i.situacao_interna}
+                                                </td>
+                                            )}
 
                                             {colunasVisiveis.observacoes && (
                                                 <td className="px-4 py-3">
-                                                    <button
+                                                    <Button
                                                         type="button"
                                                         onClick={() => openObservacoesGeraisModal(i)}
-                                                        className={`rounded px-3 py-1 text-sm text-white transition ${
-                                                            i.observacoes_secretaria
-                                                                ? 'bg-green-600 hover:bg-green-700'
-                                                                : 'bg-gray-700 hover:bg-gray-800'
-                                                        }`}
+                                                        variant={i.observacoes_secretaria ? 'observacoesPreenchidas' : 'observacoes'}
+                                                        size="sm"
+                                                        className="cursor-pointer"
                                                     >
                                                         Observações
-                                                    </button>
+                                                    </Button>
                                                 </td>
                                             )}
 
                                             {colunasVisiveis.convocar && (
                                                 <td className="px-4 py-3 text-right">
-                                                    <button
+                                                    <Button
                                                         onClick={() => modalAbertoPedirChamadaModal(i.id)}
-                                                        disabled={!!i.call?.id}
-                                                        title={i.call?.id ? 'Já existe uma chamada pendente' : 'Convocar doente'}
-                                                        className={`rounded-lg px-4 py-2 text-white ${
-                                                            i.call?.id
-                                                                ? 'cursor-not-allowed bg-green-600 opacity-60'
-                                                                : 'bg-blue-600 hover:bg-blue-700'
-                                                        }`}
+                                                        disabled={i.situacao_interna != 'Ativo'}
+                                                        title={i.call?.id ? 'Já existe uma chamada pendente' : 'Convocar'}
+                                                        variant={i.call?.id ? 'convocado' : 'convocar'}
+                                                        size="sm"
+                                                        className="cursor-pointer"
                                                     >
-                                                        Convocar
-                                                    </button>
+                                                        {i.call?.id ? 'Convocado' : 'Convocar'}
+                                                    </Button>
                                                 </td>
                                             )}
                                         </tr>
-                                        {i.observacoes_gerais && (
-                                            <tr className="bg-gray-50">
-                                                <td colSpan={12} className="px-4 py-3 text-gray-700">
+                                        {(i.observacoes_gerais || i.observacoes_secretaria) && (
+                                            <tr className="bg-gray-500">
+                                                <td colSpan={12} className="px-4 py-2 text-white">
                                                     <div className="whitespace-pre-wrap">
-                                                        {i.observacoes_gerais} | {i.observacoes_secretaria}
+                                                        {i.observacoes_gerais} {i.observacoes_secretaria}
                                                     </div>
                                                 </td>
                                             </tr>
@@ -609,6 +626,8 @@ export default function Index({
                 onClose={closeObservacoesGeraisModal}
             />
             <PedirChamadaModal open={modalAbertoPedirChamadaModal} onClose={fecharModalPedirChamadaModal} doente={doenteSelecionado} />
+
+            <SituacaoInternaModal open={modalSituacao} onClose={fecharModalSituacao} doente={doenteSituacao} resultados={resultados} />
         </AppLayout>
     );
 }

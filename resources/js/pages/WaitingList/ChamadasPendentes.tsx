@@ -6,7 +6,7 @@ import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem } from '@/types';
 
 export default function ChamadasPendentes() {
-    const { chamadas } = usePage().props;
+    const { chamadas, resultados } = usePage().props;
 
     const [filtro, setFiltro] = useState({
         tipo: '',
@@ -43,13 +43,12 @@ export default function ChamadasPendentes() {
         setDoenteSelecionado(null);
     }
 
-
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Chamadas" />
+            <Head title="Convocatórias" />
             <div className="mx-auto max-w-6xl space-y-10 py-10">
-                <h1 className="text-3xl font-bold text-gray-900">Chamadas Pendentes</h1>
-                <p className="text-gray-600">Pedidos de chamada feitos pela equipa e ainda sem resposta da secretaria.</p>
+                <h1 className="text-3xl font-bold text-gray-900">Convocatórias Pendentes</h1>
+                <p className="text-gray-600">Pedidos de convocatória feitos pela equipa e ainda sem resposta da secretaria.</p>
 
                 {/* Filtros */}
                 <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
@@ -57,7 +56,7 @@ export default function ChamadasPendentes() {
 
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                         <div>
-                            <label className="text-sm text-gray-700">Tipo de chamada</label>
+                            <label className="text-sm text-gray-700">Tipo de convocatória</label>
                             <select
                                 value={filtro.tipo}
                                 onChange={(e) => setFiltro({ ...filtro, tipo: e.target.value })}
@@ -82,67 +81,47 @@ export default function ChamadasPendentes() {
                     </div>
                 </div>
 
-                {/* Contadores */}
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-                    <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-                        <p className="text-sm text-gray-500">Total pendentes</p>
-                        <p className="text-3xl font-bold">{chamadasFiltradas.length}</p>
-                    </div>
-
-                    <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-                        <p className="text-sm text-gray-500">Ambulatório</p>
-                        <p className="text-3xl font-bold">{chamadasFiltradas.filter((c: any) => c.tipo_chamada === 'Ambulatorio').length}</p>
-                    </div>
-
-                    <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-                        <p className="text-sm text-gray-500">Base / SIGIC</p>
-                        <p className="text-3xl font-bold">
-                            {chamadasFiltradas.filter((c: any) => ['Base', 'SIGIC'].includes(c.tipo_chamada)).length}
-                        </p>
-                    </div>
-                </div>
-
                 {/* Tabela */}
                 <div className="rounded-xl border border-gray-100 bg-white shadow-sm">
-                    <table className="min-w-full divide-y divide-gray-200">
+                    <table className="min-w-full divide-y divide-gray-200 text-xs">
                         <thead className="bg-gray-50">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Doente</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipo</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pedido por</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Data pedido</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ações</th>
+                                <th className="px-3 py-2 text-left text-[10px] font-semibold tracking-wide uppercase">Doente</th>
+                                <th className="px-3 py-2 text-left text-[10px] font-semibold tracking-wide uppercase">Tipo</th>
+                                <th className="px-3 py-2 text-left text-[10px] font-semibold tracking-wide uppercase">Pedido por</th>
+                                <th className="px-3 py-2 text-left text-[10px] font-semibold tracking-wide uppercase">Data pedido</th>
+                                <th className="px-3 py-2 text-left text-[10px] font-semibold tracking-wide uppercase">Ações</th>
                             </tr>
                         </thead>
 
                         <tbody className="divide-y divide-gray-200 bg-white">
-                            {chamadasFiltradas.map((c: any) => (
-                                <tr key={c.id}>
-                                    <td className="px-6 py-4">
-                                        <div className="font-semibold">{c.doente.nome}</div>
-                                        <div className="text-sm text-gray-500">{c.doente.des_diagnostico}</div>
-                                    </td>
+                            {chamadasFiltradas.map((c: any) => {
+                                const jaRespondida = !!c.estado_novo || !!c.data_agenda || !!c.observacoes_secretaria;
 
-                                    <td className="px-6 py-4">{c.tipo_chamada}</td>
+                                return (
+                                    <tr key={c.id}>
+                                        <td className="px-3 py-2">
+                                            <div className="text-[14px] font-medium">{c.doente.nome}</div>
+                                            <div className="text-[14px] text-gray-500">{c.doente.des_diagnostico}</div>
+                                        </td>
 
-                                    <td className="px-6 py-4">{c.pedido_por_user?.name}</td>
+                                        <td className="px-3 py-2">{c.tipo_chamada}</td>
+                                        <td className="px-3 py-2">{c.pedido_por_user?.name}</td>
+                                        <td className="px-3 py-2">{c.pedido_em}</td>
 
-                                    <td className="px-6 py-4">{c.pedido_em}</td>
-
-                                    <td className="px-6 py-4">
-                                        <button
-                                            onClick={() => abrirModal(c)}
-                                            className={`rounded-lg px-4 py-2 text-white transition ${
-                                                !!c.estado_novo || !!c.data_agenda || !!c.observacoes_secretaria
-                                                    ? 'bg-blue-600 hover:bg-blue-700'
-                                                    : 'bg-green-600 hover:bg-green-700'
-                                            }`}
-                                        >
-                                            {!!c.estado_novo || !!c.data_agenda || !!c.observacoes_secretaria ? 'Editar resposta' : 'Responder'}
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
+                                        <td className="px-3 py-2">
+                                            <button
+                                                onClick={() => abrirModal(c)}
+                                                className={`rounded px-2 py-1 text-xs text-white transition ${
+                                                    jaRespondida ? 'bg-blue-600 hover:bg-blue-700' : 'bg-green-600 hover:bg-green-700'
+                                                }`}
+                                            >
+                                                {jaRespondida ? 'Editar' : 'Responder'}
+                                            </button>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
                         </tbody>
                     </table>
 
@@ -150,7 +129,7 @@ export default function ChamadasPendentes() {
                 </div>
             </div>
 
-            <SecretariaRespostaModal open={modalAberto} onClose={fecharModal} call={callSelecionada} doente={doenteSelecionado} />
+            <SecretariaRespostaModal open={modalAberto} onClose={fecharModal} call={callSelecionada} doente={doenteSelecionado} resultados={resultados} />
         </AppLayout>
     );
 }

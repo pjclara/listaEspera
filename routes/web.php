@@ -93,6 +93,8 @@ Route::post('/waiting-list/chamada/{callId}/resposta', [WaitingListCallControlle
 
 Route::get('/waiting-list/chamadas/pendentes', [WaitingListCallController::class, 'chamadasPendentes']);
 
+Route::post('/waiting-list/{id}/situacao-interna', [WaitingListController::class, 'updateSituacaoInterna']);
+
 Route::get('/phpinfo', function () {
     phpinfo();
 });

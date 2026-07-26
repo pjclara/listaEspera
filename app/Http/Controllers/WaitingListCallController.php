@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Enum\ResultadoChamada;
 use App\Http\Controllers\Controller;
 use App\Models\WaitingList;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class WaitingListCallController extends Controller
@@ -47,7 +49,7 @@ class WaitingListCallController extends Controller
     public function respostaChamada(Request $request, int $callId)
     {
         $request->validate([
-            'resultado' => ['required', 'in:Agendado,VoltaLista,Recusou,Indisponível,NA,Aceitou Outro Hospital'],
+            'resultado' => ['required', Rule::enum(ResultadoChamada::class)],
             'data_agendada' => ['required_if:resultado,Agendado', 'nullable', 'date'],
             'observacoes' => ['nullable', 'string'],
         ]);
@@ -56,9 +58,6 @@ class WaitingListCallController extends Controller
         if (!$call) {
             return back()->with('error', 'Pedido de chamada não encontrado.');
         }
-
-        $estadoAnterior = $call->estado_anterior ?? 'Ativo';
-        $resultado = $request->resultado;
 
         // 2. Atualizar o pedido de chamada
         DB::table('waiting_list_calls')->where('id', $callId)->update([
@@ -71,7 +70,17 @@ class WaitingListCallController extends Controller
             'updated_at' => now(),
         ]);
 
-        return back()->with('success', 'Resposta registada com sucesso.');
+        $doente = WaitingList::findOrFail($call->waiting_list_id);
+
+        $doente->situacao_interna =  $request->resultado;
+
+        $doente->save();
+
+        return back()->with('toast', [
+            'type' => 'success',
+            'title' => 'Sucesso',
+            'description' => 'Os dados foram registado com sucesso.',
+        ]);
     }
 
 
@@ -89,6 +98,7 @@ class WaitingListCallController extends Controller
 
         return Inertia::render('WaitingList/ChamadasPendentes', [
             'chamadas' => $chamadas,
+            'resultados' => ResultadoChamada::getAll(),
         ]);
     }
 }

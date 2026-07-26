@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enum\ResultadoChamada;
 use App\Exports\WaitingListExport;
 use App\Models\Schedule;
 use App\Models\Team;
@@ -9,6 +10,7 @@ use App\Models\WaitingList;
 use App\Models\WaitingListContact;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -79,6 +81,8 @@ class WaitingListController extends Controller
             'prioridadeOptionsState' => $prioridadeOptionsState,
             // users permissions
             'permissions' => $request->user()->getAllPermissions()->pluck('name')->toArray(),
+            'resultados' => ResultadoChamada::getAll(),
+
             'filters' => [
                 'num_processo' => $request->num_processo,
                 'situacao' => $request->situacao,
@@ -269,6 +273,23 @@ class WaitingListController extends Controller
         ]);
 
         $waitingList->update($data);
+
+        return back()->with('toast', [
+            'type' => 'success',
+            'title' => 'Observações atualizadas',
+            'description' => 'As observações gerais foram guardadas.',
+        ]);
+    }
+
+    public function updateSituacaoInterna(Request $request, $id)
+    {
+        $request->validate([
+            'situacao_interna' => ['required', Rule::in(ResultadoChamada::getAll())],
+        ]);
+
+        $doente = WaitingList::findOrFail($id);
+        $doente->situacao_interna = $request->situacao_interna;
+        $doente->save();
 
         return back()->with('toast', [
             'type' => 'success',

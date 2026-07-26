@@ -1,7 +1,7 @@
 import { router } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 
-export default function SecretariaRespostaModal({ open, onClose, call, doente }) {
+export default function SecretariaRespostaModal({ open, onClose, call, doente, resultados }) {
     const [form, setForm] = useState({
         resultado: '',
         data_agendada: '',
@@ -40,7 +40,6 @@ export default function SecretariaRespostaModal({ open, onClose, call, doente })
         });
     }
 
-    console.log(form)
     if (!open || !call || !doente) return null;
 
     return (
@@ -74,13 +73,12 @@ export default function SecretariaRespostaModal({ open, onClose, call, doente })
                             className="mt-1 w-full rounded-lg border-gray-300"
                         >
                             <option value="">Selecione...</option>
-                            <option value="Agendado">Agendado</option>
-                            <option value="VoltaLista">Volta à lista</option>
-                            <option value="Recusou">Recusou</option>
-                            <option value="Não atende">Não atende</option>
-                            <option value="Indisponível">Indisponível</option>
-                            <option value="Aceitou Outro Hospital">Aceitou Outro Hospital</option>
-                            <option value="Outro">Outro</option>
+
+                            {resultados.map((r) => (
+                                <option key={r} value={r}>
+                                    {r}
+                                </option>
+                            ))}
                         </select>
                     </div>
 
