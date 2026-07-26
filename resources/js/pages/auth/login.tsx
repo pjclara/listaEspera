@@ -121,7 +121,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
 
                 {/* Footer */}
                 <footer className="mt-10 text-xs text-muted-foreground">
-                    © {new Date().getFullYear()} SurgTuga — ULS Região de Leiria. Todos os direitos reservados.
+                    © {new Date().getFullYear()} SurgTuga. Todos os direitos reservados.
                 </footer>
             </div>
         </>

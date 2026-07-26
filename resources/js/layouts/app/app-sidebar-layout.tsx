@@ -9,8 +9,15 @@ export default function AppSidebarLayout({ children, breadcrumbs = [] }: { child
         <AppShell variant="sidebar">
             <AppSidebar />
             <AppContent variant="sidebar">
-                <AppSidebarHeader breadcrumbs={breadcrumbs} />
-                {children}
+                <div className="flex min-h-full flex-col">
+                    <div className="flex-1 flex flex-col">
+                        <AppSidebarHeader breadcrumbs={breadcrumbs} />
+                        <div className="flex-1">{children}</div>
+                    </div>
+                    <footer className="py-4 px-4 text-right text-[12px] text-gray-400">
+                        © {new Date().getFullYear()} SurgTuga. Todos os direitos reservados.
+                    </footer>
+                </div>
             </AppContent>
         </AppShell>
     );
