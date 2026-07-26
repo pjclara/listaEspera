@@ -157,13 +157,7 @@ export default function Index({
         observacoes_secretaria: '',
     });
 
-    const [modalChamadaAberto, setModalChamadaAberto] = useState(false);
     const [doenteSelecionado, setDoenteSelecionado] = useState<string | null>(null);
-    const [callForm, setCallForm] = useState<CallForm>({
-        tipo_chamada: '',
-        data_pretendida: '',
-        observacoes: '',
-    });
 
     const { errors } = usePage().props as { errors: Record<string, string> };
 
@@ -218,44 +212,9 @@ export default function Index({
         window.location.href = `${route('waiting.export')}?${params.toString()}`;
     };
 
-    const openContactModal = (item: WaitingListItem) => {
-        setSelectedContact(item);
-
-        const formattedData = item.admin?.data_contacto ? new Date(item.admin.data_contacto).toISOString().split('T')[0] : '';
-
-        setContactForm({
-            contactado: item.admin?.contactado ?? false,
-            data_contacto: formattedData,
-            contactado_por: item.admin?.contactado_por ?? '',
-            observacoes: item.admin?.observacoes ?? '',
-        });
-
-        setShowContactModal(true);
-    };
-
     const closeContactModal = () => {
         setShowContactModal(false);
         setSelectedContact(null);
-    };
-
-    const openScheduleModal = (item: WaitingListItem) => {
-        setSelectedSchedule(item);
-
-        if (item.schedule) {
-            setScheduleForm({
-                slot_id: String(item.schedule.slot_id ?? ''),
-                duracao_estimada: String(item.schedule.duracao_estimada ?? ''),
-                estado: item.schedule.estado ?? '',
-            });
-        } else {
-            setScheduleForm({
-                slot_id: '',
-                duracao_estimada: '',
-                estado: '',
-            });
-        }
-
-        setShowScheduleModal(true);
     };
 
     const closeScheduleModal = () => {
@@ -310,7 +269,7 @@ export default function Index({
     const [modalSituacao, setModalSituacao] = useState(false);
     const [doenteSituacao, setDoenteSituacao] = useState(null);
 
-    function abrirModalSituacao(doente) {
+    function abrirModalSituacao(doente: any) {
         setDoenteSituacao(doente);
         setModalSituacao(true);
     }
@@ -520,9 +479,8 @@ export default function Index({
                                             {colunasVisiveis.situacao && <td className="px-4 py-3">{i.situacao ?? '—'}</td>}
 
                                             {colunasVisiveis.situacao_interna && (
-                                                
                                                 <td className="cursor-pointer px-4 py-3 hover:bg-gray-100" onClick={() => abrirModalSituacao(i)}>
-                                                   <SituacaoBadge label={i.situacao_interna} color={i.situacao_color} />
+                                                    <SituacaoBadge label={i.situacao_interna} color={i.situacao_color} />
                                                 </td>
                                             )}
 
