@@ -18,6 +18,7 @@ class WaitingList extends Model
         'data_operado',
         'data_agenda',
         'num_processo',
+        'nome',
         'sexo',
         'des_grupo',
         'cod_medico',
