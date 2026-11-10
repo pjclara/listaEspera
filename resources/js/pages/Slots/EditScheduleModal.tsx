@@ -1,3 +1,8 @@
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -17,135 +22,115 @@ export function EditScheduleModal({ schedule, slot, close }) {
 
     const { errors } = usePage().props;
 
+    function submit(e: React.FormEvent) {
+        e.preventDefault();
+
+        router.put(`/waiting-lists/${schedule.waiting_list_id}/schedule/${schedule.id}`, form, {
+            preserveScroll: true,
+            onSuccess: () => {
+                close(form);
+            },
+            onError: (formErrors) => {
+                toast.error('Não foi possível atualizar o agendamento', {
+                    description: getFirstErrorMessage(formErrors) || 'Verifica os dados e tenta novamente.',
+                });
+            },
+        });
+    }
+
+    function cancelarAgendamento() {
+        router.put(
+            `/waiting-lists/${schedule.waiting_list_id}/schedule/${schedule.id}`,
+            { estado: 'cancelado', duracao_estimada: form.duracao_estimada, slot_id: form.slot_id },
+            {
+                onSuccess: () => close(),
+                onError: (formErrors) => {
+                    toast.error('Não foi possível cancelar o agendamento', {
+                        description: getFirstErrorMessage(formErrors) || 'Tenta novamente.',
+                    });
+                },
+            },
+        );
+    }
+
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-            <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl">
-                <h2 className="mb-4 text-xl font-semibold">Editar Agendamento</h2>
+        <Dialog open onOpenChange={(open) => !open && close()}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Editar Agendamento</DialogTitle>
+                </DialogHeader>
 
-                <form
-                    onSubmit={(e) => {
-                        e.preventDefault();
-
-                        router.put(`/waiting-lists/${schedule.waiting_list_id}/schedule/${schedule.id}`, form, {
-                            preserveScroll: true,
-                            onSuccess: () => {
-                                close(form);
-                            },
-                            onError: (formErrors) => {
-                                toast.error('Não foi possível atualizar o agendamento', {
-                                    description: getFirstErrorMessage(formErrors) || 'Verifica os dados e tenta novamente.',
-                                });
-                            },
-                        });
-                    }}
-                    className="space-y-4"
-                >
-                    {/* Slot */}
-                    <label className="block">
-                        <span className="text-sm text-gray-600">Slot</span>
-                        <select
-                            value={form.slot_id}
-                            onChange={(e) => setForm({ ...form, slot_id: e.target.value })}
-                            className="w-full rounded border px-3 py-2"
-                        >
-                            <option value={slot.id}>
-                                {new Date(slot.data).toLocaleDateString()} — {slot.hora_inicio} — Equipa {slot.team.nome}
-                            </option>
-                        </select>
-                    </label>
-
-                    {/* Estado do agendamento */}
-                    <label className="block">
-                        <span className="text-sm text-gray-600">Estado do agendamento</span>
-
-                        <select
-                            value={form.estado}
-                            onChange={(e) =>
-                                setForm({
-                                    ...form,
-                                    estado: e.target.value,
-                                })
-                            }
-                            className="w-full rounded border px-3 py-2"
-                        >
-                            <option value="proposto">Proposto</option>
-                            <option value="pronto">Pronto</option>
-                            <option value="agendado">Agendado</option>
-                            <option value="operado">Operado</option>
-                            <option value="cancelado">Cancelado</option>
-                        </select>
-
-                        {errors.estado && <p className="mt-1 text-sm text-red-600">{errors.estado}</p>}
-                    </label>
-
-                    {/* Pernoita */}
-                    <div>
-                        <label className="block text-sm text-gray-600">Pernoita</label>
-                        <select
-                            value={form.pernoita}
-                            onChange={(e) => setForm({ ...form, pernoita: e.target.value })}
-                            className="w-full rounded border px-3 py-2"
-                        >
-                            <option value="nao">Não</option>
-                            <option value="sim">Sim</option>
-                            <option value="talvez">Talvez</option>
-                        </select>
+                <form onSubmit={submit} className="space-y-4">
+                    <div className="grid gap-2">
+                        <Label>Slot</Label>
+                        <Select value={String(form.slot_id)} onValueChange={(value) => setForm({ ...form, slot_id: value })}>
+                            <SelectTrigger>
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value={String(slot.id)}>
+                                    {new Date(slot.data).toLocaleDateString()} — {slot.hora_inicio} — Equipa {slot.team.nome}
+                                </SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
 
-                    {/* Duração */}
-                    <label className="block">
-                        <span className="text-sm text-gray-600">Duração estimada (min)</span>
-                        <input
+                    <div className="grid gap-2">
+                        <Label>Estado do agendamento</Label>
+                        <Select value={form.estado} onValueChange={(value) => setForm({ ...form, estado: value })}>
+                            <SelectTrigger>
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="proposto">Proposto</SelectItem>
+                                <SelectItem value="pronto">Pronto</SelectItem>
+                                <SelectItem value="agendado">Agendado</SelectItem>
+                                <SelectItem value="operado">Operado</SelectItem>
+                                <SelectItem value="cancelado">Cancelado</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        {errors.estado && <p className="text-destructive text-sm">{errors.estado}</p>}
+                    </div>
+
+                    <div className="grid gap-2">
+                        <Label>Pernoita</Label>
+                        <Select value={form.pernoita} onValueChange={(value) => setForm({ ...form, pernoita: value })}>
+                            <SelectTrigger>
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="nao">Não</SelectItem>
+                                <SelectItem value="sim">Sim</SelectItem>
+                                <SelectItem value="talvez">Talvez</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div className="grid gap-2">
+                        <Label>Duração estimada (min)</Label>
+                        <Input
                             type="number"
                             min="1"
                             value={form.duracao_estimada}
                             onChange={(e) => setForm({ ...form, duracao_estimada: e.target.value })}
-                            className="w-full rounded border px-3 py-2"
                         />
-                        {errors?.duracao_estimada && <p className="text-sm text-red-600">{errors.duracao_estimada}</p>}
-                    </label>
-
-                    <div className="mt-6 flex justify-between">
-                        <button
-                            type="button"
-                            onClick={() =>
-                                router.put(
-                                    `/waiting-lists/${schedule.waiting_list_id}/schedule/${schedule.id}`,
-                                    { estado: 'cancelado', duracao_estimada: form.duracao_estimada, slot_id: form.slot_id },
-                                    {
-                                        onSuccess: () => close(),
-                                        onError: (formErrors) => {
-                                            toast.error('Não foi possível cancelar o agendamento', {
-                                                description: getFirstErrorMessage(formErrors) || 'Tenta novamente.',
-                                            });
-                                        },
-                                    },
-                                )
-                            }
-                            className="cursor-pointer rounded bg-red-600 px-4 py-2 text-white transition-all duration-150 hover:bg-red-700 focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95 active:bg-red-800"
-                        >
-                            Cancelar
-                        </button>
-
-                        <div className="flex gap-3">
-                            <button
-                                type="button"
-                                onClick={close}
-                                className="cursor-pointer rounded bg-gray-300 px-4 py-2 transition-all duration-150 hover:bg-gray-400 focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95 active:bg-gray-500"
-                            >
-                                Fechar
-                            </button>
-
-                            <button
-                                type="submit"
-                                className="cursor-pointer rounded bg-blue-600 px-4 py-2 text-white transition-all duration-150 hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95 active:bg-blue-800"
-                            >
-                                Guardar
-                            </button>
-                        </div>
+                        {errors?.duracao_estimada && <p className="text-destructive text-sm">{errors.duracao_estimada}</p>}
                     </div>
+
+                    <DialogFooter className="sm:justify-between">
+                        <Button type="button" variant="destructive" onClick={cancelarAgendamento}>
+                            Cancelar agendamento
+                        </Button>
+
+                        <div className="flex gap-2">
+                            <Button type="button" variant="ghost" onClick={close}>
+                                Fechar
+                            </Button>
+                            <Button type="submit">Guardar</Button>
+                        </div>
+                    </DialogFooter>
                 </form>
-            </div>
-        </div>
+            </DialogContent>
+        </Dialog>
     );
 }

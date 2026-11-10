@@ -1,3 +1,9 @@
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import { router, usePage } from '@inertiajs/react';
 
 interface AdminObservacoesModalProps {
@@ -24,10 +30,19 @@ interface AdminObservacoesModalProps {
     permissions: string[];
 }
 
+const RESULT_OPTIONS = [
+    { value: 'nao_atendeu', label: 'Não atendeu' },
+    { value: 'nao_quer_operar', label: 'Não quer ser operado' },
+    { value: 'quer_operar_mais_tarde', label: 'Quer ser operado mais tarde' },
+    { value: 'outra_instituicao', label: 'Vai ser operado noutra instituição' },
+    { value: 'quer_operar', label: 'Aceita ser operado' },
+    { value: 'outro', label: 'Outro' },
+];
+
 export default function AdminObservacoesModal({ open, selected, form, setForm, onClose, permissions }: AdminObservacoesModalProps) {
     const { errors } = usePage().props as any;
 
-    if (!open || !selected) return null;
+    if (!selected) return null;
 
     const canEdit = permissions.includes('waiting_list.manage');
 
@@ -50,108 +65,89 @@ export default function AdminObservacoesModal({ open, selected, form, setForm, o
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-            <div className="w-full max-w-lg animate-[fadeIn_0.2s_ease] rounded-xl bg-white p-6 shadow-xl">
-                <h2 className="mb-4 text-xl font-semibold">Dados Administrativos — Nº {selected.num_processo}</h2>
+        <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
+            <DialogContent className="max-w-lg">
+                <DialogHeader>
+                    <DialogTitle>Dados Administrativos — Nº {selected.num_processo}</DialogTitle>
+                </DialogHeader>
 
-                {/* FORMULÁRIO (apenas se tiver permissão) */}
                 {canEdit && (
                     <form onSubmit={handleSubmit} className="space-y-4">
-                        {/* Resultado do contacto */}
-                        <label className="block">
-                            <span className="text-sm text-gray-600">Resultado do contacto</span>
+                        <div className="grid gap-2">
+                            <Label>Resultado do contacto</Label>
+                            <Select value={form.contact_result} onValueChange={(value) => setForm({ ...form, contact_result: value })}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Selecione…" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {RESULT_OPTIONS.map((opt) => (
+                                        <SelectItem key={opt.value} value={opt.value}>
+                                            {opt.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            {errors.contact_result && <p className="text-destructive text-sm">{errors.contact_result}</p>}
+                        </div>
 
-                            <select
-                                value={form.contact_result}
-                                onChange={(e) => setForm({ ...form, contact_result: e.target.value })}
-                                className="w-full rounded border px-3 py-2"
-                            >
-                                <option value="">Selecione…</option>
-                                <option value="nao_atendeu">Não atendeu</option>
-                                <option value="nao_quer_operar">Não quer ser operado</option>
-                                <option value="quer_operar_mais_tarde">Quer ser operado mais tarde</option>
-                                <option value="outra_instituicao">Vai ser operado noutra instituição</option>
-                                <option value="quer_operar">Aceita ser operado</option>
-                                <option value="outro">Outro</option>
-                            </select>
-
-                            {errors.contact_result && <p className="mt-1 text-sm text-red-600">{errors.contact_result}</p>}
-                        </label>
-
-                        {/* Data de contacto */}
-                        <label className="block">
-                            <span className="text-sm text-gray-600">Data de contacto</span>
-
-                            <input
+                        <div className="grid gap-2">
+                            <Label>Data de contacto</Label>
+                            <Input
                                 type="date"
                                 value={form.data_contacto}
                                 onChange={(e) => setForm({ ...form, data_contacto: e.target.value })}
-                                className="w-full rounded border px-3 py-2"
                             />
+                            {errors.data_contacto && <p className="text-destructive text-sm">{errors.data_contacto}</p>}
+                        </div>
 
-                            {errors.data_contacto && <p className="mt-1 text-sm text-red-600">{errors.data_contacto}</p>}
-                        </label>
-
-                        {/* Contactado por */}
-                        <label className="block">
-                            <span className="text-sm text-gray-600">Contactado por</span>
-
-                            <input
+                        <div className="grid gap-2">
+                            <Label>Contactado por</Label>
+                            <Input
                                 type="text"
                                 value={form.contactado_por}
                                 onChange={(e) => setForm({ ...form, contactado_por: e.target.value })}
-                                className="w-full rounded border px-3 py-2"
                             />
+                            {errors.contactado_por && <p className="text-destructive text-sm">{errors.contactado_por}</p>}
+                        </div>
 
-                            {errors.contactado_por && <p className="mt-1 text-sm text-red-600">{errors.contactado_por}</p>}
-                        </label>
+                        <div className="grid gap-2">
+                            <Label>Observações</Label>
+                            <Textarea value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} className="h-24" />
+                            {errors.observacoes && <p className="text-destructive text-sm">{errors.observacoes}</p>}
+                        </div>
 
-                        {/* Observações */}
-                        <label className="block">
-                            <span className="text-sm text-gray-600">Observações</span>
-
-                            <textarea
-                                value={form.observacoes}
-                                onChange={(e) => setForm({ ...form, observacoes: e.target.value })}
-                                className="h-24 w-full rounded border px-3 py-2"
-                            />
-
-                            {errors.observacoes && <p className="mt-1 text-sm text-red-600">{errors.observacoes}</p>}
-                        </label>
-
-                        <div className="mt-6 flex justify-end gap-3">
-                            <button type="submit" className="rounded bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-700">
-                                Guardar
-                            </button>
+                        <div className="flex justify-end">
+                            <Button type="submit">Guardar</Button>
                         </div>
                     </form>
                 )}
 
-                {/* HISTÓRICO */}
-                <div className="mt-6 border-t pt-4">
-                    <h3 className="mb-2 text-lg font-semibold">Histórico de contactos</h3>
+                <div className="border-border mt-2 border-t pt-4">
+                    <h3 className="text-foreground mb-3 text-sm font-semibold">Histórico de contactos</h3>
 
-                    {selected.contacts.length === 0 && <p className="text-sm text-gray-500">Sem contactos registados.</p>}
+                    {selected.contacts.length === 0 && <p className="text-muted-foreground text-sm">Sem contactos registados.</p>}
 
-                    {selected.contacts.map((c) => (
-                        <div key={c.id} className="mb-3 rounded border bg-gray-50 p-3">
-                            <div className="text-sm">
-                                <strong>{c.data_contacto}</strong> — {c.contact_result.replace('_', ' ')}
+                    <div className="max-h-60 space-y-3 overflow-y-auto">
+                        {selected.contacts.map((c) => (
+                            <div key={c.id} className="bg-muted/50 rounded-lg border border-border p-3">
+                                <div className="text-sm text-foreground">
+                                    <strong>{c.data_contacto}</strong> — {c.contact_result.replace('_', ' ')}
+                                </div>
+
+                                <div className="text-muted-foreground text-xs">Contactado por: {c.contactado_por}</div>
+
+                                {c.observacoes && <div className="text-muted-foreground mt-1 text-xs">{c.observacoes}</div>}
                             </div>
-
-                            <div className="text-xs text-gray-600">Contactado por: {c.contactado_por}</div>
-
-                            {c.observacoes && <div className="mt-1 text-xs text-gray-600">{c.observacoes}</div>}
-                        </div>
-                    ))}
+                        ))}
+                    </div>
 
                     <div className="mt-4 flex justify-end">
-                        <button type="button" onClick={onClose} className="rounded bg-gray-300 px-4 py-2 transition hover:bg-gray-400">
+                        <Button type="button" variant="secondary" onClick={onClose}>
                             Fechar
-                        </button>
+                        </Button>
                     </div>
                 </div>
-            </div>
-        </div>
+            </DialogContent>
+        </Dialog>
     );
 }

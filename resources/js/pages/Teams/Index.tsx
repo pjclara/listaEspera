@@ -1,114 +1,150 @@
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/empty-state';
+import { PageHeader } from '@/components/ui/page-header';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem } from '@/types';
-import { router, usePage } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
+import { motion } from 'framer-motion';
+import { Pencil, Plus, Trash2, Users, UsersRound } from 'lucide-react';
 import { useState } from 'react';
 import CreateTeamModal from './../../components/teams/CreateTeamModal';
 
+type Team = {
+    id: number;
+    nome: string;
+    cor?: string;
+    ativa?: boolean;
+    leader_id?: number | string;
+    sala_default?: string;
+};
+
 export default function TeamsIndex() {
-    const { teams } = usePage().props;
+    const { teams } = usePage().props as unknown as { teams: Team[] };
 
     const [showCreate, setShowCreate] = useState(false);
-    const [showMembers, setShowMembers] = useState(false);
-    const [selectedTeam, setSelectedTeam] = useState(null);
+    const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
 
     const breadcrumbs: BreadcrumbItem[] = [
-        {
-            title: 'Dashboard',
-            href: '/dashboard',
-        },
-        {
-            title: 'Equipas',
-            href: '/teams',
-        },
+        { title: 'Dashboard', href: '/dashboard' },
+        { title: 'Equipas', href: '/teams' },
     ];
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <div className="p-6">
-                <div className="mb-6 flex items-center justify-between">
-                    <h1 className="text-2xl font-bold">Gestão de Equipas</h1>
+            <Head title="Gestão de Equipas" />
 
-                    <button
-                        onClick={() => {
-                            setSelectedTeam(null);
-                            setShowCreate(true);
-                        }}
-                        className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-                    >
-                        Nova Equipa
-                    </button>
-                </div>
+            <div className="flex flex-1 flex-col gap-6 p-6">
+                <PageHeader
+                    title="Equipas"
+                    description="Organiza as equipas cirúrgicas e respetivas salas padrão."
+                    icon={<UsersRound className="size-5" />}
+                    actions={
+                        <Button
+                            onClick={() => {
+                                setSelectedTeam(null);
+                                setShowCreate(true);
+                            }}
+                        >
+                            <Plus className="size-4" />
+                            Nova Equipa
+                        </Button>
+                    }
+                />
 
-                {/* Tabela */}
-                <div className="rounded-lg border bg-white">
-                    <table className="w-full">
-                        <thead className="bg-gray-100">
-                            <tr>
-                                <th className="px-4 py-2 text-left">Nome</th>
-                                <th className="px-4 py-2 text-left">Cor</th>
-                                <th className="px-4 py-2 text-left">Estado</th>
-                                <th className="px-4 py-2 text-left">Ações</th>
-                            </tr>
-                        </thead>
+                <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.05 }}
+                    className="overflow-hidden rounded-xl border border-border bg-card shadow-sm"
+                >
+                    {teams.length === 0 ? (
+                        <EmptyState
+                            icon={Users}
+                            title="Ainda não há equipas"
+                            description="Cria a primeira equipa cirúrgica para começar a organizar a agenda."
+                            action={
+                                <Button size="sm" onClick={() => setShowCreate(true)}>
+                                    Nova Equipa
+                                </Button>
+                            }
+                        />
+                    ) : (
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Nome</TableHead>
+                                    <TableHead>Sala padrão</TableHead>
+                                    <TableHead>Estado</TableHead>
+                                    <TableHead className="text-right">Ações</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {teams.map((team, idx) => (
+                                    <motion.tr
+                                        key={team.id}
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        transition={{ duration: 0.2, delay: idx * 0.03 }}
+                                        className="hover:bg-muted/40 border-b border-border transition-colors last:border-0"
+                                    >
+                                        <TableCell>
+                                            <div className="flex items-center gap-3">
+                                                <span
+                                                    className="inline-block size-3 shrink-0 rounded-full ring-2 ring-offset-1 ring-offset-card"
+                                                    style={{ backgroundColor: team.cor, boxShadow: `0 0 0 2px ${team.cor}33` }}
+                                                />
+                                                <span className="font-medium text-foreground">{team.nome}</span>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="text-muted-foreground">{team.sala_default || '—'}</TableCell>
+                                        <TableCell>
+                                            {team.ativa ? (
+                                                <Badge className="bg-success text-success-foreground hover:bg-success/90">Ativa</Badge>
+                                            ) : (
+                                                <Badge variant="destructive">Inativa</Badge>
+                                            )}
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <div className="flex items-center justify-end gap-1.5">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="size-8"
+                                                    title="Editar"
+                                                    onClick={() => {
+                                                        setSelectedTeam(team);
+                                                        setShowCreate(true);
+                                                    }}
+                                                >
+                                                    <Pencil className="size-4" />
+                                                </Button>
 
-                        <tbody>
-                            {teams.map((team) => (
-                                <tr key={team.id} className="border-t">
-                                    <td className="px-4 py-2">{team.nome}</td>
-
-                                    <td className="px-4 py-2">
-                                        <span className="inline-block h-4 w-4 rounded" style={{ backgroundColor: team.cor }} />
-                                    </td>
-
-                                    <td className="px-4 py-2">
-                                        {team.ativa ? (
-                                            <span className="font-medium text-green-600">Ativa</span>
-                                        ) : (
-                                            <span className="font-medium text-red-600">Inativa</span>
-                                        )}
-                                    </td>
-
-                                    <td className="space-x-2 px-4 py-2">
-                                        <button
-                                            onClick={() => {
-                                                setSelectedTeam(team);
-                                                setShowCreate(true);
-                                            }}
-                                            className="text-blue-600 hover:underline"
-                                        >
-                                            Editar
-                                        </button>
-
-                                        <button
-                                            onClick={() => {
-                                                setSelectedTeam(team);
-                                                setShowMembers(true);
-                                            }}
-                                            className="text-green-600 hover:underline"
-                                        >
-                                            Membros
-                                        </button>
-
-                                        <button
-                                            onClick={() =>
-                                                router.delete(`/teams/${team.id}`, {
-                                                    preserveScroll: true,
-                                                })
-                                            }
-                                            className="text-red-600 hover:underline"
-                                        >
-                                            Apagar
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-
-                {/* Modais */}
-                {showCreate && <CreateTeamModal team={selectedTeam} close={() => setShowCreate(false)} />}
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="text-destructive hover:bg-destructive/10 hover:text-destructive size-8"
+                                                    title="Apagar"
+                                                    onClick={() => {
+                                                        if (confirm(`Apagar a equipa "${team.nome}"?`)) {
+                                                            router.delete(`/teams/${team.id}`, { preserveScroll: true });
+                                                        }
+                                                    }}
+                                                >
+                                                    <Trash2 className="size-4" />
+                                                </Button>
+                                            </div>
+                                        </TableCell>
+                                    </motion.tr>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    )}
+                </motion.div>
             </div>
+
+            {showCreate && <CreateTeamModal team={selectedTeam} close={() => setShowCreate(false)} />}
         </AppLayout>
     );
 }

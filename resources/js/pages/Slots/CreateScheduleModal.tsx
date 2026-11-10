@@ -1,6 +1,11 @@
 import { SearchableSelect } from '@/components/SearchableSelect';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { router, usePage } from '@inertiajs/react';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 
 export function CreateScheduleModal({ slot, close }) {
@@ -13,18 +18,6 @@ export function CreateScheduleModal({ slot, close }) {
         estado: 'proposto',
         pernoita: 'nao',
     });
-    const ref = useRef(null);
-
-    useEffect(() => {
-        function handleClickOutside(e) {
-            if (ref.current && !ref.current.contains(e.target)) {
-                close();
-            }
-        }
-
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
 
     function submit(e) {
         e.preventDefault();
@@ -47,90 +40,69 @@ export function CreateScheduleModal({ slot, close }) {
     }
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-            <div ref={ref} className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl">
-                <h2 className="mb-4 text-xl font-semibold">Novo Agendamento</h2>
+        <Dialog open onOpenChange={(open) => !open && close()}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Novo Agendamento</DialogTitle>
+                </DialogHeader>
 
                 <form onSubmit={submit} className="space-y-4">
-                    {/* Doente */}
-                    <label className="block">
-                        <span className="text-sm text-gray-600">Doente</span>
-                        <SearchableSelect
-                            value={form.waiting_list_id}
-                            onChange={(id) => setForm({ ...form, waiting_list_id: id })}
-                            options={waitingLists}
-                        />
+                    <div className="grid gap-2">
+                        <Label>Doente</Label>
+                        <SearchableSelect value={form.waiting_list_id} onChange={(id) => setForm({ ...form, waiting_list_id: id })} options={waitingLists} />
+                        {errors?.waiting_list_id && <p className="text-destructive text-sm">{errors.waiting_list_id}</p>}
+                    </div>
 
-                        {errors?.waiting_list_id && <p className="text-sm text-red-600">{errors.waiting_list_id}</p>}
-                    </label>
+                    <div className="grid gap-2">
+                        <Label>Estado do agendamento</Label>
+                        <Select value={form.estado} onValueChange={(value) => setForm({ ...form, estado: value })}>
+                            <SelectTrigger>
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="proposto">Proposto</SelectItem>
+                                <SelectItem value="pronto">Pronto</SelectItem>
+                                <SelectItem value="agendado">Agendado</SelectItem>
+                                <SelectItem value="operado">Operado</SelectItem>
+                                <SelectItem value="cancelado">Cancelado</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        {errors.estado && <p className="text-destructive text-sm">{errors.estado}</p>}
+                    </div>
 
-                    {/* Estado do agendamento */}
-                    <label className="block">
-                        <span className="text-sm text-gray-600">Estado do agendamento</span>
+                    <div className="grid gap-2">
+                        <Label>Pernoita</Label>
+                        <Select value={form.pernoita} onValueChange={(value) => setForm({ ...form, pernoita: value })}>
+                            <SelectTrigger>
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="nao">Não</SelectItem>
+                                <SelectItem value="sim">Sim</SelectItem>
+                                <SelectItem value="talvez">Talvez</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
 
-                        <select
-                            value={form.estado}
-                            onChange={(e) =>
-                                setForm({
-                                    ...form,
-                                    estado: e.target.value,
-                                })
-                            }
-                            className="w-full rounded border px-3 py-2"
-                        >
-                            <option value="proposto">Proposto</option>
-                            <option value="pronto">Pronto</option>
-                            <option value="agendado">Agendado</option>
-                            <option value="operado">Operado</option>
-                            <option value="cancelado">Cancelado</option>
-                        </select>
-
-                        {errors.estado && <p className="mt-1 text-sm text-red-600">{errors.estado}</p>}
-                    </label>
-
-                    {/* Duração */}
-
-                    <select
-                        value={form.pernoita}
-                        onChange={(e) => setForm({ ...form, pernoita: e.target.value })}
-                        className="w-full rounded border px-3 py-2"
-                    >
-                        <option value="nao">Não</option>
-                        <option value="sim">Sim</option>
-                        <option value="talvez">Talvez</option>
-                    </select>
-
-                    {/* Duração */}
-                    <label className="block">
-                        <span className="text-sm text-gray-600">Duração estimada (min)</span>
-                        <input
+                    <div className="grid gap-2">
+                        <Label>Duração estimada (min)</Label>
+                        <Input
                             type="number"
                             min="1"
                             value={form.duracao_estimada}
                             onChange={(e) => setForm({ ...form, duracao_estimada: e.target.value })}
-                            className="w-full rounded border px-3 py-2"
                         />
-                        {errors?.duracao_estimada && <p className="text-sm text-red-600">{errors.duracao_estimada}</p>}
-                    </label>
-
-                    <div className="mt-6 flex justify-end gap-3">
-                        <button
-                            type="button"
-                            onClick={close}
-                            className="rounded bg-gray-300 px-4 py-2 transition-all duration-150 hover:bg-gray-400 focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95 active:bg-gray-500"
-                        >
-                            Cancelar
-                        </button>
-
-                        <button
-                            type="submit"
-                            className="rounded bg-blue-600 px-4 py-2 text-white transition-all duration-150 hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95 active:bg-blue-800"
-                        >
-                            Guardar
-                        </button>
+                        {errors?.duracao_estimada && <p className="text-destructive text-sm">{errors.duracao_estimada}</p>}
                     </div>
+
+                    <DialogFooter>
+                        <Button type="button" variant="ghost" onClick={close}>
+                            Cancelar
+                        </Button>
+                        <Button type="submit">Guardar</Button>
+                    </DialogFooter>
                 </form>
-            </div>
-        </div>
+            </DialogContent>
+        </Dialog>
     );
 }

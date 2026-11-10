@@ -1,8 +1,18 @@
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { PageHeader } from '@/components/ui/page-header';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Slot } from '@/types/Slot';
 import { Team } from '@/types/Team';
 import { Head, router, usePage } from '@inertiajs/react';
+import { motion } from 'framer-motion';
+import { CalendarClock, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -76,161 +86,201 @@ export default function Index({ slots, teams }: PageProps<{ slots: Slot[]; teams
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Slots Cirúrgicos" />
-            <div className="p-6">
-                <div className="mb-4 flex justify-between">
-                    <h1 className="text-xl font-semibold">Slots Cirúrgicos</h1>
+            <div className="flex flex-1 flex-col gap-6 p-6">
+                <PageHeader
+                    title="Slots Cirúrgicos"
+                    description="Define os blocos de sala disponíveis para cada equipa."
+                    icon={<CalendarClock className="size-5" />}
+                    actions={
+                        <Button onClick={openCreate}>
+                            <Plus className="size-4" />
+                            Criar Slot
+                        </Button>
+                    }
+                />
 
-                    <button onClick={openCreate} className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">
-                        Criar Slot
-                    </button>
-                </div>
+                <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.05 }}
+                    className="overflow-hidden rounded-xl border border-border bg-card shadow-sm"
+                >
+                    {slots.length === 0 ? (
+                        <EmptyState
+                            icon={CalendarClock}
+                            title="Ainda não há slots"
+                            description="Cria o primeiro slot para abrir disponibilidade de sala a uma equipa."
+                            action={
+                                <Button size="sm" onClick={openCreate}>
+                                    Criar Slot
+                                </Button>
+                            }
+                        />
+                    ) : (
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Data</TableHead>
+                                    <TableHead>Início</TableHead>
+                                    <TableHead>Fim</TableHead>
+                                    <TableHead>Equipa</TableHead>
+                                    <TableHead>Sala</TableHead>
+                                    <TableHead className="text-right">Ações</TableHead>
+                                </TableRow>
+                            </TableHeader>
 
-                <table className="w-full border">
-                    <thead className="bg-gray-100">
-                        <tr>
-                            <th className="px-3 py-2">Data</th>
-                            <th className="px-3 py-2">Início</th>
-                            <th className="px-3 py-2">Fim</th>
-                            <th className="px-3 py-2">team</th>
-                            <th className="px-3 py-2">Sala</th>
-                            <th className="px-3 py-2">Ações</th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-                        {slots.map((slot) => (
-                            <tr key={slot.id} className="border-t">
-                                <td className="px-3 py-2">{new Date(slot.data).toISOString().split('T')[0]}</td>
-                                <td className="px-3 py-2">{slot.hora_inicio}</td>
-                                <td className="px-3 py-2">{slot.hora_fim}</td>
-                                <td className="px-3 py-2">{slot.team.nome}</td>
-                                <td className="px-3 py-2">{slot.sala || '—'}</td>
-
-                                <td className="flex gap-2 px-3 py-2">
-                                    <button onClick={() => openEdit(slot)} className="rounded bg-yellow-500 px-3 py-1 text-white hover:bg-yellow-600">
-                                        Editar
-                                    </button>
-
-                                    <button
-                                        onClick={() => router.delete(`/slots/${slot.id}`)}
-                                        className="rounded bg-red-600 px-3 py-1 text-white hover:bg-red-700"
+                            <TableBody>
+                                {slots.map((slot, idx) => (
+                                    <motion.tr
+                                        key={slot.id}
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        transition={{ duration: 0.2, delay: idx * 0.03 }}
+                                        className="hover:bg-muted/40 border-b border-border transition-colors last:border-0"
                                     >
-                                        Apagar
-                                    </button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+                                        <TableCell className="font-medium text-foreground">
+                                            {new Date(slot.data).toISOString().split('T')[0]}
+                                        </TableCell>
+                                        <TableCell className="text-muted-foreground">{slot.hora_inicio}</TableCell>
+                                        <TableCell className="text-muted-foreground">{slot.hora_fim}</TableCell>
+                                        <TableCell>
+                                            <span className="inline-flex items-center gap-2">
+                                                <span className="inline-block size-2.5 rounded-full" style={{ backgroundColor: slot.team?.cor }} />
+                                                {slot.team.nome}
+                                            </span>
+                                        </TableCell>
+                                        <TableCell className="text-muted-foreground">{slot.sala || '—'}</TableCell>
+                                        <TableCell className="text-right">
+                                            <div className="flex items-center justify-end gap-1.5">
+                                                <Button variant="ghost" size="icon" className="size-8" title="Editar" onClick={() => openEdit(slot)}>
+                                                    <Pencil className="size-4" />
+                                                </Button>
 
-                {/* MODAL */}
-                {showModal && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-                        <div className="w-full max-w-lg rounded-xl bg-white p-6">
-                            <h2 className="mb-4 text-lg font-semibold">{editing ? 'Editar Slot' : 'Criar Slot'}</h2>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="text-destructive hover:bg-destructive/10 hover:text-destructive size-8"
+                                                    title="Apagar"
+                                                    onClick={() => {
+                                                        if (confirm('Apagar este slot?')) {
+                                                            router.delete(`/slots/${slot.id}`);
+                                                        }
+                                                    }}
+                                                >
+                                                    <Trash2 className="size-4" />
+                                                </Button>
+                                            </div>
+                                        </TableCell>
+                                    </motion.tr>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    )}
+                </motion.div>
 
-                            <form
-                                onSubmit={(e) => {
-                                    e.preventDefault();
-                                    submit();
-                                }}
-                                className="space-y-4"
-                            >
-                                {/* DATA */}
-                                <input
-                                    type="date"
-                                    value={form.data}
-                                    onChange={(e) => setForm({ ...form, data: e.target.value })}
-                                    className="w-full rounded border px-3 py-2"
-                                />
-                                {errors.data && <p className="text-red-600">{errors.data}</p>}
+                <Dialog open={showModal} onOpenChange={(open) => !open && setShowModal(false)}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>{editing ? 'Editar Slot' : 'Criar Slot'}</DialogTitle>
+                        </DialogHeader>
 
-                                {/* HORAS */}
-                                <input
-                                    type="time"
-                                    value={form.hora_inicio}
-                                    onChange={(e) => setForm({ ...form, hora_inicio: e.target.value })}
-                                    className="w-full rounded border px-3 py-2"
-                                />
+                        <form
+                            onSubmit={(e) => {
+                                e.preventDefault();
+                                submit();
+                            }}
+                            className="space-y-4"
+                        >
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="grid gap-2">
+                                    <Label>Data</Label>
+                                    <Input type="date" value={form.data} onChange={(e) => setForm({ ...form, data: e.target.value })} />
+                                    {errors.data && <p className="text-destructive text-sm">{errors.data}</p>}
+                                </div>
 
-                                <input
-                                    type="time"
-                                    value={form.hora_fim}
-                                    onChange={(e) => setForm({ ...form, hora_fim: e.target.value })}
-                                    className="w-full rounded border px-3 py-2"
-                                />
+                                <div className="grid gap-2">
+                                    <Label>Sala</Label>
+                                    <Input placeholder="Sala" value={form.sala} onChange={(e) => setForm({ ...form, sala: e.target.value })} />
+                                </div>
+                            </div>
 
-                                {/* team */}
-                                <select
-                                    value={form.team_id}
-                                    onChange={(e) => setForm({ ...form, team_id: e.target.value })}
-                                    className="w-full rounded border px-3 py-2"
-                                >
-                                    <option value="">Selecione a team</option>
-                                    {teams.map((team) => (
-                                        <option key={team.id} value={team.id}>
-                                            {team.nome}
-                                        </option>
-                                    ))}
-                                </select>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="grid gap-2">
+                                    <Label>Hora início</Label>
+                                    <Input
+                                        type="time"
+                                        value={form.hora_inicio}
+                                        onChange={(e) => setForm({ ...form, hora_inicio: e.target.value })}
+                                    />
+                                </div>
 
-                                {/* SALA */}
-                                <input
-                                    type="text"
-                                    placeholder="Sala"
-                                    value={form.sala}
-                                    onChange={(e) => setForm({ ...form, sala: e.target.value })}
-                                    className="w-full rounded border px-3 py-2"
-                                />
+                                <div className="grid gap-2">
+                                    <Label>Hora fim</Label>
+                                    <Input type="time" value={form.hora_fim} onChange={(e) => setForm({ ...form, hora_fim: e.target.value })} />
+                                </div>
+                            </div>
 
-                                {/* REPETIÇÃO */}
-                                <select
-                                    value={form.repeat_type}
-                                    onChange={(e) => setForm({ ...form, repeat_type: e.target.value })}
-                                    className="w-full rounded border px-3 py-2"
-                                >
-                                    <option value="none">Não repetir</option>
-                                    <option value="daily">Diariamente</option>
-                                    <option value="weekly">Semanalmente</option>
-                                    <option value="monthly">Mensalmente</option>
-                                </select>
+                            <div className="grid gap-2">
+                                <Label>Equipa</Label>
+                                <Select value={String(form.team_id || '')} onValueChange={(value) => setForm({ ...form, team_id: value })}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Selecione a equipa" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {teams.map((team) => (
+                                            <SelectItem key={team.id} value={String(team.id)}>
+                                                {team.nome}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
 
-                                {/* Até data */}
-                                {form.repeat_type !== 'none' && (
-                                    <input
+                            <div className="grid gap-2">
+                                <Label>Repetição</Label>
+                                <Select value={form.repeat_type} onValueChange={(value) => setForm({ ...form, repeat_type: value })}>
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="none">Não repetir</SelectItem>
+                                        <SelectItem value="daily">Diariamente</SelectItem>
+                                        <SelectItem value="weekly">Semanalmente</SelectItem>
+                                        <SelectItem value="monthly">Mensalmente</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            {form.repeat_type !== 'none' && (
+                                <div className="grid gap-2">
+                                    <Label>Repetir até</Label>
+                                    <Input
                                         type="date"
                                         value={form.repeat_until || ''}
                                         onChange={(e) => setForm({ ...form, repeat_until: e.target.value })}
-                                        className="w-full rounded border px-3 py-2"
                                     />
-                                )}
+                                </div>
+                            )}
 
-                                {/* OBSERVAÇÕES */}
+                            <div className="grid gap-2">
+                                <Label>Observações</Label>
                                 <textarea
                                     placeholder="Observações"
                                     value={form.observacoes}
                                     onChange={(e) => setForm({ ...form, observacoes: e.target.value })}
-                                    className="h-24 w-full rounded border px-3 py-2"
+                                    className="border-input bg-background focus:ring-ring h-24 w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2"
                                 />
+                            </div>
 
-                                {/* BOTÕES */}
-                                <div className="flex justify-end gap-3">
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowModal(false)}
-                                        className="rounded bg-gray-300 px-4 py-2 hover:bg-gray-400"
-                                    >
-                                        Cancelar
-                                    </button>
-
-                                    <button type="submit" className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">
-                                        Guardar
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                )}
+                            <DialogFooter>
+                                <Button type="button" variant="ghost" onClick={() => setShowModal(false)}>
+                                    Cancelar
+                                </Button>
+                                <Button type="submit">Guardar</Button>
+                            </DialogFooter>
+                        </form>
+                    </DialogContent>
+                </Dialog>
             </div>
         </AppLayout>
     );

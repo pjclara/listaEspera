@@ -1,5 +1,13 @@
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { PageHeader } from '@/components/ui/page-header';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import { Head, router, usePage } from '@inertiajs/react';
+import { motion } from 'framer-motion';
+import { CalendarRange, FileDown } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { SlotModal } from '../Slots/SlotModal';
 
@@ -87,7 +95,7 @@ export default function Mensal({
         window.open(`/agenda/export/pdf?${params.toString()}`, '_blank');
     }
 
-    function CreateSlotModal({ date, onClose }) {
+    function CreateSlotModal({ date, onClose }: { date: string; onClose: () => void }) {
         const [form, setForm] = useState({
             data: date,
             hora_inicio: '',
@@ -99,8 +107,6 @@ export default function Mensal({
             observacoes: '',
         });
 
-        const { errors } = usePage().props;
-
         const submit = () => {
             router.post('/slots', form, {
                 onSuccess: onClose,
@@ -108,89 +114,96 @@ export default function Mensal({
         };
 
         return (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-                <div className="w-full max-w-md rounded-xl bg-white p-6">
-                    <h2 className="mb-4 text-xl font-semibold">Criar Slot — {date}</h2>
+            <Dialog open onOpenChange={(open) => !open && onClose()}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Criar Slot — {date}</DialogTitle>
+                    </DialogHeader>
 
-                    {/* Hora início */}
-                    <input
-                        type="time"
-                        value={form.hora_inicio}
-                        onChange={(e) => setForm({ ...form, hora_inicio: e.target.value })}
-                        className="mb-3 w-full rounded border px-3 py-2"
-                    />
-
-                    {/* Hora fim */}
-                    <input
-                        type="time"
-                        value={form.hora_fim}
-                        onChange={(e) => setForm({ ...form, hora_fim: e.target.value })}
-                        className="mb-3 w-full rounded border px-3 py-2"
-                    />
-
-                    {/* Equipa */}
-                    <select
-                        value={form.team_id}
-                        onChange={(e) => setForm({ ...form, team_id: e.target.value })}
-                        className="mb-3 w-full rounded border px-3 py-2"
+                    <form
+                        onSubmit={(e) => {
+                            e.preventDefault();
+                            submit();
+                        }}
+                        className="space-y-4"
                     >
-                        <option value="">Selecione equipa…</option>
-                        {teams.map((team) => (
-                            <option key={team.id} value={team.id}>
-                                {team.nome}
-                            </option>
-                        ))}
-                    </select>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="grid gap-2">
+                                <Label>Hora início</Label>
+                                <Input type="time" value={form.hora_inicio} onChange={(e) => setForm({ ...form, hora_inicio: e.target.value })} />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label>Hora fim</Label>
+                                <Input type="time" value={form.hora_fim} onChange={(e) => setForm({ ...form, hora_fim: e.target.value })} />
+                            </div>
+                        </div>
 
-                    {/* SALA */}
-                    <input
-                        type="text"
-                        placeholder="Sala"
-                        value={form.sala}
-                        onChange={(e) => setForm({ ...form, sala: e.target.value })}
-                        className="w-full rounded border px-3 py-2"
-                    />
+                        <div className="grid gap-2">
+                            <Label>Equipa</Label>
+                            <Select value={String(form.team_id || '')} onValueChange={(value) => setForm({ ...form, team_id: value })}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Selecione equipa…" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {teams.map((team) => (
+                                        <SelectItem key={team.id} value={String(team.id)}>
+                                            {team.nome}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
 
-                    {/* REPETIÇÃO */}
-                    <select
-                        value={form.repeat_type}
-                        onChange={(e) => setForm({ ...form, repeat_type: e.target.value })}
-                        className="w-full rounded border px-3 py-2"
-                    >
-                        <option value="none">Não repetir</option>
-                        <option value="daily">Diariamente</option>
-                        <option value="weekly">Semanalmente</option>
-                        <option value="monthly">Mensalmente</option>
-                    </select>
+                        <div className="grid gap-2">
+                            <Label>Sala</Label>
+                            <Input placeholder="Sala" value={form.sala} onChange={(e) => setForm({ ...form, sala: e.target.value })} />
+                        </div>
 
-                    {/* Até data */}
-                    {form.repeat_type !== 'none' && (
-                        <input
-                            type="date"
-                            value={form.repeat_until || ''}
-                            onChange={(e) => setForm({ ...form, repeat_until: e.target.value })}
-                            className="w-full rounded border px-3 py-2"
-                        />
-                    )}
+                        <div className="grid gap-2">
+                            <Label>Repetição</Label>
+                            <Select value={form.repeat_type} onValueChange={(value) => setForm({ ...form, repeat_type: value })}>
+                                <SelectTrigger>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="none">Não repetir</SelectItem>
+                                    <SelectItem value="daily">Diariamente</SelectItem>
+                                    <SelectItem value="weekly">Semanalmente</SelectItem>
+                                    <SelectItem value="monthly">Mensalmente</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
 
-                    {/* OBSERVAÇÕES */}
-                    <textarea
-                        placeholder="Observações"
-                        value={form.observacoes}
-                        onChange={(e) => setForm({ ...form, observacoes: e.target.value })}
-                        className="h-24 w-full rounded border px-3 py-2"
-                    />
+                        {form.repeat_type !== 'none' && (
+                            <div className="grid gap-2">
+                                <Label>Repetir até</Label>
+                                <Input
+                                    type="date"
+                                    value={form.repeat_until || ''}
+                                    onChange={(e) => setForm({ ...form, repeat_until: e.target.value })}
+                                />
+                            </div>
+                        )}
 
-                    <div className="flex justify-end gap-3">
-                        <button onClick={onClose} className="rounded bg-gray-300 px-4 py-2">
-                            Cancelar
-                        </button>
-                        <button onClick={submit} className="rounded bg-blue-600 px-4 py-2 text-white">
-                            Criar
-                        </button>
-                    </div>
-                </div>
-            </div>
+                        <div className="grid gap-2">
+                            <Label>Observações</Label>
+                            <textarea
+                                placeholder="Observações"
+                                value={form.observacoes}
+                                onChange={(e) => setForm({ ...form, observacoes: e.target.value })}
+                                className="border-input bg-background focus:ring-ring h-24 w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2"
+                            />
+                        </div>
+
+                        <DialogFooter>
+                            <Button type="button" variant="ghost" onClick={onClose}>
+                                Cancelar
+                            </Button>
+                            <Button type="submit">Criar</Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
         );
     }
 
@@ -201,37 +214,31 @@ export default function Mensal({
     return (
         <AppLayout breadcrumbs={[{ title: 'Agenda Cirúrgica', href: '/agenda' }]}>
             <Head title="Agenda Cirúrgica - Mês" />
-            <div className="p-6">
-                {/* Navegação */}
-                <div className="mb-6 flex items-center justify-between">
-                    <h1 className="text-2xl font-semibold">
-                        {new Date(month).toLocaleDateString('pt-PT', {
-                            month: 'long',
-                            year: 'numeric',
-                        })}
-                    </h1>
-
-                    <div className="flex gap-3">
-                        <button onClick={exportarPdf} className="rounded bg-red-600 px-4 py-2 text-white hover:bg-red-700">
-                            Exportar PDF
-                        </button>
-
-                        <button onClick={() => mudarMes(-1)} className="rounded bg-gray-200 px-4 py-2 hover:bg-gray-300">
-                            Mês anterior
-                        </button>
-
-                        <button onClick={() => mudarMes(0)} className="rounded bg-gray-200 px-4 py-2 hover:bg-gray-300">
-                            Hoje
-                        </button>
-
-                        <button onClick={() => mudarMes(1)} className="rounded bg-gray-200 px-4 py-2 hover:bg-gray-300">
-                            Próximo mês
-                        </button>
-                    </div>
-                </div>
+            <div className="flex flex-1 flex-col gap-6 p-6">
+                <PageHeader
+                    title={new Date(month).toLocaleDateString('pt-PT', { month: 'long', year: 'numeric' })}
+                    icon={<CalendarRange className="size-5" />}
+                    actions={
+                        <>
+                            <Button variant="outline" onClick={exportarPdf}>
+                                <FileDown className="size-4" />
+                                Exportar PDF
+                            </Button>
+                            <Button variant="secondary" onClick={() => mudarMes(-1)}>
+                                Mês anterior
+                            </Button>
+                            <Button variant="secondary" onClick={() => mudarMes(0)}>
+                                Hoje
+                            </Button>
+                            <Button variant="secondary" onClick={() => mudarMes(1)}>
+                                Próximo mês
+                            </Button>
+                        </>
+                    }
+                />
 
                 {/* Cabeçalho */}
-                <div className="mb-2 grid grid-cols-7 text-center font-semibold">
+                <div className="text-muted-foreground grid grid-cols-7 text-center text-xs font-semibold tracking-wide uppercase">
                     <div>Seg</div>
                     <div>Ter</div>
                     <div>Qua</div>
@@ -242,47 +249,49 @@ export default function Mensal({
                 </div>
 
                 {/* Grelha mensal */}
-                <div className="grid grid-cols-7 gap-2">
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.3 }}
+                    className="grid grid-cols-7 gap-2"
+                >
                     {dias.map(({ data, diaMes, mesAtual }) => {
                         const slotsDoDia = agendaNormalizada[data] ?? [];
 
                         return (
                             <div
                                 key={data}
-                                className="min-h-[120px] cursor-pointer rounded-xl border bg-white p-2"
+                                className={`min-h-[120px] cursor-pointer rounded-xl border border-border bg-card p-2 transition-colors hover:bg-muted/30 ${
+                                    mesAtual ? '' : 'opacity-50'
+                                }`}
                                 onClick={(e) => {
                                     if (e.target === e.currentTarget) {
                                         setCreatingSlotDate(data);
                                     }
                                 }}
                             >
-                                <div className="mb-1 text-sm font-semibold">{diaMes}</div>
+                                <div className="mb-1 text-sm font-semibold text-foreground">{diaMes}</div>
 
                                 <div className="space-y-1">
-                                    {slotsDoDia.map((slot) => {
-                                        const cheio = slot.schedules.length >= slot.capacidade;
-                                        const parcial = slot.schedules.length > 0 && slot.schedules.length < slot.capacidade;
-
-                                        return (
-                                            <div
-                                                key={slot.id}
-                                                className="cursor-pointer rounded border p-1 text-xs"
-                                                style={{ backgroundColor: slot.team.cor + '10', borderColor: slot.team.cor }}
-                                                onClick={() => setSlotModal(slot)}
-                                            >
-                                                {slot.hora_inicio} — {slot.hora_fim}
-                                                <br />
-                                                {slot.team.nome}
-                                                <br />
-                                                <div className="mt-1 font-semibold">Nº de cirurgias: {slot.schedules.length}</div>
-                                            </div>
-                                        );
-                                    })}
+                                    {slotsDoDia.map((slot) => (
+                                        <div
+                                            key={slot.id}
+                                            className="cursor-pointer rounded-md border p-1 text-xs"
+                                            style={{ backgroundColor: slot.team.cor + '15', borderColor: slot.team.cor }}
+                                            onClick={() => setSlotModal(slot)}
+                                        >
+                                            {slot.hora_inicio} — {slot.hora_fim}
+                                            <br />
+                                            {slot.team.nome}
+                                            <br />
+                                            <div className="mt-1 font-semibold">Nº de cirurgias: {slot.schedules.length}</div>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
                         );
                     })}
-                </div>
+                </motion.div>
 
                 {creatingSlotDate && (
                     <CreateSlotModal

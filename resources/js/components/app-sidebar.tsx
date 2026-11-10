@@ -4,7 +4,7 @@ import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { Calendar, CalendarDays, CalendarRange, LayoutGrid } from 'lucide-react';
+import { Calendar, CalendarClock, CalendarDays, CalendarRange, LayoutDashboard, PhoneCall, ShieldCheck, Users, UsersRound } from 'lucide-react';
 import AppLogo from './app-logo';
 
 /**
@@ -15,24 +15,24 @@ const mainNavItems: NavItem[] = [
     {
         title: 'Dashboard',
         url: '/dashboard',
-        icon: LayoutGrid,
+        icon: LayoutDashboard,
     },
     {
         title: 'Listas de Espera',
         url: '/waiting-lists',
-        icon: LayoutGrid,
+        icon: CalendarClock,
         permissions: ['waiting_list.view'], // Apenas visível para utilizadores com estas permissões
     },
 
     {
         title: 'Doentes a contactar',
         url: '/waiting-list/chamadas/pendentes',
-        icon: LayoutGrid,
+        icon: PhoneCall,
     },
     {
         title: 'Slots',
         url: '/slots',
-        icon: LayoutGrid,
+        icon: Calendar,
         permissions: ['slots.view'], // Apenas visível para utilizadores com estas permissões
     },
     {
@@ -43,7 +43,7 @@ const mainNavItems: NavItem[] = [
             {
                 title: 'Slots',
                 url: '/agenda',
-                icon: LayoutGrid,
+                icon: Calendar,
             },
             {
                 title: 'Semana',
@@ -60,19 +60,19 @@ const mainNavItems: NavItem[] = [
     {
         title: 'Utilizadores',
         url: '/users',
-        icon: LayoutGrid,
+        icon: Users,
         permissions: ['users.view'],
     },
     {
         title: 'Equipas',
         url: '/teams',
-        icon: LayoutGrid,
-        permissions: ['teams.vie'],
+        icon: UsersRound,
+        permissions: ['teams.view'],
     },
     {
         title: 'Roles & Permissões',
         url: '/access-control',
-        icon: LayoutGrid,
+        icon: ShieldCheck,
         permissions: ['roles.view'],
 
     },

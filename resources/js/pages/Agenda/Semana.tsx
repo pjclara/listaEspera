@@ -1,5 +1,9 @@
+import { Button } from '@/components/ui/button';
+import { PageHeader } from '@/components/ui/page-header';
 import AppLayout from '@/layouts/app-layout';
 import { Head, router, usePage } from '@inertiajs/react';
+import { motion } from 'framer-motion';
+import { CalendarDays, FileDown } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { SlotModal } from '../Slots/SlotModal';
 
@@ -109,41 +113,47 @@ export default function Semana({
         <AppLayout breadcrumbs={[{ title: 'Agenda Cirúrgica', href: '/agenda' }]}>
             <Head title="Agenda Cirúrgica - Semana" />
 
-            <div className="p-6">
-                <div className="mb-6 flex items-center justify-between">
-                    <h1 className="text-2xl font-semibold">
-                        Semana {start} → {end}
-                    </h1>
+            <div className="flex flex-1 flex-col gap-6 p-6">
+                <PageHeader
+                    title={`Semana ${start} → ${end}`}
+                    icon={<CalendarDays className="size-5" />}
+                    actions={
+                        <>
+                            <Button variant="outline" onClick={exportarPdf}>
+                                <FileDown className="size-4" />
+                                Exportar PDF
+                            </Button>
+                            <Button variant="secondary" onClick={() => mudarSemana(-1)}>
+                                Semana anterior
+                            </Button>
+                            <Button variant="secondary" onClick={() => mudarSemana(0)}>
+                                Hoje
+                            </Button>
+                            <Button variant="secondary" onClick={() => mudarSemana(1)}>
+                                Próxima semana
+                            </Button>
+                        </>
+                    }
+                />
 
-                    <div className="flex gap-3">
-                        <button onClick={exportarPdf} className="rounded bg-red-600 px-4 py-2 text-white hover:bg-red-700">
-                            Exportar PDF
-                        </button>
-
-                        <button onClick={() => mudarSemana(-1)} className="rounded bg-gray-200 px-4 py-2 hover:bg-gray-300">
-                            Semana anterior
-                        </button>
-
-                        <button onClick={() => mudarSemana(0)} className="rounded bg-gray-200 px-4 py-2 hover:bg-gray-300">
-                            Hoje
-                        </button>
-
-                        <button onClick={() => mudarSemana(1)} className="rounded bg-gray-200 px-4 py-2 hover:bg-gray-300">
-                            Próxima semana
-                        </button>
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-5 gap-4">
-                    {diasSemana.map((diaNome) => {
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+                    {diasSemana.map((diaNome, idx) => {
                         const data = mapaDias[diaNome];
 
                         return (
-                            <div key={diaNome} className="rounded-xl border bg-white p-3 shadow-sm">
-                                <h2 className="mb-3 text-lg font-semibold">
+                            <motion.div
+                                key={diaNome}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.3, delay: idx * 0.05 }}
+                                className="rounded-xl border border-border bg-card p-3 shadow-sm"
+                            >
+                                <h2 className="mb-3 text-lg font-semibold text-foreground">
                                     {diaNome}
                                     <br />
-                                    <span className="text-sm text-gray-600">{data ? parseYmdLocal(data).toLocaleDateString('pt-PT') : ''}</span>
+                                    <span className="text-muted-foreground text-sm font-normal">
+                                        {data ? parseYmdLocal(data).toLocaleDateString('pt-PT') : ''}
+                                    </span>
                                 </h2>
 
                                 <div className="space-y-3">
@@ -151,40 +161,43 @@ export default function Semana({
                                         agendaNormalizada[data]?.map((slot: any) => (
                                             <div
                                                 key={slot.id}
-                                                className="cursor-pointer rounded-lg border p-3"
+                                                className="cursor-pointer rounded-lg border p-3 transition-transform hover:-translate-y-0.5"
                                                 style={{
                                                     backgroundColor: slot.team.cor + '20',
                                                     borderColor: slot.team.cor,
                                                 }}
                                                 onClick={() => setSlotModal(slot)}
                                             >
-                                                <div className="font-medium">
+                                                <div className="font-medium text-foreground">
                                                     {slot.hora_inicio} — {slot.hora_fim}
                                                 </div>
 
-                                                <div className="text-sm text-gray-600">Equipa: {slot.team.nome}</div>
+                                                <div className="text-muted-foreground text-sm">Equipa: {slot.team.nome}</div>
 
-                                                <div className="text-sm text-gray-600">Sala: {slot.sala || '—'}</div>
+                                                <div className="text-muted-foreground text-sm">Sala: {slot.sala || '—'}</div>
 
-                                                <div className="mt-1 text-sm font-semibold">Nº de cirurgias agendadas: {slot.schedules.length}</div>
+                                                <div className="mt-1 text-sm font-semibold text-foreground">
+                                                    Nº de cirurgias agendadas: {slot.schedules.length}
+                                                </div>
                                                 {slot.schedules.length > 0 && (
                                                     <div className="mt-2 space-y-2">
                                                         {slot.schedules.map((sch: any) => (
                                                             <div
                                                                 key={sch.id}
-                                                                className={`rounded border border-${sch.estado_cor} ${sch.estado_cor} px-3 py-2`}
+                                                                className="rounded-md border px-3 py-2 text-white shadow-sm"
+                                                                style={{ backgroundColor: sch.estado_cor, borderColor: sch.estado_cor }}
                                                             >
                                                                 <div className="text-sm font-medium">Doente: {sch.waiting_list?.num_processo}</div>
-                                                                <div className="text-xs text-gray-600">{sch.waiting_list?.des_diagnostico}</div>
-                                                                <div className="mt-1 text-xs text-gray-700">Estado: {sch.estado}</div>
-                                                                <div className="text-xs text-gray-700">
+                                                                <div className="text-xs opacity-90">{sch.waiting_list?.des_diagnostico}</div>
+                                                                <div className="mt-1 text-xs opacity-90">Estado: {sch.estado}</div>
+                                                                <div className="text-xs opacity-90">
                                                                     Prioridade: {sch.waiting_list?.prioridade}
                                                                 </div>
-                                                                <div className="text-xs text-gray-700">
+                                                                <div className="text-xs opacity-90">
                                                                     Posição: {sch.waiting_list?.posicao_lista} / {sch.waiting_list?.posicao_patologia}
                                                                 </div>
-                                                                <div className="text-xs text-gray-700">Pernoita: {sch.pernoita}</div>
-                                                                <div className="text-xs text-gray-700">Duração: {sch.duracao_estimada} min</div>
+                                                                <div className="text-xs opacity-90">Pernoita: {sch.pernoita}</div>
+                                                                <div className="text-xs opacity-90">Duração: {sch.duracao_estimada} min</div>
                                                             </div>
                                                         ))}
                                                     </div>
@@ -192,7 +205,7 @@ export default function Semana({
                                             </div>
                                         ))}
                                 </div>
-                            </div>
+                            </motion.div>
                         );
                     })}
                 </div>

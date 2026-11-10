@@ -1,3 +1,6 @@
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 import { router, usePage } from '@inertiajs/react';
 
 interface Slot {
@@ -35,41 +38,23 @@ interface ScheduleModalProps {
     onClose: () => void;
 }
 
-export default function ScheduleModal({
-    open,
-    selected,
-    scheduleForm,
-    setScheduleForm,
-    slotsDisponiveis,
-    onClose,
-}: ScheduleModalProps) {
+const selectClass =
+    'border-input bg-background focus:ring-ring w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2';
+
+export default function ScheduleModal({ open, selected, scheduleForm, setScheduleForm, slotsDisponiveis, onClose }: ScheduleModalProps) {
     const { errors } = usePage().props as any;
 
-    if (!open || !selected) return null;
-
-    console.log("slotsDisponiveis", slotsDisponiveis);
+    if (!selected) return null;
 
     // --- EQUIPAS ÚNICAS (robusto)
-    const equipas = Array.from(
-        new Set(
-            slotsDisponiveis.map(
-                (s) => s.team?.id ?? s.team_id ?? null
-            )
-        )
-    )
+    const equipas = Array.from(new Set(slotsDisponiveis.map((s) => s.team?.id ?? s.team_id ?? null)))
         .filter((id) => id !== null)
         .map((teamId) => ({
             id: teamId,
             nome:
-                slotsDisponiveis.find(
-                    (s) =>
-                        (s.team?.id ?? s.team_id) === teamId
-                )?.team?.nome ??
-                slotsDisponiveis.find(
-                    (s) =>
-                        (s.team?.id ?? s.team_id) === teamId
-                )?.team_nome ??
-                "Equipa " + teamId,
+                slotsDisponiveis.find((s) => (s.team?.id ?? s.team_id) === teamId)?.team?.nome ??
+                slotsDisponiveis.find((s) => (s.team?.id ?? s.team_id) === teamId)?.team_nome ??
+                'Equipa ' + teamId,
         }));
 
     // --- MESES ÚNICOS (robusto)
@@ -78,34 +63,24 @@ export default function ScheduleModal({
             slotsDisponiveis.map((s) => {
                 if (!s.data) return null;
                 return new Date(s.data).getMonth() + 1;
-            })
-        )
+            }),
+        ),
     ).filter((mes) => mes !== null);
 
     // --- FILTRAR SLOTS POR EQUIPA E MÊS (robusto)
     const slotsFiltrados = slotsDisponiveis.filter((slot) => {
-        const slotMes = slot.data
-            ? new Date(slot.data).getMonth() + 1
-            : null;
-
+        const slotMes = slot.data ? new Date(slot.data).getMonth() + 1 : null;
         const slotTeam = slot.team?.id ?? slot.team_id ?? null;
 
-        return (
-            (!scheduleForm.team_id ||
-                scheduleForm.team_id == slotTeam) &&
-            (!scheduleForm.mes ||
-                scheduleForm.mes == slotMes)
-        );
+        return (!scheduleForm.team_id || scheduleForm.team_id == slotTeam) && (!scheduleForm.mes || scheduleForm.mes == slotMes);
     });
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-            <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl">
-                <h2 className="mb-4 text-xl font-semibold">
-                    {selected.schedule
-                        ? "Editar Agendamento"
-                        : `Agendar — Nº ${selected.num_processo}`}
-                </h2>
+        <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
+            <DialogContent className="max-w-lg">
+                <DialogHeader>
+                    <DialogTitle>{selected.schedule ? 'Editar Agendamento' : `Agendar — Nº ${selected.num_processo}`}</DialogTitle>
+                </DialogHeader>
 
                 <form
                     onSubmit={(e) => {
@@ -118,41 +93,32 @@ export default function ScheduleModal({
                         };
 
                         if (selected.schedule) {
-                            router.put(
-                                `/waiting-lists/${selected.id}/schedule/${selected.schedule.id}`,
-                                payload,
-                                {
-                                    preserveScroll: true,
-                                    onSuccess: () => onClose(),
-                                }
-                            );
+                            router.put(`/waiting-lists/${selected.id}/schedule/${selected.schedule.id}`, payload, {
+                                preserveScroll: true,
+                                onSuccess: () => onClose(),
+                            });
                         } else {
-                            router.post(
-                                `/waiting-lists/${selected.id}/schedule`,
-                                payload,
-                                {
-                                    preserveScroll: true,
-                                    onSuccess: () => onClose(),
-                                }
-                            );
+                            router.post(`/waiting-lists/${selected.id}/schedule`, payload, {
+                                preserveScroll: true,
+                                onSuccess: () => onClose(),
+                            });
                         }
                     }}
                     className="space-y-4"
                 >
                     {/* EQUIPA */}
-                    <label className="block">
-                        <span className="text-sm text-gray-600">Equipa</span>
-
+                    <div className="grid gap-2">
+                        <Label>Equipa</Label>
                         <select
                             value={scheduleForm.team_id}
                             onChange={(e) =>
                                 setScheduleForm({
                                     ...scheduleForm,
                                     team_id: e.target.value,
-                                    slot_id: "",
+                                    slot_id: '',
                                 })
                             }
-                            className="w-full rounded border px-3 py-2"
+                            className={selectClass}
                         >
                             <option value="">Todas as equipas</option>
 
@@ -162,37 +128,35 @@ export default function ScheduleModal({
                                 </option>
                             ))}
                         </select>
-                    </label>
+                    </div>
 
                     {/* MÊS */}
-                    <label className="block">
-                        <span className="text-sm text-gray-600">Mês</span>
-
+                    <div className="grid gap-2">
+                        <Label>Mês</Label>
                         <select
                             value={scheduleForm.mes}
                             onChange={(e) =>
                                 setScheduleForm({
                                     ...scheduleForm,
                                     mes: e.target.value,
-                                    slot_id: "",
+                                    slot_id: '',
                                 })
                             }
-                            className="w-full rounded border px-3 py-2"
+                            className={selectClass}
                         >
                             <option value="">Todos os meses</option>
 
                             {meses.map((mes) => (
                                 <option key={mes} value={mes}>
-                                    {mes.toString().padStart(2, "0")}
+                                    {mes.toString().padStart(2, '0')}
                                 </option>
                             ))}
                         </select>
-                    </label>
+                    </div>
 
                     {/* SLOT */}
-                    <label className="block">
-                        <span className="text-sm text-gray-600">Slot disponível</span>
-
+                    <div className="grid gap-2">
+                        <Label>Slot disponível</Label>
                         <select
                             value={scheduleForm.slot_id}
                             onChange={(e) =>
@@ -201,30 +165,23 @@ export default function ScheduleModal({
                                     slot_id: e.target.value,
                                 })
                             }
-                            className="w-full rounded border px-3 py-2"
+                            className={selectClass}
                         >
                             <option value="">Selecione um slot</option>
 
                             {slotsFiltrados.map((slot) => (
                                 <option key={slot.id} value={slot.id}>
-                                    {new Date(slot.data).toLocaleDateString()} —{" "}
-                                    {slot.hora_inicio} — Equipa{" "}
-                                    {slot.team?.nome ?? slot.team_nome}
+                                    {new Date(slot.data).toLocaleDateString()} — {slot.hora_inicio} — Equipa {slot.team?.nome ?? slot.team_nome}
                                 </option>
                             ))}
                         </select>
 
-                        {errors.slot_id && (
-                            <p className="mt-1 text-sm text-red-600">
-                                {errors.slot_id}
-                            </p>
-                        )}
-                    </label>
+                        {errors.slot_id && <p className="text-destructive text-sm">{errors.slot_id}</p>}
+                    </div>
 
                     {/* ESTADO */}
-                    <label className="block">
-                        <span className="text-sm text-gray-600">Estado do agendamento</span>
-
+                    <div className="grid gap-2">
+                        <Label>Estado do agendamento</Label>
                         <select
                             value={scheduleForm.estado}
                             onChange={(e) =>
@@ -233,7 +190,7 @@ export default function ScheduleModal({
                                     estado: e.target.value,
                                 })
                             }
-                            className="w-full rounded border px-3 py-2"
+                            className={selectClass}
                         >
                             <option value="proposto">Proposto</option>
                             <option value="pronto">Pronto</option>
@@ -242,19 +199,12 @@ export default function ScheduleModal({
                             <option value="cancelado">Cancelado</option>
                         </select>
 
-                        {errors.estado && (
-                            <p className="mt-1 text-sm text-red-600">
-                                {errors.estado}
-                            </p>
-                        )}
-                    </label>
+                        {errors.estado && <p className="text-destructive text-sm">{errors.estado}</p>}
+                    </div>
 
                     {/* DURAÇÃO */}
-                    <label className="block">
-                        <span className="text-sm text-gray-600">
-                            Duração estimada (minutos)
-                        </span>
-
+                    <div className="grid gap-2">
+                        <Label>Duração estimada (minutos)</Label>
                         <input
                             type="number"
                             min="1"
@@ -265,36 +215,21 @@ export default function ScheduleModal({
                                     duracao_estimada: e.target.value,
                                 })
                             }
-                            className="w-full rounded border px-3 py-2"
+                            className={selectClass}
                         />
 
-                        {errors.duracao_estimada && (
-                            <p className="mt-1 text-sm text-red-600">
-                                {errors.duracao_estimada}
-                            </p>
-                        )}
-                    </label>
+                        {errors.duracao_estimada && <p className="text-destructive text-sm">{errors.duracao_estimada}</p>}
+                    </div>
 
-                    <div className="mt-6 flex justify-end gap-3">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="rounded bg-gray-300 px-4 py-2 hover:bg-gray-400"
-                        >
+                    <div className="flex justify-end gap-3 pt-2">
+                        <Button type="button" variant="ghost" onClick={onClose}>
                             Cancelar
-                        </button>
+                        </Button>
 
-                        <button
-                            type="submit"
-                            className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-                        >
-                            {selected.schedule
-                                ? "Guardar Alterações"
-                                : "Guardar Agendamento"}
-                        </button>
+                        <Button type="submit">{selected.schedule ? 'Guardar Alterações' : 'Guardar Agendamento'}</Button>
                     </div>
                 </form>
-            </div>
-        </div>
+            </DialogContent>
+        </Dialog>
     );
 }

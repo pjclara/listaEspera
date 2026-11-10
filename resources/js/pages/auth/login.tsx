@@ -1,6 +1,7 @@
 import { Head, useForm, Link } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
-import { LoaderCircle } from 'lucide-react';
+import { LoaderCircle, Stethoscope } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -38,26 +39,32 @@ export default function Login({ status, canResetPassword }: LoginProps) {
         <>
             <Head title="Login" />
 
-            <div className="flex min-h-screen flex-col items-center justify-center bg-[#FDFDFC] px-6 text-[#1b1b18] dark:bg-[#0a0a0a]">
-                
+            <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-background px-6 text-foreground">
+                <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_50%_0%,hsl(243_75%_59%/0.12),transparent_60%)]" />
+
                 {/* Hero */}
-                <div className="mb-10 text-center">
-                    <h1 className="text-3xl font-semibold tracking-tight dark:text-[#EDEDEC]">
-                        CirurFlow
-                    </h1>
-                    <p className="mt-2 text-sm text-muted-foreground">
-                        Gestão inteligente da lista de espera cirúrgica
-                    </p>
-                </div>
+                <motion.div
+                    initial={{ opacity: 0, y: -12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, ease: 'easeOut' }}
+                    className="mb-8 flex flex-col items-center text-center"
+                >
+                    <div className="bg-primary text-primary-foreground mb-4 flex size-12 items-center justify-center rounded-2xl shadow-lg shadow-primary/30">
+                        <Stethoscope className="size-6" />
+                    </div>
+                    <h1 className="text-3xl font-semibold tracking-tight">CirurFlow</h1>
+                    <p className="text-muted-foreground mt-2 text-sm">Gestão inteligente da lista de espera cirúrgica</p>
+                </motion.div>
 
                 {/* Card */}
-                <div className="w-full max-w-md rounded-xl bg-white p-8 shadow-[0_0_0_1px_rgba(0,0,0,0.08)] dark:bg-[#161615] dark:shadow-[0_0_0_1px_rgba(255,255,255,0.08)]">
-                    <h2 className="mb-1 text-xl font-medium dark:text-[#EDEDEC]">
-                        Iniciar sessão
-                    </h2>
-                    <p className="mb-6 text-sm text-muted-foreground">
-                        Introduza o seu email e password para entrar
-                    </p>
+                <motion.div
+                    initial={{ opacity: 0, y: 12, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    transition={{ duration: 0.4, delay: 0.1, ease: 'easeOut' }}
+                    className="w-full max-w-md rounded-2xl border border-border bg-card p-8 shadow-xl shadow-black/5"
+                >
+                    <h2 className="mb-1 text-xl font-semibold">Iniciar sessão</h2>
+                    <p className="text-muted-foreground mb-6 text-sm">Introduza o seu email e password para entrar</p>
 
                     <form className="flex flex-col gap-6" onSubmit={submit}>
                         <div className="grid gap-6">
@@ -113,14 +120,14 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                     </form>
 
                     {status && (
-                        <div className="mt-4 text-center text-sm font-medium text-green-600">
+                        <div className="text-success mt-4 text-center text-sm font-medium">
                             {status}
                         </div>
                     )}
-                </div>
+                </motion.div>
 
                 {/* Footer */}
-                <footer className="mt-10 text-xs text-muted-foreground">
+                <footer className="text-muted-foreground mt-10 text-xs">
                     © {new Date().getFullYear()} SurgTuga. Todos os direitos reservados.
                 </footer>
             </div>

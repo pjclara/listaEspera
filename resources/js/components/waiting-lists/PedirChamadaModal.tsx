@@ -1,6 +1,13 @@
-import { useState } from "react";
-import { router } from "@inertiajs/react";
-import { toast } from "sonner";
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { router } from '@inertiajs/react';
+import { LoaderCircle } from 'lucide-react';
+import { useState } from 'react';
+import { toast } from 'sonner';
 
 interface Props {
     open: boolean;
@@ -10,9 +17,9 @@ interface Props {
 
 export default function PedirChamadaModal({ open, onClose, doente }: Props) {
     const [form, setForm] = useState({
-        tipo_chamada: "",
-        data_pretendida: "",
-        observacoes: "",
+        tipo_chamada: '',
+        data_pretendida: '',
+        observacoes: '',
     });
 
     const [loading, setLoading] = useState(false);
@@ -32,81 +39,61 @@ export default function PedirChamadaModal({ open, onClose, doente }: Props) {
                 setLoading(false);
                 onClose();
                 setForm({
-                    tipo_chamada: "",
-                    data_pretendida: "",
-                    observacoes: "",
+                    tipo_chamada: '',
+                    data_pretendida: '',
+                    observacoes: '',
                 });
-                toast.success('asdas')
+                toast.success('asdas');
             },
             onError: () => setLoading(false),
         });
     }
 
-    if (!open || !doente) return null;
+    if (!doente) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-lg space-y-6">
-
-                <h2 className="text-xl font-semibold">
-                    Pedir Chamada para {doente}
-                </h2>
+        <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Pedir Chamada para {doente}</DialogTitle>
+                </DialogHeader>
 
                 <div className="space-y-4">
-                    {/* Tipo de chamada */}
-                    <div>
-                        <label className="text-sm text-gray-700">Tipo de chamada</label>
-                        <select
-                            value={form.tipo_chamada}
-                            onChange={(e) => update("tipo_chamada", e.target.value)}
-                            className="mt-1 w-full rounded-lg border-gray-300"
-                        >
-                            <option value="">Selecione...</option>
-                            <option value="Ambulatorio">Ambulatório</option>
-                            <option value="Base">Base</option>
-                            <option value="SIGIC">SIGIC</option>
-                        </select>
+                    <div className="grid gap-2">
+                        <Label>Tipo de chamada</Label>
+                        <Select value={form.tipo_chamada} onValueChange={(value) => update('tipo_chamada', value)}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Selecione..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="Ambulatorio">Ambulatório</SelectItem>
+                                <SelectItem value="Base">Base</SelectItem>
+                                <SelectItem value="SIGIC">SIGIC</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
 
-                    {/* Data pretendida */}
-                    <div>
-                        <label className="text-sm text-gray-700">Data pretendida</label>
-                        <input
-                            type="date"
-                            value={form.data_pretendida}
-                            onChange={(e) => update("data_pretendida", e.target.value)}
-                            className="mt-1 w-full rounded-lg border-gray-300"
-                        />
+                    <div className="grid gap-2">
+                        <Label>Data pretendida</Label>
+                        <Input type="date" value={form.data_pretendida} onChange={(e) => update('data_pretendida', e.target.value)} />
                     </div>
 
-                    {/* Observações */}
-                    <div>
-                        <label className="text-sm text-gray-700">Observações</label>
-                        <textarea
-                            value={form.observacoes}
-                            onChange={(e) => update("observacoes", e.target.value)}
-                            className="mt-1 w-full rounded-lg border-gray-300 h-24"
-                        />
+                    <div className="grid gap-2">
+                        <Label>Observações</Label>
+                        <Textarea value={form.observacoes} onChange={(e) => update('observacoes', e.target.value)} className="h-24" />
                     </div>
                 </div>
 
-                <div className="flex justify-end gap-4">
-                    <button
-                        onClick={onClose}
-                        className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300"
-                    >
+                <DialogFooter>
+                    <Button variant="ghost" onClick={onClose}>
                         Cancelar
-                    </button>
-
-                    <button
-                        onClick={submit}
-                        disabled={loading}
-                        className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60"
-                    >
-                        {loading ? "A enviar..." : "Enviar pedido"}
-                    </button>
-                </div>
-            </div>
-        </div>
+                    </Button>
+                    <Button onClick={submit} disabled={loading}>
+                        {loading && <LoaderCircle className="size-4 animate-spin" />}
+                        {loading ? 'A enviar...' : 'Enviar pedido'}
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     );
 }

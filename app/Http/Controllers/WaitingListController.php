@@ -39,6 +39,7 @@ class WaitingListController extends Controller
             ->when($request->estado, fn($q) => $q->where('estado', $request->estado))
             ->when($request->prioridade, fn($q) => $q->where('prioridade', $request->prioridade))
             ->when($request->des_diagnostico, fn($q) => $q->where('des_diagnostico', 'like', '%' . $request->des_diagnostico . '%'))
+            ->when($request->medico_nome, fn($q) => $q->where('nome_clinico', 'like', '%' . $request->medico_nome . '%'))
             ->orderBy('data_marcacao', 'asc')
             ->paginate(20)
             ->withQueryString();
@@ -93,6 +94,7 @@ class WaitingListController extends Controller
                 'situacao' => $request->situacao,
                 'estado' => $request->estado,
                 'des_diagnostico' => $request->des_diagnostico,
+                'medico_nome' => $request->medico_nome,
 
             ],
         ]);
@@ -254,6 +256,10 @@ class WaitingListController extends Controller
 
         if ($request->des_diagnostico) {
             $query->where('des_diagnostico', 'like', "%{$request->des_diagnostico}%");
+        }
+
+        if ($request->medico_nome) {
+            $query->where('nome_clinico', 'like', "%{$request->medico_nome}%");
         }
 
         if ($request->situacao) {

@@ -5,29 +5,40 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Services\ExcelImportService;
 use Inertia\Inertia;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use Spatie\SimpleExcel\SimpleExcelReader;
 
 class ExcelImportController extends Controller
 {
     public function import(Request $request)
     {
-        set_time_limit(0);
-        ini_set('max_execution_time', 0);
-
         $request->validate([
-            'file' => 'required|file|mimes:xlsx'
+            'file' => 'required|file|mimes:xlsx,xls'
         ]);
 
         $uploadedFile = $request->file('file');
         $extension = strtolower($uploadedFile->getClientOriginalExtension());
+        $path = $uploadedFile->path();
 
-        if ($extension !== 'xlsx') {
-            return redirect()->back()->withErrors(['file' => 'Apenas ficheiros .xlsx são suportados pelo importador atual.']);
+        // Se for XLS → converter para XLSX
+        if ($extension === 'xls') {
+            $spreadsheet = IOFactory::load($path);
+            $newPath = $path . '.xlsx';
+
+            $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
+            $writer->save($newPath);
+
+            $path = $newPath;   // usar o novo ficheiro
+            $extension = 'xlsx';
         }
 
-        $importService = new ExcelImportService();
-        $importService->import($uploadedFile->path(), $extension);
 
-        return redirect()->back()->with('success', 'Arquivo importado com sucesso.');
+
+        // Chamar o teu serviço
+        $importService = new ExcelImportService();
+        $importService->import($path, $extension);
+
+        return back()->with('success', 'Arquivo importado com sucesso.');
     }
 
     public function page()

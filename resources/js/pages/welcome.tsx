@@ -1,5 +1,7 @@
-import { Head, Link, usePage } from '@inertiajs/react';
 import type { SharedData } from '@/types';
+import { Head, Link, usePage } from '@inertiajs/react';
+import { motion } from 'framer-motion';
+import { ArrowRight, Stethoscope } from 'lucide-react';
 
 export default function Welcome() {
     const { auth } = usePage<SharedData>().props;
@@ -8,53 +10,55 @@ export default function Welcome() {
         <>
             <Head title="CirurFlow" />
 
-            <div className="flex min-h-screen flex-col items-center justify-center bg-[#FDFDFC] px-6 text-[#1b1b18] dark:bg-[#0a0a0a]">
-                {/* Logo / Nome */}
-                <div className="mb-10 text-center">
-                    <h1 className="text-4xl font-semibold tracking-tight dark:text-[#EDEDEC]">
-                        CirurFlow
-                    </h1>
-                    <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                        Gestão inteligente da lista de espera cirúrgica
-                    </p>
-                </div>
+            <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-background px-6 text-foreground">
+                <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_50%_0%,hsl(243_75%_59%/0.12),transparent_60%)]" />
 
-                {/* Card */}
-                <div className="w-full max-w-md rounded-xl bg-white p-8 shadow-[0_0_0_1px_rgba(0,0,0,0.08)] dark:bg-[#161615] dark:shadow-[0_0_0_1px_rgba(255,255,255,0.08)]">
-                    <h2 className="mb-4 text-lg font-medium dark:text-[#EDEDEC]">
-                        Bem-vindo
-                    </h2>
+                <motion.div
+                    initial={{ opacity: 0, y: -12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, ease: 'easeOut' }}
+                    className="mb-8 flex flex-col items-center text-center"
+                >
+                    <div className="bg-primary text-primary-foreground mb-4 flex size-12 items-center justify-center rounded-2xl shadow-lg shadow-primary/30">
+                        <Stethoscope className="size-6" />
+                    </div>
+                    <h1 className="text-4xl font-semibold tracking-tight">CirurFlow</h1>
+                    <p className="text-muted-foreground mt-2 text-sm">Gestão inteligente da lista de espera cirúrgica</p>
+                </motion.div>
 
-                    <p className="mb-6 text-sm text-gray-600 leading-relaxed dark:text-gray-400">
+                <motion.div
+                    initial={{ opacity: 0, y: 12, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    transition={{ duration: 0.4, delay: 0.1, ease: 'easeOut' }}
+                    className="w-full max-w-md rounded-2xl border border-border bg-card p-8 shadow-xl shadow-black/5"
+                >
+                    <h2 className="mb-2 text-lg font-semibold">Bem-vindo</h2>
+
+                    <p className="text-muted-foreground mb-6 text-sm leading-relaxed">
                         Acompanhe, filtre, exporte e analise toda a informação da lista de espera cirúrgica com rapidez e precisão.
                     </p>
 
-                    {/* Botões */}
                     <div className="flex flex-col gap-3">
                         {auth.user ? (
                             <Link
                                 href={route('dashboard')}
-                                className="rounded-md bg-blue-600 px-4 py-2 text-center text-white transition hover:bg-blue-700"
+                                className="bg-primary text-primary-foreground inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-center text-sm font-medium shadow-sm transition hover:bg-primary/90 hover:shadow"
                             >
                                 Ir para o Dashboard
+                                <ArrowRight className="size-4" />
                             </Link>
                         ) : (
-                            <>
-                                <Link
-                                    href={route('login')}
-                                    className="rounded-md border border-gray-300 px-4 py-2 text-center text-sm transition hover:bg-gray-100 dark:border-gray-600 dark:text-[#EDEDEC] dark:hover:bg-[#222]"
-                                >
-                                    Iniciar sessão
-                                </Link>
-
-
-                            </>
+                            <Link
+                                href={route('login')}
+                                className="border-input bg-background hover:bg-accent inline-flex items-center justify-center rounded-lg border px-4 py-2.5 text-center text-sm font-medium transition"
+                            >
+                                Iniciar sessão
+                            </Link>
                         )}
                     </div>
-                </div>
+                </motion.div>
 
-                {/* Footer */}
-                <footer className="mt-10 text-xs text-gray-500 dark:text-gray-600">
+                <footer className="text-muted-foreground mt-10 text-xs">
                     © {new Date().getFullYear()} SurgTuga. Todos os direitos reservados.
                 </footer>
             </div>

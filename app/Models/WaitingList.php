@@ -38,7 +38,7 @@ class WaitingList extends Model
 
     public $incrementing = false; // porque o ID vem do Excel
 
-    protected $appends = ['situacao_color'];
+    protected $appends = ['situacao_color', 'medico_nome'];
 
     protected $casts = [
         'data_marcacao' => 'date:Y-m-d',
@@ -88,5 +88,10 @@ class WaitingList extends Model
     public function getSituacaoColorAttribute(): string
     {
         return ResultadoChamada::from($this->situacao_interna)->color();
+    }
+
+    public function getMedicoNomeAttribute(): ?string
+    {
+        return $this->nome_clinico;
     }
 }

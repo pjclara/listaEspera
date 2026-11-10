@@ -1,4 +1,10 @@
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import { router } from '@inertiajs/react';
+import { LoaderCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export default function SecretariaRespostaModal({ open, onClose, call, doente, resultados }) {
@@ -40,86 +46,77 @@ export default function SecretariaRespostaModal({ open, onClose, call, doente, r
         });
     }
 
-    if (!open || !call || !doente) return null;
+    if (!call || !doente) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-            <div className="w-full max-w-lg space-y-6 rounded-xl bg-white p-6 shadow-xl">
-                <h2 className="text-xl font-semibold">{doente.nome}</h2>
+        <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>{doente.nome}</DialogTitle>
+                </DialogHeader>
 
                 {/* Dados do pedido */}
-                <div className="rounded-lg border bg-gray-50 p-4">
+                <div className="bg-muted/50 space-y-1 rounded-lg border border-border p-4 text-sm">
                     <p>
-                        <strong>Pedido por:</strong> {call.pedido_por_user?.nome}
+                        <strong className="text-foreground">Pedido por:</strong> <span className="text-muted-foreground">{call.pedido_por_user?.nome}</span>
                     </p>
                     <p>
-                        <strong>Tipo:</strong> {call.tipo_chamada}
+                        <strong className="text-foreground">Tipo:</strong> <span className="text-muted-foreground">{call.tipo_chamada}</span>
                     </p>
                     <p>
-                        <strong>Data pretendida:</strong> {call.data_pretendida}
+                        <strong className="text-foreground">Data pretendida:</strong> <span className="text-muted-foreground">{call.data_pretendida}</span>
                     </p>
                     <p>
-                        <strong>Pedido em:</strong> {call.pedido_em}
+                        <strong className="text-foreground">Pedido em:</strong> <span className="text-muted-foreground">{call.pedido_em}</span>
                     </p>
                 </div>
 
                 <div className="space-y-4">
-                    {/* Resultado */}
-                    <div>
-                        <label className="text-sm text-gray-700">Resultado</label>
-                        <select
-                            value={form.resultado}
-                            onChange={(e) => update('resultado', e.target.value)}
-                            className="mt-1 w-full rounded-lg border-gray-300"
-                        >
-                            <option value="">Selecione...</option>
-
-                            {resultados.map((r) => (
-                                <option key={r} value={r}>
-                                    {r}
-                                </option>
-                            ))}
-                        </select>
+                    <div className="grid gap-2">
+                        <Label>Resultado</Label>
+                        <Select value={form.resultado} onValueChange={(value) => update('resultado', value)}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Selecione..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {resultados.map((r: string) => (
+                                    <SelectItem key={r} value={r}>
+                                        {r}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
 
-                    {/* Data de agenda */}
                     {form.resultado === 'Agendado' && (
-                        <div>
-                            <label className="text-sm text-gray-700">Data de Agenda</label>
+                        <div className="grid gap-2">
+                            <Label>Data de Agenda</Label>
                             <input
                                 type="date"
                                 value={form.data_agendada}
                                 onChange={(e) => update('data_agendada', e.target.value)}
-                                className="mt-1 w-full rounded-lg border-gray-300"
+                                className="border-input bg-background focus:ring-ring w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2"
                             />
                         </div>
                     )}
 
-                    {/* Observações */}
-                    <div>
-                        <label className="text-sm text-gray-700">Observações</label>
-                        <textarea
-                            value={form.observacoes}
-                            onChange={(e) => update('observacoes', e.target.value)}
-                            className="mt-1 h-24 w-full rounded-lg border-gray-300"
-                        />
+                    <div className="grid gap-2">
+                        <Label>Observações</Label>
+                        <Textarea value={form.observacoes} onChange={(e) => update('observacoes', e.target.value)} className="h-24" />
                     </div>
                 </div>
 
-                <div className="flex justify-end gap-4">
-                    <button onClick={onClose} className="rounded-lg bg-gray-200 px-4 py-2 hover:bg-gray-300">
+                <div className="flex justify-end gap-3 pt-2">
+                    <Button variant="ghost" onClick={onClose}>
                         Cancelar
-                    </button>
+                    </Button>
 
-                    <button
-                        onClick={submit}
-                        disabled={loading}
-                        className="rounded-lg bg-green-600 px-4 py-2 text-white hover:bg-green-700 disabled:opacity-60"
-                    >
+                    <Button onClick={submit} disabled={loading} className="bg-success text-success-foreground hover:bg-success/90">
+                        {loading && <LoaderCircle className="size-4 animate-spin" />}
                         {loading ? 'A guardar...' : 'Guardar resposta'}
-                    </button>
+                    </Button>
                 </div>
-            </div>
-        </div>
+            </DialogContent>
+        </Dialog>
     );
 }

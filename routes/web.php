@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AgendaController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ExcelImportController;
 use App\Http\Controllers\RolePermissionController;
 use App\Http\Controllers\SlotController;
@@ -16,9 +17,7 @@ Route::get('/', function () {
 })->name('home');
 
 Route::middleware(['auth'])->group(function () {
-    Route::get('dashboard', function () {
-        return Inertia::render('dashboard');
-    })->name('dashboard');
+    Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Waiting List Routes
     Route::resource('waiting-lists', WaitingListController::class)
@@ -56,18 +55,18 @@ Route::middleware(['auth'])->group(function () {
         ->middleware('permission:waiting_list.manage');
 
     Route::resource('users', UserController::class)
-        ->only(['index', 'show'])
-        ->middleware('permission:users.view');
-    Route::resource('users', UserController::class)
         ->except(['index', 'show'])
         ->middleware('permission:users.manage');
-
-    Route::resource('teams', \App\Http\Controllers\TeamController::class)
+    Route::resource('users', UserController::class)
         ->only(['index', 'show'])
-        ->middleware('permission:teams.view');
+        ->middleware('permission:users.view');
+
     Route::resource('teams', \App\Http\Controllers\TeamController::class)
         ->except(['index', 'show'])
         ->middleware('permission:teams.manage');
+    Route::resource('teams', \App\Http\Controllers\TeamController::class)
+        ->only(['index', 'show'])
+        ->middleware('permission:teams.view');
 
     // Gestão de RBAC (roles & permissions)
     Route::get('/access-control', [RolePermissionController::class, 'index'])

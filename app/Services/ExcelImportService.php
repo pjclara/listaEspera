@@ -51,6 +51,26 @@ class ExcelImportService
         'NOME' => 'nome'
     ];
 
+    private ?array $normalizedHeaderMap = null;
+
+    private function resolveHeaderField(string $colName): ?string
+    {
+        if ($this->normalizedHeaderMap === null) {
+            $this->normalizedHeaderMap = [];
+
+            foreach ($this->headerMap as $header => $field) {
+                $this->normalizedHeaderMap[$this->normalizeHeaderKey($header)] = $field;
+            }
+        }
+
+        return $this->normalizedHeaderMap[$this->normalizeHeaderKey($colName)] ?? null;
+    }
+
+    private function normalizeHeaderKey(string $header): string
+    {
+        return strtoupper(trim($header));
+    }
+
     private array $dateFields = [
         'data_marcacao',
         'data_agenda',
@@ -60,6 +80,8 @@ class ExcelImportService
 
     public function import($file, string $type = 'xlsx', int $batchSize = self::DEFAULT_BATCH_SIZE)
     {
+
+    
 
         $rows = SimpleExcelReader::create($file, $type)->getRows();
 
@@ -106,10 +128,10 @@ class ExcelImportService
         $normalizedRow = [];
 
         foreach ($row as $colName => $value) {
-            $key = trim((string) $colName);
+            $key = $this->resolveHeaderField((string) $colName);
 
-            if (array_key_exists($key, $this->headerMap)) {
-                $normalizedRow[$this->headerMap[$key]] = $value;
+            if ($key !== null) {
+                $normalizedRow[$key] = $value;
             }
         }
 

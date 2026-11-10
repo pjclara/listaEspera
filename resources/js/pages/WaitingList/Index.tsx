@@ -1,4 +1,6 @@
 import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/empty-state';
+import { PageHeader } from '@/components/ui/page-header';
 import { SituacaoBadge } from '@/components/ui/SituacaoBadge';
 import AdminObservacoesModal from '@/components/waiting-lists/AdminObservacoesModal';
 import ObservacoesGeraisModal from '@/components/waiting-lists/ObservacoesGeraisModal';
@@ -8,6 +10,8 @@ import SituacaoInternaModal from '@/components/waiting-lists/SituacaoInternaModa
 import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem } from '@/types';
 import { Head, Link, PageProps, router, usePage } from '@inertiajs/react';
+import { motion } from 'framer-motion';
+import { ClipboardList, FileSpreadsheet, ListFilter, X } from 'lucide-react';
 import { Fragment, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -30,6 +34,7 @@ type WaitingListItem = {
     posicao_lista?: number | null;
     posicao_patologia?: number | null;
     des_diagnostico?: string | null;
+    medico_nome?: string | null;
     data_marcacao?: string | null;
     situacao?: string | null;
     situacao_interna?: string | null;
@@ -59,6 +64,7 @@ type Filters = {
     prioridade?: string;
     estado?: string;
     des_diagnostico?: string;
+    medico_nome?: string;
 };
 
 type ContactForm = {
@@ -134,6 +140,7 @@ export default function Index({
     const [prioridade, setPrioridade] = useState(safeFilters.prioridade ?? '');
     const [estado, setEstado] = useState(safeFilters.estado ?? '');
     const [desDiagnostico, setDesDiagnostico] = useState(safeFilters.des_diagnostico ?? '');
+    const [medicoNome, setMedicoNome] = useState(safeFilters.medico_nome ?? '');
 
     const [showContactModal, setShowContactModal] = useState(false);
     const [selectedContact, setSelectedContact] = useState<WaitingListItem | null>(null);
@@ -171,6 +178,7 @@ export default function Index({
         situacao,
         estado,
         des_diagnostico: desDiagnostico,
+        medico_nome: medicoNome,
         prioridade,
     });
 
@@ -188,6 +196,7 @@ export default function Index({
         setPrioridade('');
         setEstado('');
         setDesDiagnostico('');
+        setMedicoNome('');
 
         router.get(
             '/waiting-lists',
@@ -206,6 +215,7 @@ export default function Index({
         if (numProcesso) params.set('num_processo', numProcesso);
         if (estado) params.set('estado', estado);
         if (desDiagnostico) params.set('des_diagnostico', desDiagnostico);
+        if (medicoNome) params.set('medico_nome', medicoNome);
         if (prioridade) params.set('prioridade', prioridade);
 
         situacao.forEach((item) => params.append('situacao[]', item));
@@ -260,6 +270,7 @@ export default function Index({
         posicao_lista: false,
         posicao_patologia: false,
         des_diagnostico: true,
+        medico_nome: true,
         data_marcacao: true,
         situacao: true,
         situacao_interna: true,
@@ -289,20 +300,32 @@ export default function Index({
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Lista de Espera" />
 
-            <div className="flex h-full flex-1 flex-col gap-6 rounded-xl p-6">
-                <div className="flex items-center justify-between">
-                    <h1 className="text-2xl font-semibold tracking-tight">Lista de Espera</h1>
+            <div className="flex h-full flex-1 flex-col gap-6 p-6">
+                <PageHeader
+                    title="Lista de Espera"
+                    description="Gestão da lista de espera cirúrgica em tempo real."
+                    icon={<ClipboardList className="size-5" />}
+                    actions={
+                        permissions.includes('waiting_list.import') && (
+                            <Link
+                                href="/waiting-list/import"
+                                className="bg-primary text-primary-foreground inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium shadow-sm transition hover:bg-primary/90 hover:shadow"
+                            >
+                                <FileSpreadsheet className="size-4" />
+                                Importar Excel
+                            </Link>
+                        )
+                    }
+                />
 
-                    {permissions.includes('waiting_list.import') && (
-                        <Link href="/waiting-list/import" className="rounded-lg bg-blue-600 px-4 py-2 text-white shadow transition hover:bg-blue-700">
-                            Importar Excel
-                        </Link>
-                    )}
-                </div>
-
-                <div className="flex flex-wrap items-end gap-4 rounded-xl border border-gray-200 bg-white p-4 shadow">
+                <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.05 }}
+                    className="flex flex-wrap items-end gap-4 rounded-xl border border-border bg-card p-4 shadow-sm"
+                >
                     <div className="flex flex-col">
-                        <label className="mb-1 text-sm text-gray-600">Nº Processo</label>
+                        <label className="text-muted-foreground mb-1 text-sm">Nº Processo</label>
                         <input
                             type="text"
                             value={numProcesso}
@@ -310,13 +333,13 @@ export default function Index({
                             onKeyDown={(e) => {
                                 if (e.key === 'Enter') applyFilters();
                             }}
-                            className="rounded border px-3 py-2"
+                            className="border-input bg-background focus:ring-ring rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2"
                             placeholder="Ex: 12345"
                         />
                     </div>
 
                     <div className="flex flex-col">
-                        <label className="mb-1 text-sm text-gray-600">Descrição Diagnóstico</label>
+                        <label className="text-muted-foreground mb-1 text-sm">Descrição Diagnóstico</label>
                         <input
                             type="text"
                             value={desDiagnostico}
@@ -324,25 +347,39 @@ export default function Index({
                             onKeyDown={(e) => {
                                 if (e.key === 'Enter') applyFilters();
                             }}
-                            className="rounded border px-3 py-2"
+                            className="border-input bg-background focus:ring-ring rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2"
                             placeholder="Ex: Diagnóstico"
                         />
                     </div>
 
+                    <div className="flex flex-col">
+                        <label className="text-muted-foreground mb-1 text-sm">Médico</label>
+                        <input
+                            type="text"
+                            value={medicoNome}
+                            onChange={(e) => setMedicoNome(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') applyFilters();
+                            }}
+                            className="border-input bg-background focus:ring-ring rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2"
+                            placeholder="Ex: Dr. João Silva"
+                        />
+                    </div>
+
                     <div className="relative flex min-w-[220px] flex-col">
-                        <label className="mb-1 block text-sm text-gray-600">Situação</label>
+                        <label className="text-muted-foreground mb-1 block text-sm">Situação</label>
 
                         <button
                             type="button"
                             onClick={() => setShowSituacaoDropdown((prev) => !prev)}
-                            className="w-full rounded border px-3 py-2 text-left"
+                            className="border-input bg-background focus:ring-ring w-full rounded-lg border px-3 py-2 text-left text-sm outline-none focus:ring-2"
                         >
                             {situacao.length === 0 ? (
-                                <span className="text-gray-500">Todas</span>
+                                <span className="text-muted-foreground">Todas</span>
                             ) : (
                                 <div className="flex flex-wrap gap-1">
                                     {situacao.map((s) => (
-                                        <span key={s} className="rounded bg-blue-100 px-2 py-1 text-xs text-blue-700">
+                                        <span key={s} className="bg-accent text-accent-foreground rounded-full px-2 py-0.5 text-xs font-medium">
                                             {s}
                                         </span>
                                     ))}
@@ -351,12 +388,12 @@ export default function Index({
                         </button>
 
                         {showSituacaoDropdown && (
-                            <div className="absolute top-full left-0 z-50 mt-1 w-full rounded border bg-white shadow">
+                            <div className="bg-popover absolute top-full left-0 z-50 mt-1 w-full rounded-lg border border-border shadow-lg">
                                 {situacaoOptions.map((option) => {
                                     const checked = situacao.includes(option);
 
                                     return (
-                                        <label key={option} className="flex cursor-pointer items-center gap-2 px-3 py-2 hover:bg-gray-100">
+                                        <label key={option} className="hover:bg-accent flex cursor-pointer items-center gap-2 px-3 py-2 text-sm first:rounded-t-lg last:rounded-b-lg">
                                             <input
                                                 type="checkbox"
                                                 checked={checked}
@@ -373,8 +410,8 @@ export default function Index({
                     </div>
 
                     <div className="flex flex-col">
-                        <label className="mb-1 text-sm text-gray-600">Prioridade</label>
-                        <select value={prioridade} onChange={(e) => setPrioridade(e.target.value)} className="rounded border px-3 py-2">
+                        <label className="text-muted-foreground mb-1 text-sm">Prioridade</label>
+                        <select value={prioridade} onChange={(e) => setPrioridade(e.target.value)} className="border-input bg-background focus:ring-ring rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2">
                             <option value="">Todas</option>
                             {prioridadeOptionsState.map((option) => (
                                 <option key={option} value={option}>
@@ -385,8 +422,8 @@ export default function Index({
                     </div>
 
                     <div className="flex flex-col">
-                        <label className="mb-1 text-sm text-gray-600">Estado</label>
-                        <select value={estado} onChange={(e) => setEstado(e.target.value)} className="rounded border px-3 py-2">
+                        <label className="text-muted-foreground mb-1 text-sm">Estado</label>
+                        <select value={estado} onChange={(e) => setEstado(e.target.value)} className="border-input bg-background focus:ring-ring rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2">
                             <option value="">Todos</option>
                             {estadoOptions.map((option) => (
                                 <option key={option} value={option}>
@@ -397,33 +434,24 @@ export default function Index({
                     </div>
 
                     <div className="flex gap-2">
-                        <button
-                            type="button"
-                            onClick={applyFilters}
-                            className="rounded bg-blue-600 px-4 py-2 text-white shadow transition hover:bg-blue-700"
-                        >
+                        <Button type="button" onClick={applyFilters}>
+                            <ListFilter className="size-4" />
                             Filtrar
-                        </button>
+                        </Button>
 
-                        <button
-                            type="button"
-                            onClick={resetFilters}
-                            className="rounded bg-gray-200 px-4 py-2 text-gray-800 shadow transition hover:bg-gray-300"
-                        >
+                        <Button type="button" variant="secondary" onClick={resetFilters}>
+                            <X className="size-4" />
                             Limpar
-                        </button>
+                        </Button>
 
-                        <button
-                            type="button"
-                            onClick={exportExcel}
-                            className="rounded bg-green-600 px-4 py-2 text-white shadow transition hover:bg-green-700"
-                        >
+                        <Button type="button" variant="outline" onClick={exportExcel}>
+                            <FileSpreadsheet className="size-4" />
                             Exportar Excel
-                        </button>
+                        </Button>
                     </div>
-                </div>
+                </motion.div>
 
-                <div className="mb-4 flex flex-wrap gap-4 rounded-lg bg-gray-100 p-4">
+                <div className="bg-muted/60 mb-4 flex flex-wrap gap-4 rounded-xl p-4">
                     {Object.keys(colunasVisiveis).map((col) => (
                         <label key={col} className="flex items-center gap-2 text-sm">
                             <input
@@ -435,24 +463,30 @@ export default function Index({
                                         [col]: !colunasVisiveis[col],
                                     })
                                 }
-                                className="rounded"
+                                className="accent-primary rounded"
                             />
-                            {col.replace(/_/g, ' ').toUpperCase()}
+                            <span className="text-muted-foreground text-xs font-medium tracking-wide uppercase">{col.replace(/_/g, ' ')}</span>
                         </label>
                     ))}
                 </div>
 
-                <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow">
+                <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.1 }}
+                    className="overflow-hidden rounded-xl border border-border bg-card shadow-sm"
+                >
                     <div className="overflow-x-auto">
                         <table className="w-full border-collapse">
-                            <thead className="sticky top-0 z-10 bg-gray-50">
-                                <tr className="text-left text-sm font-medium text-gray-600">
+                            <thead className="bg-muted/60 sticky top-0 z-10">
+                                <tr className="text-muted-foreground text-left text-xs font-semibold tracking-wide uppercase">
                                     <th className="px-4 py-3">Nº Lista</th>
                                     <th className="px-4 py-3">Nº Processo</th>
                                     {colunasVisiveis.prioridade && <th className="px-4 py-3">Prioridade</th>}
                                     {colunasVisiveis.posicao_lista && <th className="px-4 py-3">P. Absoluta</th>}
                                     {colunasVisiveis.posicao_patologia && <th className="px-4 py-3">P. Relativa</th>}
                                     {colunasVisiveis.des_diagnostico && <th className="px-4 py-3">Diagnóstico</th>}
+                                    {colunasVisiveis.medico_nome && <th className="px-4 py-3">Médico</th>}
                                     {colunasVisiveis.data_marcacao && <th className="px-4 py-3">Data LE</th>}
                                     {colunasVisiveis.situacao && <th className="px-4 py-3">Situação</th>}
                                     {colunasVisiveis.situacao_interna && <th className="px-4 py-3">Situação Interna</th>}
@@ -460,14 +494,14 @@ export default function Index({
                                     {colunasVisiveis.convocar && <th className="px-4 py-3 text-right">Convocar</th>}
                                 </tr>
                             </thead>
-                            <tbody className="text-sm text-gray-700">
+                            <tbody className="text-foreground divide-y divide-border text-sm">
                                 {waitingLists.data.map((i, idx) => (
                                     <Fragment key={i.id}>
-                                        <tr className={`transition hover:bg-gray-100 ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
-                                            <td className="px-4 py-3 font-medium text-gray-900">{i.id}</td>
+                                        <tr className="hover:bg-muted/40 transition-colors duration-150">
+                                            <td className="px-4 py-3 font-medium text-foreground">{i.id}</td>
 
                                             <td
-                                                className="cursor-pointer px-4 py-3 text-center hover:bg-gray-300"
+                                                className="hover:bg-accent cursor-pointer px-4 py-3 text-center"
                                                 title="Clique para copiar"
                                                 onClick={() => copiar(i.num_processo)}
                                             >
@@ -482,6 +516,8 @@ export default function Index({
 
                                             {colunasVisiveis.des_diagnostico && <td className="px-4 py-3">{i.des_diagnostico ?? '—'}</td>}
 
+                                            {colunasVisiveis.medico_nome && <td className="px-4 py-3">{i.medico_nome ?? '—'}</td>}
+
                                             {colunasVisiveis.data_marcacao && (
                                                 <td className="px-4 py-3">
                                                     {i.data_marcacao ? new Date(i.data_marcacao).toLocaleDateString('pt-PT') : '—'}
@@ -491,7 +527,7 @@ export default function Index({
                                             {colunasVisiveis.situacao && <td className="px-4 py-3">{i.situacao ?? '—'}</td>}
 
                                             {colunasVisiveis.situacao_interna && (
-                                                <td className="cursor-pointer px-4 py-3 hover:bg-gray-100" onClick={() => abrirModalSituacao(i)}>
+                                                <td className="hover:bg-accent cursor-pointer px-4 py-3" onClick={() => abrirModalSituacao(i)}>
                                                     <SituacaoBadge label={i.situacao_interna} color={i.situacao_color} />
                                                 </td>
                                             )}
@@ -526,8 +562,8 @@ export default function Index({
                                             )}
                                         </tr>
                                         {(i.observacoes_gerais || i.observacoes_secretaria) && (
-                                            <tr className="bg-gray-500">
-                                                <td colSpan={12} className="px-4 py-2 text-white">
+                                            <tr className="bg-secondary/80">
+                                                <td colSpan={12} className="text-secondary-foreground px-4 py-2">
                                                     <div className="whitespace-pre-wrap">
                                                         {i.observacoes_gerais} {i.observacoes_secretaria}
                                                     </div>
@@ -539,18 +575,22 @@ export default function Index({
 
                                 {waitingLists.data.length === 0 && (
                                     <tr>
-                                        <td colSpan={12} className="px-4 py-8 text-center text-gray-500">
-                                            Não existem registos para os filtros seleccionados.
+                                        <td colSpan={12} className="p-0">
+                                            <EmptyState
+                                                icon={ClipboardList}
+                                                title="Não existem registos"
+                                                description="Não há resultados para os filtros selecionados. Tenta ajustar os critérios de pesquisa."
+                                            />
                                         </td>
                                     </tr>
                                 )}
                             </tbody>
                         </table>
                     </div>
-                </div>
+                </motion.div>
 
-                <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-                    <div className="text-sm text-gray-600">
+                <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+                    <div className="text-muted-foreground text-sm">
                         Página {waitingLists.current_page} de {waitingLists.last_page}
                     </div>
 
@@ -562,11 +602,11 @@ export default function Index({
                                 preserveScroll
                                 preserveState
                                 data={filterParams()}
-                                className={`rounded border px-3 py-2 text-sm transition ${
+                                className={`rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
                                     link.active
-                                        ? 'border-blue-600 bg-blue-600 text-white'
-                                        : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-100'
-                                } ${!link.url ? 'cursor-not-allowed opacity-40' : ''}`}
+                                        ? 'border-primary bg-primary text-primary-foreground'
+                                        : 'border-border bg-card text-foreground hover:bg-accent'
+                                } ${!link.url ? 'pointer-events-none cursor-not-allowed opacity-40' : ''}`}
                                 dangerouslySetInnerHTML={{ __html: link.label }}
                             />
                         ))}

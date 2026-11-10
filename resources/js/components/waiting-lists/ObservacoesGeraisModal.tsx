@@ -1,21 +1,18 @@
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { router } from '@inertiajs/react';
 
-export default function ObservacoesGeraisModal({
-    open,
-    selected,
-    form,
-    setForm,
-    errors = {},
-    onClose,
-}) {
-    if (!open || !selected) return null;
+export default function ObservacoesGeraisModal({ open, selected, form, setForm, errors = {}, onClose }) {
+    if (!selected) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-            <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl">
-                <h2 className="mb-4 text-xl font-semibold">
-                    Observações Gerais — Nº {selected.num_processo}
-                </h2>
+        <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Observações Gerais — Nº {selected.num_processo}</DialogTitle>
+                </DialogHeader>
 
                 <form
                     onSubmit={(e) => {
@@ -34,12 +31,9 @@ export default function ObservacoesGeraisModal({
                     }}
                     className="space-y-4"
                 >
-                    <label className="block">
-                        <span className="text-sm text-gray-600">
-                            Observações gerais
-                        </span>
-
-                        <textarea
+                    <div className="grid gap-2">
+                        <Label>Observações gerais</Label>
+                        <Textarea
                             value={form.observacoes_secretaria}
                             onChange={(e) =>
                                 setForm({
@@ -47,34 +41,19 @@ export default function ObservacoesGeraisModal({
                                     observacoes_secretaria: e.target.value,
                                 })
                             }
-                            className="h-32 w-full rounded border px-3 py-2"
+                            className="h-32"
                         />
-
-                        {errors.observacoes_secretaria && (
-                            <p className="mt-1 text-sm text-red-600">
-                                {errors.observacoes_secretaria}
-                            </p>
-                        )}
-                    </label>
-
-                    <div className="mt-6 flex justify-end gap-3">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="rounded bg-gray-300 px-4 py-2 hover:bg-gray-400"
-                        >
-                            Cancelar
-                        </button>
-
-                        <button
-                            type="submit"
-                            className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-                        >
-                            Guardar
-                        </button>
+                        {errors.observacoes_secretaria && <p className="text-destructive text-sm">{errors.observacoes_secretaria}</p>}
                     </div>
+
+                    <DialogFooter>
+                        <Button type="button" variant="ghost" onClick={onClose}>
+                            Cancelar
+                        </Button>
+                        <Button type="submit">Guardar</Button>
+                    </DialogFooter>
                 </form>
-            </div>
-        </div>
+            </DialogContent>
+        </Dialog>
     );
 }

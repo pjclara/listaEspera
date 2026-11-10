@@ -1,12 +1,18 @@
 import { Head, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
+import { Badge } from '@/components/ui/badge';
+import { EmptyState } from '@/components/ui/empty-state';
+import { PageHeader } from '@/components/ui/page-header';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import SecretariaRespostaModal from '@/components/waiting-lists/SecretariaRespostaModal';
 import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem } from '@/types';
+import { motion } from 'framer-motion';
+import { CheckCircle2, PhoneCall } from 'lucide-react';
 
 export default function ChamadasPendentes() {
-    const { chamadas, resultados } = usePage().props;
+    const { chamadas, resultados } = usePage().props as any;
 
     const [filtro, setFiltro] = useState({
         tipo: '',
@@ -31,7 +37,6 @@ export default function ChamadasPendentes() {
     const [doenteSelecionado, setDoenteSelecionado] = useState(null);
 
     function abrirModal(call: any) {
-        console.log(call);
         setCallSelecionada(call);
         setDoenteSelecionado(call.doente);
         setModalAberto(true);
@@ -46,21 +51,29 @@ export default function ChamadasPendentes() {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Convocatórias" />
-            <div className="mx-auto max-w-6xl space-y-10 py-10">
-                <h1 className="text-3xl font-bold text-gray-900">Convocatórias Pendentes</h1>
-                <p className="text-gray-600">Pedidos de convocatória feitos pela equipa e ainda sem resposta da secretaria.</p>
 
-                {/* Filtros */}
-                <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-                    <h2 className="mb-4 text-lg font-semibold">Filtros</h2>
+            <div className="flex flex-1 flex-col gap-6 p-6">
+                <PageHeader
+                    title="Convocatórias Pendentes"
+                    description="Pedidos de convocatória feitos pela equipa e ainda sem resposta da secretaria."
+                    icon={<PhoneCall className="size-5" />}
+                />
 
-                    <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+                <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.05 }}
+                    className="rounded-xl border border-border bg-card p-5 shadow-sm"
+                >
+                    <h2 className="mb-4 text-sm font-semibold text-foreground">Filtros</h2>
+
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                         <div>
-                            <label className="text-sm text-gray-700">Tipo de convocatória</label>
+                            <label className="text-muted-foreground mb-1 block text-sm">Tipo de convocatória</label>
                             <select
                                 value={filtro.tipo}
                                 onChange={(e) => setFiltro({ ...filtro, tipo: e.target.value })}
-                                className="mt-1 w-full rounded-lg border-gray-300"
+                                className="border-input bg-background focus:ring-ring w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2"
                             >
                                 <option value="">Todos</option>
                                 <option value="Ambulatorio">Ambulatório</option>
@@ -70,65 +83,89 @@ export default function ChamadasPendentes() {
                         </div>
 
                         <div>
-                            <label className="text-sm text-gray-700">Data do pedido</label>
+                            <label className="text-muted-foreground mb-1 block text-sm">Data do pedido</label>
                             <input
                                 type="date"
                                 value={filtro.data}
                                 onChange={(e) => setFiltro({ ...filtro, data: e.target.value })}
-                                className="mt-1 w-full rounded-lg border-gray-300"
+                                className="border-input bg-background focus:ring-ring w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2"
                             />
                         </div>
                     </div>
-                </div>
+                </motion.div>
 
-                {/* Tabela */}
-                <div className="rounded-xl border border-gray-100 bg-white shadow-sm">
-                    <table className="min-w-full divide-y divide-gray-200 text-xs">
-                        <thead className="bg-gray-50">
-                            <tr>
-                                <th className="px-3 py-2 text-left text-[10px] font-semibold tracking-wide uppercase">Doente</th>
-                                <th className="px-3 py-2 text-left text-[10px] font-semibold tracking-wide uppercase">Tipo</th>
-                                <th className="px-3 py-2 text-left text-[10px] font-semibold tracking-wide uppercase">Pedido por</th>
-                                <th className="px-3 py-2 text-left text-[10px] font-semibold tracking-wide uppercase">Data pedido</th>
-                                <th className="px-3 py-2 text-left text-[10px] font-semibold tracking-wide uppercase">Situação</th>
-                                <th className="px-3 py-2 text-left text-[10px] font-semibold tracking-wide uppercase">Ações</th>
-                            </tr>
-                        </thead>
+                <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.1 }}
+                    className="overflow-hidden rounded-xl border border-border bg-card shadow-sm"
+                >
+                    {chamadasFiltradas.length === 0 ? (
+                        <EmptyState
+                            icon={CheckCircle2}
+                            title="Nenhuma chamada pendente"
+                            description="Não há convocatórias à espera de resposta da secretaria para os filtros selecionados."
+                        />
+                    ) : (
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Doente</TableHead>
+                                    <TableHead>Tipo</TableHead>
+                                    <TableHead>Pedido por</TableHead>
+                                    <TableHead>Data pedido</TableHead>
+                                    <TableHead>Situação</TableHead>
+                                    <TableHead>Ações</TableHead>
+                                </TableRow>
+                            </TableHeader>
 
-                        <tbody className="divide-y divide-gray-200 bg-white">
-                            {chamadasFiltradas.map((c: any) => {
-                                const jaRespondida = !!c.estado_novo || !!c.data_agenda || !!c.observacoes_secretaria;
+                            <TableBody>
+                                {chamadasFiltradas.map((c: any, idx: number) => {
+                                    const jaRespondida = !!c.estado_novo || !!c.data_agenda || !!c.observacoes_secretaria;
 
-                                return (
-                                    <tr key={c.id}>
-                                        <td className="px-3 py-2">
-                                            <div className="text-[14px] font-medium">{c.doente.nome}</div>
-                                            <div className="text-[14px] text-gray-500">{c.doente.des_diagnostico}</div>
-                                        </td>
+                                    return (
+                                        <motion.tr
+                                            key={c.id}
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            transition={{ duration: 0.2, delay: idx * 0.03 }}
+                                            className="hover:bg-muted/40 border-b border-border transition-colors last:border-0"
+                                        >
+                                            <TableCell>
+                                                <div className="font-medium text-foreground">{c.doente.nome}</div>
+                                                <div className="text-muted-foreground text-xs">{c.doente.des_diagnostico}</div>
+                                            </TableCell>
 
-                                        <td className="px-3 py-2">{c.tipo_chamada}</td>
-                                        <td className="px-3 py-2">{c.pedido_por_user?.name}</td>
-                                        <td className="px-3 py-2">{c.pedido_em}</td>
-                                        <td className="px-3 py-2">{c.estado_novo}</td>
+                                            <TableCell className="text-muted-foreground">{c.tipo_chamada}</TableCell>
+                                            <TableCell className="text-muted-foreground">{c.pedido_por_user?.name}</TableCell>
+                                            <TableCell className="text-muted-foreground">{c.pedido_em}</TableCell>
+                                            <TableCell>
+                                                {c.estado_novo ? (
+                                                    <Badge variant="secondary" className="font-normal">
+                                                        {c.estado_novo}
+                                                    </Badge>
+                                                ) : (
+                                                    <span className="text-muted-foreground">—</span>
+                                                )}
+                                            </TableCell>
 
-                                        <td className="px-3 py-2">
-                                            <button
-                                                onClick={() => abrirModal(c)}
-                                                className={`rounded px-2 py-1 text-xs text-white transition ${
-                                                    jaRespondida ? 'bg-blue-600 hover:bg-blue-700' : 'bg-green-600 hover:bg-green-700'
-                                                }`}
-                                            >
-                                                {jaRespondida ? 'Editar' : 'Responder'}
-                                            </button>
-                                        </td>
-                                    </tr>
-                                );
-                            })}
-                        </tbody>
-                    </table>
-
-                    {chamadasFiltradas.length === 0 && <p className="py-6 text-center text-gray-500">Nenhuma chamada pendente encontrada.</p>}
-                </div>
+                                            <TableCell>
+                                                <button
+                                                    onClick={() => abrirModal(c)}
+                                                    className={`rounded-lg px-3 py-1.5 text-xs font-medium text-white shadow-sm transition ${
+                                                        jaRespondida ? 'bg-primary hover:bg-primary/90' : 'bg-success hover:bg-success/90'
+                                                    }`}
+                                                >
+                                                    {jaRespondida ? 'Editar' : 'Responder'}
+                                                </button>
+                                            </TableCell>
+                                        </motion.tr>
+                                    );
+                                })}
+                            </TableBody>
+                        </Table>
+                    )}
+                </motion.div>
             </div>
 
             <SecretariaRespostaModal open={modalAberto} onClose={fecharModal} call={callSelecionada} doente={doenteSelecionado} resultados={resultados} />

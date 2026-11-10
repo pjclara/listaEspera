@@ -22,8 +22,7 @@ export function SituacaoBadge({ label, color, className = "" }: SituacaoBadgePro
 
     return (
         <span
-            className={`flex w-full items-center justify-center rounded px-2 py-1 text-xs font-medium text-white ${color} ${className}`}
-
+            className={`inline-flex w-full items-center justify-center rounded-full px-2.5 py-1 text-xs font-semibold text-white shadow-sm ${className}`}
             style={{ backgroundColor }}
         >
             {text}

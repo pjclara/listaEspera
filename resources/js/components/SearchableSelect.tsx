@@ -53,15 +53,15 @@ export function SearchableSelect({ value, onChange, options }) {
                     onChange(""); // limpar seleção
                 }}
                 onFocus={() => setOpen(true)}
-                className="w-full rounded border px-3 py-2"
+                className="border-input bg-background focus:ring-ring w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2"
                 placeholder="Pesquisar doente..."
             />
 
             {/* DROPDOWN */}
             {open && (
-                <div className="absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded border bg-white shadow-lg">
+                <div className="bg-popover absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-border shadow-lg">
                     {filtered.length === 0 && (
-                        <div className="px-3 py-2 text-sm text-gray-500">
+                        <div className="text-muted-foreground px-3 py-2 text-sm">
                             Nenhum resultado
                         </div>
                     )}
@@ -74,10 +74,10 @@ export function SearchableSelect({ value, onChange, options }) {
                                 setQuery("");
                                 setOpen(false); // FECHA AO CLICAR
                             }}
-                            className="cursor-pointer px-3 py-2 hover:bg-gray-100"
+                            className="hover:bg-accent cursor-pointer px-3 py-2"
                         >
-                            <div className="font-medium">{w.num_processo}</div>
-                            <div className="text-sm text-gray-600">
+                            <div className="font-medium text-foreground">{w.num_processo}</div>
+                            <div className="text-muted-foreground text-sm">
                                 {w.des_diagnostico}
                             </div>
                         </div>
