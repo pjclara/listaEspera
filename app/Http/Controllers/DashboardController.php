@@ -25,7 +25,8 @@ class DashboardController extends Controller
             ->whereYear('data_operado', now()->year)
             ->count();
 
-        $porPrioridade = WaitingList::where('estado', 'A')
+        $porPrioridade = DB::table('waiting_list')
+            ->where('estado', 'A')
             ->whereNotNull('prioridade')
             ->select('prioridade', DB::raw('count(*) as total'))
             ->groupBy('prioridade')

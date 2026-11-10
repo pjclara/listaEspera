@@ -87,7 +87,7 @@ class WaitingList extends Model
 
     public function getSituacaoColorAttribute(): string
     {
-        return ResultadoChamada::from($this->situacao_interna)->color();
+        return ResultadoChamada::tryFrom($this->situacao_interna ?? '')?->color() ?? 'bg-slate-600';
     }
 
     public function getMedicoNomeAttribute(): ?string
