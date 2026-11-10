@@ -75,7 +75,7 @@ export default function Dashboard() {
                                 description="Quando marcares cirurgias na agenda, elas aparecem aqui."
                             />
                         ) : (
-                            <ul className="divide-y divide-border">
+                            <ul className="divide-y divide-border ">
                                 {proximosAgendamentos.map((item, idx) => (
                                     <motion.li
                                         key={item.id}
